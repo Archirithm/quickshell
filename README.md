@@ -42,4 +42,4 @@ echo "QT_QPA_PLATFORMTHEME=gtk3" > ~/.config/environment.d/envvars.conf
 或者连起来
 mkdir -p ~/.config/environment.d && echo "QT_QPA_PLATFORMTHEME=gtk3" > ~/.config/environment.d/envvars.conf
 ```
-这个变量是将qt的主题同步为gtk主题。
+重启电脑重新读取环境变量即可，这个变量是将qt的主题同步为gtk主题。

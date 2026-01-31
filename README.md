@@ -14,7 +14,7 @@
 -  ttf-jetbrains-mono-nerd（字体）
 -  tela-circle-icon-theme-dracula（图标）
 - matugen（随壁纸主题切换颜色）
-- 想要同步overview模糊背景参考我另一个仓库的overview.sh文件
+
 
 ```
 https://github.com/Archirithm/quickshell.git

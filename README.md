@@ -1,5 +1,6 @@
 # 手动安装
 ## 由于up本人还未在虚拟机或实体机里复刻，手动安装仅供参考，安装前请先备份好自己的数据或者创建快照。
+ b站演示视频[link](https://www.bilibili.com/video/BV1PK62BTE9b/?vd_source=6afb576b864e69724a04d265fd065105)
 ## 必要的包
 - niri（只能是niri，因为配置里有用到niri的命令。）
 - quickshell
@@ -9,14 +10,34 @@
 - powerprofilesctl（电源管理按钮）
 - nm-connection-editor（网络图形化界面）
 - wlogout（电源菜单，样式可以参考我另一个仓库下的配置文件）
-- swww（壁纸切换工具）
+- swww（壁纸切换工具。我将壁纸放在了./.config/wallpaper目录下，参考我[dotfiles](https://github.com/Archirithm/dotfiles/tree/master/wallpaper)）
 ## 可能需要的包（提供更好的体验）
 - ttf-lxgw-wenkai-screen（字体）
 -  ttf-jetbrains-mono-nerd（字体）
 -  tela-circle-icon-theme-dracula（图标）
 - matugen（随壁纸主题切换颜色）
+matugen的配置可以参考[dotfiles](https://github.com/Archirithm/dotfiles/tree/master/matugen)
+```
+...
+[templates.Colorsheme]
+input_path = '~/.config/matugen/templates/Colorscheme.qml'
+output_path = '~/.config/quickshell/config/Colorsheme.qml'
+...
+```
+Colorscheme.qml:
+```
+pragma Singleton
 
+import Quickshell
+import QtQuick
 
+Singleton {
+<* for name, value in colors *>
+    readonly property color {{name}} : "{{value.default.hex}}"
+<* endfor *>
+}
+```
+### 安装
 ```
 git clone https://github.com/Archirithm/quickshell.git
 ```
@@ -32,8 +53,29 @@ Mod+Shift+W { spawn "sh" "-c" "echo 'wallpaper' > /tmp/qs_launcher.pipe"; }
 Mod+A { spawn "sh" "-c" "echo 'toggle' > /tmp/qs_launcher.pipe"; }
 
 ```
-Mod键=win键。`Mod+P`打开quickshell锁屏`Mod+M`打开灵动岛天气，`Mod+Shift+W`打开灵动岛壁纸，`Mod+A`打开灵动岛app启动器。
+Mod键=win键。鼠标左键打开媒体
+鼠标左键打开媒体
+<p align="center">
+  <img src="./picture/Screenshot from 2026-02-01 14-17-47.png" width="600" />
+</p>
+`Mod+P`打开quickshell锁屏
+<p align="center">
+  <img src="./picture/Pasted image.png" width="600" />
+</p>
+`Mod+M`打开灵动岛天气
+<p align="center">
+  <img src="./picture/Screenshot from 2026-02-01 14-18-07.png" width="600" />
+</p>
+`Mod+Shift+W`打开灵动岛壁纸
+<p align="center">
+  <img src="./picture/Screenshot from 2026-02-01 14-35-57.png" width="600" />
+</p>
+`Mod+A`打开灵动岛app启动器。
+<p align="center">
+  <img src="./picture/Screenshot from 2026-02-01 14-35-12.png" width="600" />
+</p>
 稍微解释下灵动岛快捷键，例如`Mod+M`打印‘dashboard’到`/tmp/qs_launcher.pipe`管道文件中，quickshell后台收到信息展开灵动岛。/tmp是系统临时文件，阅后即焚，不用担心。
+
 ## 已知问题
 1. 系统托盘中可能出现图标丢失的情况导致只显示紫黑方块
 这个问题是由于qt软件主题造成的解决办法设置QT_QPA_PLATFORMTHEME=gtk3环境变量，例如你可以

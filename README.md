@@ -1,7 +1,7 @@
 # 手动安装
 ## 由于up本人还未在虚拟机或实体机里复刻，手动安装仅供参考，安装前请先备份好自己的数据或者创建快照。
  b站演示视频[爱吹笛子的托儿索](https://www.bilibili.com/video/BV1PK62BTE9b/?vd_source=6afb576b864e69724a04d265fd065105)
- ，完整的~/.config配置在[dotfiles](https://github.com/Archirithm/dotfiles)。
+ ，**完整的~/.config配置在[dotfiles](https://github.com/Archirithm/dotfiles)**。
 ## 必要的包
 - niri（只能是niri，因为配置里有用到niri的命令。）
 - quickshell

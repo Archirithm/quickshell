@@ -63,7 +63,6 @@ Variants {
                 anchors.top: parent.top
                 anchors.topMargin: 10
                 
-                z: 999 
             }
 
             // --- 右侧组件 ---

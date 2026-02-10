@@ -4,12 +4,8 @@
 import Quickshell
 import Quickshell.Wayland
 import qs.Modules.Bar
-//import qs.Modules.Launcher
-//import qs.Modules.NotificationPopup
 
 ShellRoot {
     Bar {}
-//    Launcher {}
-//    NotificationPopup {}
 }
 

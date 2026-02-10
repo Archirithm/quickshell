@@ -12,6 +12,8 @@ import qs.Modules.Bar.Volume
 import qs.Modules.Bar.PowerButton
 import qs.Modules.Bar.PowerProfile
 import qs.Modules.Bar.SysMonitor
+import qs.Modules.Bar.NotificationButton
+import qs.Modules.Bar.DayNightSwitch
 import qs.Modules.DynamicIsland
 
 Variants {
@@ -53,6 +55,7 @@ Variants {
                 spacing: 10
                 Workspaces {}
                 Cava {}
+                DayNightSwitch {}
             }
 
             // --- 中间：灵动岛 ---
@@ -83,16 +86,23 @@ Variants {
 
                 Tray {}
                 
+                // 4. 电源模式胶囊
+                // 因为我们在 PowerProfile.qml 里加了 implicitWidth: width
+                // 所以当它动画变宽时，Layout 会实时把左边的组件（Volume, Network...）往左推
+                PowerProfile {
+                    Layout.alignment: Qt.AlignVCenter
+                } 
+                
                 // 2. 网络
                 Network {}
                 
                 // 3. 音量
                 Volume {}
 
-                // 4. 电源模式胶囊
-                // 因为我们在 PowerProfile.qml 里加了 implicitWidth: width
-                // 所以当它动画变宽时，Layout 会实时把左边的组件（Volume, Network...）往左推
-                PowerProfile {
+
+                
+                
+                NotificationButton {
                     Layout.alignment: Qt.AlignVCenter
                 }
 

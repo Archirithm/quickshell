@@ -1,29 +1,33 @@
 import QtQuick
 import Quickshell
 import qs.config
+import qs.Widget
 
 Rectangle {
     id: root
 
-    // --- 样式设定 ---
-    color: Colorsheme.error 
+    // --- 样式设定 (完全仿照 PowerButton) ---
+    color: Colorsheme.on_primary_container 
     
-    // 圆角和高度保持和其他胶囊一致
     radius: Sizes.cornerRadius
     implicitHeight: Sizes.barHeight
     
-    // 宽度自适应，左右各留 12px 边距 (24px)
-    // 这样如果只有图标，它会是一个近似正方形的圆角按钮
+    // 宽度自适应
     implicitWidth: icon.contentWidth + 20
 
     // --- 交互区域 ---
+    NotificationWidget {
+        id: notifPanel
+        isOpen: false
+    }
+
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         
-        // 左键点击运行 wlogout 命令
+        // 3. 点击切换开关
         onClicked: {
-            Quickshell.execDetached(["wlogout", "-p", "layer-shell", "-b", "2"])
+            notifPanel.isOpen = !notifPanel.isOpen
         }
     }
 
@@ -32,8 +36,10 @@ Rectangle {
         id: icon
         anchors.centerIn: parent
         
-        text: "⏻"
-        font.pixelSize: 15 //稍微大一点，突出电源键
+        // 铃铛图标 (Font Awesome)
+        text: "\uf0f3" 
+        font.family: "Font Awesome 6 Free Solid"
+        font.pixelSize: 15
         font.bold: true
         
         color: Colorsheme.background 

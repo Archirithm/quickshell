@@ -5,6 +5,11 @@ import Quickshell
 import qs.Services
 import qs.config
 
+// 【1】 导入你的组件路径
+// 如果 NetworkWidget.qml 在上一级的 Widget 文件夹里：
+import qs.Widget 
+// 或者如果它就在旁边，直接用 import "." 即可
+
 Rectangle {
     id: root
     
@@ -14,33 +19,42 @@ Rectangle {
     implicitHeight: Sizes.barHeight
     implicitWidth: layout.width + 24
 
+    // --- 【2】 实例化网络面板 ---
+    NetworkWidget {
+        id: wifiPanel
+        // 默认是关闭的
+        isOpen: false
+        
+        // 如果你想让面板的配色跟随全局 Colorsheme，可以在这里覆盖内部属性
+        // (前提是 NetworkWidget 内部没有把这些属性写死，而是开放了别名或者属性)
+        // 目前你的 NetworkWidget 是自包含配色的，直接用即可。
+    }
+
     // --- 交互区域 ---
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         
-        // 点击打开 nm-connection-editor
-        onClicked: Quickshell.execDetached(["nm-connection-editor"])
-        
-        // 【已删除】 鼠标悬停提示代码已移除
+        // --- 【3】 修改点击逻辑 ---
+        onClicked: {
+            // 切换面板的开关状态
+            wifiPanel.isOpen = !wifiPanel.isOpen
+        }
     }
 
-    // --- 内容布局 ---
+    // --- 内容布局 (保持不变) ---
     RowLayout {
         id: layout
         anchors.centerIn: parent
         spacing: 8
 
-        // 1. 图标
         Text {
-            // 确保使用支持图标的字体
             font.family: "Font Awesome 6 Free Regular" 
             font.pixelSize: 16
             
             // 颜色：连上是青色，断开是红色
             color: Network.connected ? Colorsheme.on_tertiary_container : "#ff5555"
             
-            // 根据 Service 返回的类型来决定显示什么图标
             text: {
                 if (Network.activeConnectionType === "WIFI") return ""
                 if (Network.activeConnectionType === "ETHERNET") return ""
@@ -48,12 +62,10 @@ Rectangle {
             }
         }
 
-        // 2. 文字 (SSID 或 连接名)
         Text {
             font.bold: true
             font.pixelSize: 14
             color: Colorsheme.on_primary_container
-            
             // 直接读取 Service 数据
             text: Network.activeConnection
         }

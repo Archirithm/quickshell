@@ -6,7 +6,7 @@
 - niri（只能是niri，因为配置里有用到niri的命令。）
 - quickshell
 - cava（提供音频可视模块）
-- qt5-graphicaleffects（处理svg矢量图）
+- qt6-5compat （图形特效）
 - pavucontrol（音频图形化界面）
 - nm-connection-editor（网络图形化界面）
 我觉得既然都用quickshell了，这些乱七八糟的第三方图形化界面都可以用quickshell重写，以后的版本我会重新统一下ui。

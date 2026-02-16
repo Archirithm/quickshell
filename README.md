@@ -1,15 +1,14 @@
-# 手动安装
+# 手动克隆demo
 ## 由于up本人还未在虚拟机或实体机里复刻，手动安装仅供参考，安装前请先备份好自己的数据或者创建快照。脚本安装等有空了再做，最近很忙。
+我在虚拟机里试了一下能打开，没问题。但克隆前还是要做好备份。
  b站演示视频[爱吹笛子的托儿索](https://www.bilibili.com/video/BV1PK62BTE9b/?vd_source=6afb576b864e69724a04d265fd065105)
  ，**完整的~/.config配置在[dotfiles](https://github.com/Archirithm/dotfiles)**。
 ## 必要的包
 - niri（只能是niri，因为配置里有用到niri的命令。）
 - quickshell
 - cava（提供音频可视模块）
-- qt5-graphicaleffects（处理svg矢量图）
+- qt6-5compat （图形特效）
 - pavucontrol（音频图形化界面）
-- nm-connection-editor（网络图形化界面）
-我觉得既然都用quickshell了，这些乱七八糟的第三方图形化界面都可以用quickshell重写，以后的版本我会重新统一下ui。
 - powerprofilesctl（电源管理按钮）
 - wlogout（电源菜单，样式可以参考我另一个仓库下的配置文件）
 - swww（壁纸切换工具。我将壁纸放在了./.config/wallpaper目录下，参考我的[dotfiles/wallpaper](https://github.com/Archirithm/dotfiles/tree/master/wallpaper)）
@@ -55,7 +54,7 @@ Mod+Shift+W { spawn "sh" "-c" "echo 'wallpaper' > /tmp/qs_launcher.pipe"; }
 Mod+A { spawn "sh" "-c" "echo 'toggle' > /tmp/qs_launcher.pipe"; }
 
 ```
-Mod键=win键。
+Mod键=win键。鼠标中键打开歌词。
 鼠标左键打开媒体
 <p align="center">
   <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from 2026-02-01 14-17-47.png" width="500">
@@ -93,4 +92,4 @@ echo "QT_QPA_PLATFORMTHEME=gtk3" > ~/.config/environment.d/envvars.conf
 ```
 mkdir -p ~/.config/environment.d && echo "QT_QPA_PLATFORMTHEME=gtk3" > ~/.config/environment.d/envvars.conf
 ```
-重启电脑重新读取环境变量即可，这个变量是将qt的主题同步为gtk主题。
+重新读取环境变量即可，这个变量是将qt的主题同步为gtk主题。

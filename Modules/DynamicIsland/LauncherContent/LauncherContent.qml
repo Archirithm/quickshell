@@ -24,7 +24,6 @@ Item {
         appScanner.running = true;
     }
 
-    // 扫描进程
     Process {
         id: appScanner
         command: ["bash", "-c", "find /usr/share/applications ~/.local/share/applications -name '*.desktop' 2>/dev/null -exec grep -H -E '^(Name|Exec|Icon|NoDisplay|Categories)=' {} + > /tmp/qs_apps.txt"]
@@ -39,7 +38,6 @@ Item {
         }
     }
 
-    // 读取进程
     Process {
         id: appReader
         command: ["cat", "/tmp/qs_apps.txt"]
@@ -51,7 +49,6 @@ Item {
         onExited: (code, status) => root.finalizeApps()
     }
 
-    // 解析逻辑
     function parseSingleLine(line) {
         line = line.trim();
         if (!line) return;
@@ -89,10 +86,9 @@ Item {
         }
         root.isLoading = false;
         root.tempAppsData = {}; 
-        search(""); // 初始化列表
+        search(""); 
     }
 
-    // 黑名单过滤
     function shouldHideApp(app) {
         let name = app.name.toLowerCase();
         let exec = app.exec.toLowerCase();
@@ -128,15 +124,11 @@ Item {
         appsList.currentIndex = 0;
     }
 
-    // ============================================================
-    // 【核心策略：显示时零计算】
-    // ============================================================
     onVisibleChanged: {
         if (visible) {
             searchBox.text = "";
             searchBox.forceActiveFocus();
             
-            // 只有当预加载意外失败或者列表为空时，才尝试补救扫描
             if (allAppsModel.count === 0 && !root.isLoading) {
                 appScanner.running = true;
             } else {
@@ -145,41 +137,59 @@ Item {
         }
     }
 
-    // 界面布局
+    // ============================================================
+    // 【全新界面布局：Material You 风格】
+    // ============================================================
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 16
-        spacing: 10
+        spacing: 12
 
-        // 搜索框
+        // 1. 搜索框
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 44
-            color: Colorsheme.background
-            radius: 12
+            Layout.preferredHeight: 48
+            
+            // 使用最高层级的容器颜色，突出搜索框
+            color: Colorsheme.surface_container_highest 
+            radius: 24 // 更圆润的胶囊形状
+            
+            // 获取焦点时显示主色边框，否则透明
             border.width: 1
-            border.color: searchBox.activeFocus ? "#666" : "#333"
+            border.color: searchBox.activeFocus ? Colorsheme.primary : "transparent"
+            Behavior on border.color { ColorAnimation { duration: 150 } }
 
             RowLayout {
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 8
-                Text { text: "🔍"; color: "#888"; font.pixelSize: 14 }
+                anchors.leftMargin: 16
+                anchors.rightMargin: 16
+                spacing: 12
+                
+                Text { 
+                    text: "" // 也可以用 Nerd Font 的放大镜
+                    color: searchBox.activeFocus ? Colorsheme.primary : Colorsheme.on_surface_variant 
+                    font.family: "Font Awesome 6 Free Solid"
+                    font.pixelSize: 14 
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                }
+                
                 TextInput {
                     id: searchBox
                     Layout.fillWidth: true
-                    color: "white"
+                    color: Colorsheme.on_surface 
                     font.pixelSize: 16
                     verticalAlignment: Text.AlignVCenter
                     selectByMouse: true
                     activeFocusOnTab: true
+                    
                     Text {
-                        text: root.isLoading ? "Loading apps..." : "Search..."
-                        color: "#555"
+                        text: root.isLoading ? "Loading apps..." : "Search apps..."
+                        color: Colorsheme.on_surface_variant
                         visible: parent.text === ""
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                     }
+                    
                     onTextChanged: root.search(text)
                     Keys.onUpPressed: appsList.decrementCurrentIndex()
                     Keys.onDownPressed: appsList.incrementCurrentIndex()
@@ -189,22 +199,26 @@ Item {
             }
         }
 
-        // 列表视图
+        // 2. 列表视图
         ListView {
             id: appsList
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
             model: filteredApps
-            spacing: 2
+            spacing: 4
             cacheBuffer: 200 
             
-            highlight: Rectangle { color: "#333"; radius: 8 }
-            highlightMoveDuration: 0 
+            // 高亮效果：使用带透明度的 primary_container
+            highlight: Rectangle { 
+                color: Colorsheme.primary_container
+                radius: 12 
+            }
+            highlightMoveDuration: 150 // 增加一点丝滑的移动动画
 
             delegate: Item {
                 width: ListView.view.width
-                height: 48
+                height: 52
 
                 TapHandler {
                     onTapped: {
@@ -215,26 +229,27 @@ Item {
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    spacing: 12
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 16
+                    spacing: 16
 
                     // 图标容器
                     Item {
-                        Layout.preferredWidth: 32
-                        Layout.preferredHeight: 32
+                        Layout.preferredWidth: 36
+                        Layout.preferredHeight: 36
 
-                        // 底层：文字头像
+                        // 底层：文字头像 (没有图标时显示)
                         Rectangle {
                             anchors.fill: parent
-                            radius: 8
-                            color: "#444"
+                            radius: 10
+                            color: Colorsheme.surface_variant
+                            
                             Text {
                                 anchors.centerIn: parent
                                 text: model.name ? model.name.charAt(0).toUpperCase() : "?"
-                                color: "#aaa"
+                                color: Colorsheme.on_surface_variant
                                 font.bold: true
-                                font.pixelSize: 16
+                                font.pixelSize: 18
                             }
                         }
 
@@ -249,7 +264,6 @@ Item {
                             cache: true
                             smooth: true
 
-                            // 优先系统 -> 备用 Tela
                             source: {
                                 if (!model.icon) return "";
                                 if (model.icon.indexOf("/") !== -1) return "file://" + model.icon;
@@ -274,17 +288,26 @@ Item {
                         }
                     }
 
+                    // 应用名称
                     Text {
                         text: model.name
-                        color: ListView.isCurrentItem ? "white" : "#ccc"
-                        font.pixelSize: 14
+                        // 选中时文字变色
+                        color: ListView.isCurrentItem ? Colorsheme.on_primary_container : Colorsheme.on_surface
+                        font.pixelSize: 15
                         font.bold: ListView.isCurrentItem
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                         renderType: Text.NativeRendering 
                     }
 
-                    Text { text: "⏎"; color: "#666"; visible: ListView.isCurrentItem }
+                    // 回车提示图标
+                    Text { 
+                        text: "⏎"
+                        color: Colorsheme.primary 
+                        visible: ListView.isCurrentItem 
+                        font.pixelSize: 16
+                        font.bold: true
+                    }
                 }
             }
         }
@@ -298,5 +321,6 @@ Item {
             root.launchRequested();
         }
     }
+    
     Process { id: launchProcess; onExited: running = false }
 }

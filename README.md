@@ -48,10 +48,16 @@ git clone https://github.com/Archirithm/quickshell.git
 ## 快捷键设置
 参考我的快捷键设置
 ```
-Mod+P { spawn "quickshell" "-p" "/home/archirithm/.config/quickshell/Modules/Lock/Lock.qml"; }
-Mod+M { spawn "sh" "-c" "echo 'dashboard' > /tmp/qs_launcher.pipe"; }
-Mod+Shift+W { spawn "sh" "-c" "echo 'wallpaper' > /tmp/qs_launcher.pipe"; }
-Mod+A { spawn "sh" "-c" "echo 'toggle' > /tmp/qs_launcher.pipe"; }
+// 呼叫主进程开启锁屏
+Mod+P { spawn "quickshell" "ipc" "call" "lock" "open"; }
+// 打开/关闭仪表盘 (Dashboard)
+Mod+M { spawn "quickshell" "ipc" "call" "island" "dashboard"; }
+
+// 打开/关闭壁纸切换器 (Wallpaper)
+Mod+Shift+W { spawn "quickshell" "ipc" "call" "island" "wallpaper"; }
+
+// 打开/关闭应用启动器 (Launcher) - 对应之前的 'toggle'
+ Mod+A { spawn "quickshell" "ipc" "call" "island" "launcher"; }
 
 ```
 Mod键=win键。鼠标中键打开歌词。
@@ -78,8 +84,8 @@ Mod键=win键。鼠标中键打开歌词。
 <p align="center">
  <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from 2026-02-01 14-35-12.png" width="500">
 </p>
-稍微解释下灵动岛快捷键，例如`Mod+M`打印‘dashboard’到`/tmp/qs_launcher.pipe`管道文件中，quickshell后台收到信息展开灵动岛。/tmp是系统临时文件，阅后即焚，不用担心。
-（现在我觉得这种管道文件的IPC通信效率太低了，经常卡键，后面我得换一个方式实现quickshell和niri之间的通信。）
+
+现在快捷键全部变成quickshell自己的ipc接口。
 
 ## 已知问题
 1. 系统托盘中可能出现图标丢失的情况导致只显示紫黑方块
@@ -93,3 +99,6 @@ echo "QT_QPA_PLATFORMTHEME=gtk3" > ~/.config/environment.d/envvars.conf
 mkdir -p ~/.config/environment.d && echo "QT_QPA_PLATFORMTHEME=gtk3" > ~/.config/environment.d/envvars.conf
 ```
 重新读取环境变量即可，这个变量是将qt的主题同步为gtk主题。
+
+2. 播放歌曲的时候如果在播放器里面手动调整进度条会发现灵动岛歌词和媒体进度条没有同步变过去，这个时候只需要暂停播放就能同步进度条了。这个问题我发现dms中也没解决，如果有大佬有方法可以教教我。
+3. up的两个屏幕都是2k屏幕，所有配置文件的高宽都写死了，低分辨率下组件会很大，这个尺寸我以后得重写一遍。

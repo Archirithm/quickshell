@@ -56,7 +56,7 @@ Mod+M { spawn "quickshell" "ipc" "call" "island" "dashboard"; }
 // 打开/关闭壁纸切换器 (Wallpaper)
 Mod+Shift+W { spawn "quickshell" "ipc" "call" "island" "wallpaper"; }
 
-// 打开/关闭应用启动器 (Launcher) - 对应之前的 'toggle'
+// 打开/关闭应用启动器 (Launcher)
  Mod+A { spawn "quickshell" "ipc" "call" "island" "launcher"; }
 
 ```

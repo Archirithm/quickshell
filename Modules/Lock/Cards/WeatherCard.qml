@@ -1,21 +1,26 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Shapes 
+import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
+import qs.config
 
 Rectangle {
     id: root
+    Layout.fillWidth: true
+    Layout.preferredHeight: 160 // 配合之前的布局高度
     
-    width: 420
-    height: 220
+    color: Colorsheme.surface_container 
+    radius: Sizes.lockCardRadius
 
-    color: "#1E1E1E"
-    radius: 24
+    // ================== 数据属性 ==================
+    property string temp: "--"
+    property string cond: "Loading..."
+    property string loc: ""
+    property string iconPath: icons.cloudy
+    property bool isDay: true
 
-    // ============================================================
-    // 1. 图标数据 (从灵动岛复制过来，保持统一)
-    // ============================================================
+    // ================== 图标定义 (保持不变) ==================
     QtObject {
         id: icons
         property string sunny: "M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 2c1.65 0 3 1.35 3 3s-1.35 3-3 3-3-1.35-3-3 1.35-3 3-3zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"
@@ -27,29 +32,18 @@ Rectangle {
         function getPath(desc, isDay) {
             if (!desc) return cloudy;
             let d = desc.toLowerCase();
-            if (d.includes("sun") || d.includes("clear") || d.includes("main")) {
-                return isDay ? sunny : moon;
-            }
+            if (d.includes("sun") || d.includes("clear") || d.includes("main")) return isDay ? sunny : moon;
             if (d.includes("rain") || d.includes("drizzle") || d.includes("shower")) return rain;
             if (d.includes("snow") || d.includes("ice")) return snow;
             return cloudy;
         }
     }
 
-    // 天气数据属性
-    property string temp: "--"
-    property string cond: "Loading..."
-    property string loc: ""
-    // 【修改】使用 path 字符串而不是字体图标字符
-    property string iconPath: icons.cloudy
-    property bool isDay: true
-
     // ================== 数据获取 ==================
     Process {
         id: weatherProc
         command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/scripts/weather.py"]
         running: true 
-        
         stdout: SplitParser {
             onRead: (data) => {
                 try {
@@ -58,78 +52,77 @@ Rectangle {
                     root.cond = json.desc;
                     root.loc = json.city;
                     if (json.isDay !== undefined) root.isDay = json.isDay;
-                    // 【修改】使用 icons.getPath 获取路径
                     root.iconPath = icons.getPath(json.desc, root.isDay);
                 } catch(e) {
-                    console.log("Weather JSON error: " + e);
                     root.cond = "Error";
                 }
             }
         }
-    } 
-
+    }
     onVisibleChanged: if (visible) weatherProc.running = true
 
     // ================== 界面布局 ==================
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 50 
-        anchors.rightMargin: 40
-        spacing: 40
+        anchors.margins: 24 // 增加内边距
+        spacing: 15
 
-        // 1. 超大天气图标 (统一为 Shape 渲染 SVG)
+        // 左侧：大图标
         Item {
-            // 设置一个合适的容器大小
-            Layout.preferredWidth: 100
-            Layout.preferredHeight: 100
+            Layout.preferredWidth: 64
+            Layout.preferredHeight: 64
             Layout.alignment: Qt.AlignVCenter
             
             Shape {
-                // 原 SVG 视图大小大概是 24x24，这里我们放大到 100x100
-                // scale = 100 / 24 ≈ 4.16
-                scale: 100 / 24
+                scale: 64 / 24
                 anchors.centerIn: parent
                 width: 24; height: 24
-                
                 ShapePath {
                     strokeWidth: 0
-                    fillColor: "#FFD700" 
+                    fillColor: Colorsheme.primary 
                     PathSvg { path: root.iconPath }
                 }
             }
         }
 
-        // 2. 信息区
+        // 右侧：信息区
         ColumnLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
-            spacing: 10 
+            spacing: 0
 
-            // 温度
+            // 1. 巨大的温度数字
             Text {
                 text: root.temp
-                color: "white"
-                font.family: "LXGW WenKai GB Screen"
+                color: Colorsheme.on_surface
+                font.family: Sizes.fontFamily
+                // 【修改】字体加大到 42
+                font.pixelSize: 42 
                 font.bold: true
-                font.pixelSize: 60 
+                Layout.fillWidth: true
             }
 
-            // 状况 + 地点
-            ColumnLayout {
-                spacing: 5
-                Text {
-                    text: root.cond
-                    color: "#aaa"
-                    font.family: "LXGW WenKai GB Screen"
-                    font.pixelSize: 24
-                }
-                Text {
-                    text: root.loc
-                    color: "#666"
-                    font.family: "LXGW WenKai GB Screen"
-                    font.pixelSize: 18
-                    visible: root.loc !== "" 
-                }
+            // 2. 城市名 (小标题)
+            Text {
+                text: root.loc ? root.loc : "Location"
+                color: Colorsheme.primary
+                font.family: Sizes.fontFamily
+                font.pixelSize: 14
+                font.bold: true
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                opacity: 0.8
+            }
+
+            // 3. 天气状况
+            Text {
+                text: root.cond 
+                color: Colorsheme.on_surface_variant
+                font.family: Sizes.fontFamily
+                font.pixelSize: 18
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                Layout.topMargin: 4
             }
         }
     }

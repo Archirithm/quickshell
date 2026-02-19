@@ -1,24 +1,69 @@
+import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import QtQuick
+import Quickshell.Services.Pam
 
 ShellRoot {
-    // 共享上下文
-    LockContext {
-        id: lockContext
+    id: root
+    signal unlocked()
+
+    // 1. 鉴权逻辑 (Scope) - 保持不变
+    Scope {
+        id: internalContext
+        property string currentText: ""
+        property bool unlockInProgress: false
+        property bool showFailure: false
+
+        function tryUnlock() {
+            if (currentText === "") return;
+            internalContext.unlockInProgress = true;
+            pam.start();
+        }
         
-        onUnlocked: {
+        function emergencyUnlock() {
             sessionLock.locked = false;
-            Qt.quit();
+            root.unlocked();
+        }
+
+        PamContext {
+            id: pam
+            configDirectory: Quickshell.env("HOME") + "/.config/quickshell/Modules/Lock/pam"
+            config: "password.conf"
+            onPamMessage: { if (this.responseRequired) this.respond(internalContext.currentText); }
+            onCompleted: result => {
+                if (result == PamResult.Success) {
+                    internalContext.currentText = "";
+                    internalContext.showFailure = false;
+                    internalContext.emergencyUnlock();
+                } else {
+                    internalContext.currentText = "";
+                    internalContext.showFailure = true;
+                }
+                internalContext.unlockInProgress = false;
+            }
         }
     }
 
+    // 2. Wayland 锁屏
     WlSessionLock {
         id: sessionLock
         locked: true
 
-        LockSurface {
-            context: lockContext
+        WlSessionLockSurface {
+            
+            // A. UI 加载器
+            Loader {
+                id: uiLoader
+                anchors.fill: parent
+                // 使用绝对路径
+                source: "/home/archirithm/.config/quickshell/Modules/Lock/LockSurface.qml"
+                
+                onLoaded: {
+                    if (item) item.context = internalContext
+                }
+            }
+            
+            
         }
     }
 }

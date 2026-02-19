@@ -1,37 +1,38 @@
 import QtQuick
 import QtQuick.Layouts
+import qs.config
 
 Rectangle {
     id: root
+    Layout.fillWidth: true
+    Layout.preferredHeight: 160
     
-    // 【修改】高度变矮
-    width: 260
-    height: 160
-
-    color: "#1E1E1E"
-    radius: 24
+    // 使用全局配置的颜色和圆角
+    color: Colorsheme.surface_container
+    radius: Sizes.lockCardRadius
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 20 // 边距稍微减小
+        anchors.margins: Sizes.lockCardPadding
         spacing: 0
 
-        // 上引号 (缩小一点)
+        // 左上角引号
         Text {
             text: "“"
-            color: "#444"
-            font.pixelSize: 48 // 缩小
-            font.family: "LXGW WenKai GB Screen"
+            // 使用次级文字颜色，或者用 primary 强调色
+            color: Colorsheme.on_surface_variant 
+            font.pixelSize: 60
+            font.family: Sizes.fontFamily
             Layout.alignment: Qt.AlignLeft | Qt.AlignTop
-            Layout.preferredHeight: 30
+            Layout.preferredHeight: 40
         }
 
-        // 正文
+        // 中间正文
         Text {
             text: "休息一下，\n马上回来。"
-            color: "#E0E0E0"
-            font.family: "LXGW WenKai GB Screen"
-            font.pixelSize: 24
+            color: Colorsheme.on_surface
+            font.family: Sizes.fontFamily
+            font.pixelSize: 26
             font.bold: true
             font.italic: true
             
@@ -40,17 +41,17 @@ Rectangle {
             
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            lineHeight: 1.2
+            lineHeight: 1.3
         }
 
-        // 下引号
+        // 右下角引号
         Text {
             text: "”"
-            color: "#444"
-            font.pixelSize: 48
-            font.family: "LXGW WenKai GB Screen"
+            color: Colorsheme.on_surface_variant
+            font.pixelSize: 60
+            font.family: Sizes.fontFamily
             Layout.alignment: Qt.AlignRight | Qt.AlignBottom
-            Layout.preferredHeight: 30
+            Layout.preferredHeight: 40
         }
     }
 }

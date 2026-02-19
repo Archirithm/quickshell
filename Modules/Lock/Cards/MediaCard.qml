@@ -4,28 +4,21 @@ import QtQuick.Controls
 import Qt5Compat.GraphicalEffects 
 import Quickshell
 import Quickshell.Services.Mpris
+import qs.config
 
 Rectangle {
     id: root
+    Layout.fillWidth: true
+    Layout.preferredHeight: 160
     
-    // 适配之前的放大版尺寸
-    width: 280
-    height: 260 
-
-    color: "#1E1E1E"
-    radius: 24
+    // 基础背景色
+    color: "#000000"
+    radius: Sizes.lockCardRadius
     
-    // 图标定义
-    QtObject {
-        id: icons
-        readonly property string basePath: "/home/archirithm/.config/quickshell/assets/icons/"
-        property string play: basePath + "play.svg"
-        property string pause: basePath + "pause.svg"
-        property string next: basePath + "next.svg"
-        property string previous: basePath + "previous.svg"
-    }
+    // 【核心】裁切圆角，因为内部的 Image 是铺满的
+    clip: true
 
-    // 播放器逻辑
+    // ================== MPRIS 逻辑 ==================
     property var player: {
         let list = Mpris.players.values;
         for (let i = 0; i < list.length; i++) {
@@ -38,140 +31,128 @@ Rectangle {
     property bool isPlaying: player && player.isPlaying
     property string artUrl: (player && player.trackArtUrl) ? player.trackArtUrl : ""
     property string title: (player && player.trackTitle) ? player.trackTitle : "No Media"
-    property string artist: (player && player.trackArtist) ? player.trackArtist : ""
+    property string artist: (player && player.trackArtist) ? player.trackArtist : "Not Playing"
 
+    // ================== 1. 全背景封面 ==================
+    Image {
+        id: coverArt
+        anchors.fill: parent
+        source: root.artUrl
+        // 保持比例裁切填充
+        fillMode: Image.PreserveAspectCrop 
+        visible: root.artUrl !== ""
+        smooth: true
+    }
+
+    // ================== 2. 黑色渐变遮罩 (Gradient Scrim) ==================
+    // 从左侧黑色过渡到右侧透明，保证左侧文字可读
+    Rectangle {
+        anchors.fill: parent
+        visible: root.artUrl !== ""
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: "#cc000000" } // 左侧 80% 黑
+            GradientStop { position: 0.6; color: "#66000000" } // 中间半透明
+            GradientStop { position: 1.0; color: "#00000000" } // 右侧完全透明
+        }
+    }
+
+    // 无媒体时的默认背景 (微弱的渐变)
+    Rectangle {
+        anchors.fill: parent
+        visible: root.artUrl === ""
+        color: Colorsheme.surface_container
+        
+        Text {
+            anchors.centerIn: parent
+            text: ""
+            font.family: Sizes.fontFamilyMono
+            font.pixelSize: 40
+            color: Colorsheme.on_surface_variant
+            opacity: 0.2
+        }
+    }
+
+    // ================== 3. 内容层 ==================
     ColumnLayout {
-        anchors.centerIn: parent
-        spacing: 20 // 封面和按钮之间的间距
+        anchors.fill: parent
+        anchors.margins: 24
+        spacing: 0
 
-        // === 1. 专辑封面 (带文字) ===
-        Rectangle {
-            Layout.preferredWidth: 160
-            Layout.preferredHeight: 160
-            Layout.alignment: Qt.AlignHCenter
-            
-            radius: 16
-            color: "#2a2a2a"
-            clip: true // 裁切圆角
-            
-            // 封面原图 (无模糊)
-            Image {
-                anchors.fill: parent
-                source: root.artUrl
-                fillMode: Image.PreserveAspectCrop
-                visible: root.artUrl !== ""
-                smooth: true
-            }
+        // 顶部占位 (把内容推到下面或者居中)
+        Item { Layout.fillHeight: true }
 
-            // 无封面时的占位符
-            Text {
-                anchors.centerIn: parent
-                text: "♫"
-                color: "#444"
-                font.pixelSize: 50
-                visible: root.artUrl === ""
-            }
-
-            // --- 文字遮罩层 ---
-            // 为了让白字在任何封面上都能看清，加一个底部黑色渐变
-            Rectangle {
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
-                height: 60 // 遮罩高度
-                visible: root.artUrl !== ""
-                
-                gradient: Gradient {
-                    GradientStop { position: 0.0; color: "transparent" }
-                    GradientStop { position: 1.0; color: "#cc000000" } // 底部变黑
-                }
-            }
-
-            // 歌曲信息 (叠加在封面上)
-            ColumnLayout {
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.margins: 10
-                spacing: 2
-                
-                // 歌名
-                Text {
-                    Layout.fillWidth: true
-                    text: root.title
-                    color: "white"
-                    font.bold: true
-                    font.pixelSize: 15
-                    font.family: "LXGW WenKai GB Screen"
-                    elide: Text.ElideRight
-                    horizontalAlignment: Text.AlignHCenter
-                }
-                
-                // 歌手
-                Text {
-                    Layout.fillWidth: true
-                    text: root.artist
-                    color: "#ddd" // 浅灰
-                    font.pixelSize: 12
-                    font.family: "LXGW WenKai GB Screen"
-                    elide: Text.ElideRight
-                    horizontalAlignment: Text.AlignHCenter
-                }
-            }
+        // 标签
+        Text {
+            text: "Now playing"
+            color: Colorsheme.primary
+            font.family: Sizes.fontFamilyMono
+            font.pixelSize: 12
+            font.bold: true
+            opacity: 0.9
         }
 
-        // === 2. 控制按钮 (放在下面) ===
+        // 歌名
+        Text {
+            text: root.title
+            color: "white" // 无论主题如何，在黑色遮罩上必须是白色
+            font.family: Sizes.fontFamily
+            font.bold: true
+            font.pixelSize: 20
+            Layout.fillWidth: true
+            Layout.maximumWidth: root.width * 0.8 // 防止文字太长挡住封面主体
+            elide: Text.ElideRight
+            Layout.topMargin: 4
+        }
+        
+        // 歌手
+        Text {
+            text: root.artist
+            color: "#cccccc" // 浅灰
+            font.family: Sizes.fontFamily
+            font.pixelSize: 14
+            Layout.fillWidth: true
+            Layout.maximumWidth: root.width * 0.8
+            elide: Text.ElideRight
+            Layout.bottomMargin: 15
+        }
+
+        // 按钮组 (居左显示)
         RowLayout {
-            Layout.alignment: Qt.AlignHCenter
-            spacing: 30
-
+            spacing: 20
+            
             // 上一曲
-            MouseArea {
-                Layout.preferredWidth: 32; Layout.preferredHeight: 32
-                onClicked: if(root.player) root.player.previous()
-                Image {
-                    id: prevIcon
-                    anchors.fill: parent
-                    source: icons.previous
-                    visible: false
-                }
-                ColorOverlay { anchors.fill: prevIcon; source: prevIcon; color: "white" }
+            Text { 
+                text: "" 
+                font.family: Sizes.fontFamilyMono; font.pixelSize: 22
+                color: "#dddddd"
+                MouseArea { anchors.fill: parent; onClicked: if(root.player) root.player.previous() }
             }
-
-            // 播放/暂停 (大按钮)
-            MouseArea {
-                Layout.preferredWidth: 54; Layout.preferredHeight: 54
-                onClicked: if(root.player) root.player.togglePlaying()
+            
+            // 播放/暂停 (圆形按钮)
+            Rectangle {
+                width: 40; height: 40; radius: 20
+                color: Colorsheme.primary
                 
-                // 按钮背景圈
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 27
-                    color: "#89b4fa"
-                }
-                
-                Image {
-                    id: playIcon
+                Text { 
                     anchors.centerIn: parent
-                    width: 24; height: 24
-                    source: root.isPlaying ? icons.pause : icons.play
-                    visible: false
+                    text: root.isPlaying ? "" : ""
+                    font.family: Sizes.fontFamilyMono; font.pixelSize: 16
+                    color: Colorsheme.on_primary
                 }
-                ColorOverlay { anchors.fill: playIcon; source: playIcon; color: "white" }
+                MouseArea { anchors.fill: parent; onClicked: if(root.player) root.player.togglePlaying() }
             }
 
             // 下一曲
-            MouseArea {
-                Layout.preferredWidth: 32; Layout.preferredHeight: 32
-                onClicked: if(root.player) root.player.next()
-                Image {
-                    id: nextIcon
-                    anchors.fill: parent
-                    source: icons.next
-                    visible: false
-                }
-                ColorOverlay { anchors.fill: nextIcon; source: nextIcon; color: "white" }
+            Text { 
+                text: "" 
+                font.family: Sizes.fontFamilyMono; font.pixelSize: 22
+                color: "#dddddd"
+                MouseArea { anchors.fill: parent; onClicked: if(root.player) root.player.next() }
             }
         }
+        
+        // 底部留白
+        Item { height: 5 }
     }
 }

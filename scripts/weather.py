@@ -5,13 +5,13 @@ import os
 import urllib.request
 import sys
 import ssl
+import datetime
 
 # ================= 配置区域 =================
 CACHE_FILE = "/tmp/qs_weather_cache.json"
 CACHE_DURATION = 1800
 ssl._create_default_https_context = ssl._create_unverified_context
 
-# WMO 天气代码转换表
 WEATHER_CODES = {
     0: "Clear",
     1: "Mainly Clear",
@@ -47,15 +47,14 @@ def get_current_location():
             content = response.read().decode("utf-8")
             if not content:
                 return None, None, None, False
-
             data = json.loads(content)
             if not isinstance(data, dict):
                 return None, None, None, False
-
-            lat = data.get("latitude")
-            lon = data.get("longitude")
-            city = data.get("city", "Unknown")
-
+            lat, lon, city = (
+                data.get("latitude"),
+                data.get("longitude"),
+                data.get("city", "Unknown"),
+            )
             if lat and lon:
                 return lat, lon, city, True
     except Exception:
@@ -68,7 +67,6 @@ def load_cache():
         try:
             with open(CACHE_FILE, "r") as f:
                 data = json.load(f)
-                # 【核心修复】确保读取的内容必须是字典，否则视为 None
                 if isinstance(data, dict):
                     return data
         except:
@@ -85,66 +83,68 @@ def save_cache(data):
 
 
 def fetch_open_meteo(lat, lon, city):
-    # 显式请求 is_day 参数，虽然默认有，但显式请求更稳妥
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true"
+    # 【新增】追加 daily 参数，请求未来 7 天的最高温度和天气代码，并自动适应当地时区
+    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&daily=weathercode,temperature_2m_max&timezone=auto"
     req = urllib.request.Request(url, headers={"User-Agent": "Quickshell-Widget"})
 
     with urllib.request.urlopen(req, timeout=5) as response:
         content = response.read().decode("utf-8")
         if not content:
             raise Exception("Empty Response")
-
         raw = json.loads(content)
-        # 【核心修复】防止 raw 为 None 导致的 subscriptable 错误
         if not isinstance(raw, dict) or "current_weather" not in raw:
             raise Exception("Invalid API Response")
 
         current = raw["current_weather"]
+        is_day_bool = True if current.get("is_day", 1) == 1 else False
 
-        # is_day: 1 是白天, 0 是晚上
-        raw_is_day = current.get("is_day", 1)
-        is_day_bool = True if raw_is_day == 1 else False
+        # 【新增】解析未来一周数据
+        daily = raw.get("daily", {})
+        d_times = daily.get("time", [])
+        d_codes = daily.get("weathercode", [])
+        d_maxs = daily.get("temperature_2m_max", [])
+
+        forecast_list = []
+        # 提取明天开始的连续 6 天预测
+        for i in range(1, min(7, len(d_times))):
+            try:
+                dt = datetime.datetime.strptime(d_times[i], "%Y-%m-%d")
+                day_name = dt.strftime("%a")  # 格式化为 Mon, Tue 等
+                forecast_list.append(
+                    {
+                        "day": day_name,
+                        "temp": f"{round(d_maxs[i])}°",
+                        "desc": get_weather_desc(d_codes[i]),
+                    }
+                )
+            except Exception:
+                pass
 
         return {
-            "temp": f"{current['temperature']}°C",
+            "temp": f"{current['temperature']}°",
             "desc": get_weather_desc(current["weathercode"]),
             "city": city,
             "isDay": is_day_bool,
-            "lat": lat,
-            "lon": lon,
+            "forecast": forecast_list,  # 注入预测数组
             "timestamp": time.time(),
-            "is_cached": False,
         }
 
 
 def main():
     cur_lat, cur_lon, cur_city, loc_success = get_current_location()
-
     cache = load_cache()
-    # 【核心修复】确保 cache 确实是字典
     has_valid_cache = isinstance(cache, dict)
-
     use_cache = False
 
     if has_valid_cache:
-        # cache 此时必为 dict，Pyright 不会再报错
-        cache_age = time.time() - cache.get("timestamp", 0)
-        is_fresh = cache_age < CACHE_DURATION
-
-        is_same_location = True
-        if loc_success:
-            is_same_location = str(cache.get("city")) == str(cur_city)
-
-        if loc_success:
-            if is_same_location and is_fresh:
-                use_cache = True
-        else:
-            use_cache = True  # 断网救急
+        is_fresh = (time.time() - cache.get("timestamp", 0)) < CACHE_DURATION
+        is_same_location = (
+            str(cache.get("city")) == str(cur_city) if loc_success else True
+        )
+        if (loc_success and is_same_location and is_fresh) or not loc_success:
+            use_cache = True
 
     if use_cache and has_valid_cache:
-        # 补全 isDay 防止旧缓存导致报错
-        if "isDay" not in cache:
-            cache["isDay"] = True
         print(json.dumps(cache))
     else:
         try:
@@ -154,13 +154,9 @@ def main():
             save_cache(weather_data)
             print(json.dumps(weather_data))
         except Exception:
-            # 只有当 cache 有效时才使用它做兜底
             if has_valid_cache:
-                if "isDay" not in cache:
-                    cache["isDay"] = True
                 print(json.dumps(cache))
             else:
-                # 彻底失败，返回默认安全数据
                 print(
                     json.dumps(
                         {
@@ -168,6 +164,10 @@ def main():
                             "desc": "Offline",
                             "city": "Error",
                             "isDay": True,
+                            "forecast": [
+                                {"day": "N/A", "temp": "--", "desc": "Unknown"}
+                            ]
+                            * 6,
                         }
                     )
                 )

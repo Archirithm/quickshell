@@ -7,10 +7,9 @@ import qs.config
 
 Rectangle {
     id: root
-    
-    // 样式设定
-    color: Colorsheme.background
-    radius: 18
+    // 使用主题色作为卡片底色
+    color: Colorsheme.surface_container_high 
+    radius: 16
 
     // ================== 图标数据 ==================
     QtObject {
@@ -24,94 +23,165 @@ Rectangle {
         function getPath(desc, isDay) {
             if (!desc) return cloudy;
             let d = desc.toLowerCase();
-            if (d.includes("sun") || d.includes("clear") || d.includes("main")) {
-                return isDay ? sunny : moon;
-            }
+            if (d.includes("sun") || d.includes("clear") || d.includes("main")) return isDay ? sunny : moon;
             if (d.includes("rain") || d.includes("drizzle") || d.includes("shower")) return rain;
             if (d.includes("snow") || d.includes("ice")) return snow;
             return cloudy;
         }
     }
 
-    // ================== 天气逻辑 ==================
-    property string weatherTemp: "--"
-    property string weatherDesc: "Loading..."
-    property string weatherCity: ""
+    // ================== 后台数据获取 ==================
+    property string weatherTemp: "--°"
+    property string weatherDesc: "Fetching"
+    property string weatherCity: "..."
     property string weatherIconPath: icons.cloudy
     property bool isDay: true
+    property var forecastData: [] 
 
     Process {
         id: weatherProc
         command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/scripts/weather.py"]
         running: false
-        
         stdout: SplitParser {
             onRead: (data) => {
                 try {
                     var json = JSON.parse(data);
-                    root.weatherTemp = json.temp;
-                    root.weatherDesc = json.desc;
-                    root.weatherCity = json.city;
+                    if(json.temp) root.weatherTemp = json.temp;
+                    if(json.desc) root.weatherDesc = json.desc;
+                    if(json.city) root.weatherCity = json.city;
                     if (json.isDay !== undefined) root.isDay = json.isDay;
+                    if (json.forecast && json.forecast.length > 0) root.forecastData = json.forecast;
                     root.weatherIconPath = icons.getPath(json.desc, root.isDay);
-                } catch(e) {
-                    console.log("Weather JSON error: " + e);
-                }
+                } catch(e) { console.log("Weather JSON error: " + e); }
             }
         }
     }
-
     onVisibleChanged: if (visible) weatherProc.running = true
 
-    // ================== 界面布局 ==================
+    // ================== 横向界面的精调 ==================
     RowLayout {
-        anchors.centerIn: parent
-        spacing: 20
-        
-        // 1. 温度
-        Text {
-            text: root.weatherTemp
-            color: "white"
-            font.family: Sizes.fontFamily
-            font.pixelSize: 48
-            font.bold: true
-        }
-        
-        // 2. 右侧信息区
+        anchors.fill: parent
+        anchors.margins: 12
+        spacing: 12
+
+        // 【左半边】：当天天气 (全新纵向堆叠排布，告别文字截断)
         ColumnLayout {
-            spacing: 5
+            // 保持左侧的小权重占比
+            Layout.preferredWidth: 35 
+            Layout.fillWidth: true 
+            Layout.fillHeight: true
+            spacing: 2
             
-            // 图标
-            Item {
-                width: 40; height: 40
-                Layout.alignment: Qt.AlignLeft
-                Shape {
-                    scale: 40/24 
-                    anchors.centerIn: parent
-                    width: 24; height: 24
-                    ShapePath {
-                        strokeWidth: 0
-                        fillColor: "#F4C242"
-                        PathSvg { path: root.weatherIconPath }
+            // 顶部：图标 + 温度
+            RowLayout {
+                spacing: 8
+                Item {
+                    width: 32; height: 32
+                    Layout.alignment: Qt.AlignVCenter
+                    Shape {
+                        scale: 32/24; anchors.centerIn: parent; width: 24; height: 24
+                        // 图标采用主题的主打色 (或者 tertiary 色)
+                        ShapePath { strokeWidth: 0; fillColor: Colorsheme.tertiary; PathSvg { path: root.weatherIconPath } }
                     }
+                }
+                Text { 
+                    text: root.weatherTemp
+                    color: Colorsheme.on_surface 
+                    font.family: Sizes.fontFamily
+                    font.pixelSize: 28 
+                    font.bold: true 
                 }
             }
 
-            // 描述
-            Text { 
-                text: root.weatherDesc
-                color: "white"
-                font.bold: true
-                font.family: Sizes.fontFamily
-                font.pixelSize: 16
+            // 底部：独立显示天气描述和城市，利用全部宽度
+            ColumnLayout {
+                spacing: 0
+                Layout.fillWidth: true
+                Layout.topMargin: 2
+                
+                Text { 
+                    text: root.weatherDesc
+                    color: Colorsheme.on_surface_variant
+                    font.family: Sizes.fontFamily
+                    font.pixelSize: 12
+                    font.bold: true
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+                
+                Text { 
+                    text: root.weatherCity
+                    color: Colorsheme.outline
+                    font.family: Sizes.fontFamily
+                    font.pixelSize: 11
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
             }
+        }
+
+        // 【中轴线】
+        Rectangle {
+            width: 1
+            Layout.fillHeight: true
+            Layout.topMargin: 5
+            Layout.bottomMargin: 5
+            color: Colorsheme.outline_variant
+        }
+
+        // 【右半边】：未来 6 天的宽裕排列
+        RowLayout {
+            // 根据你的要求，大幅增加右侧的 Flex 权重
+            Layout.preferredWidth: 95 
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 6
             
-            // 城市
-            Text { 
-                text: root.weatherCity
-                color: "#888"
-                font.family: Sizes.fontFamily
-                font.pixelSize: 12 
+            Repeater {
+                model: root.forecastData.length > 0 ? root.forecastData : [
+                    {"day": "-", "temp": "--", "desc": ""}, {"day": "-", "temp": "--", "desc": ""}, 
+                    {"day": "-", "temp": "--", "desc": ""}, {"day": "-", "temp": "--", "desc": ""}, 
+                    {"day": "-", "temp": "--", "desc": ""}, {"day": "-", "temp": "--", "desc": ""}
+                ]
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    // 单个日期的卡片底色
+                    color: Colorsheme.surface_container_highest 
+                    radius: 10
+                    
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 2
+                        
+                        Text { 
+                            text: modelData.day 
+                            color: Colorsheme.on_surface_variant
+                            font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily
+                            Layout.alignment: Qt.AlignHCenter 
+                        }
+                        
+                        Item {
+                            width: 18; height: 18
+                            Layout.alignment: Qt.AlignHCenter 
+                            Shape {
+                                scale: 18/24; anchors.centerIn: parent; width: 24; height: 24
+                                ShapePath { 
+                                    strokeWidth: 0; fillColor: Colorsheme.tertiary
+                                    PathSvg { path: icons.getPath(modelData.desc, true) } 
+                                }
+                            }
+                        }
+                        
+                        Text { 
+                            text: modelData.temp
+                            color: Colorsheme.on_surface
+                            font.pixelSize: 12; font.bold: true; font.family: Sizes.fontFamily
+                            Layout.alignment: Qt.AlignHCenter 
+                        }
+                    }
+                }
             }
         }
     }

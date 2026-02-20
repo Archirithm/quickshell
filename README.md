@@ -63,26 +63,26 @@ Mod+Shift+W { spawn "quickshell" "ipc" "call" "island" "wallpaper"; }
 Mod键=win键。鼠标中键打开歌词。
 鼠标左键打开媒体
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from 2026-02-01 14-17-47.png" width="500">
+  <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from media.png" width="500">
 </p>
 
 `Mod+P`打开quickshell锁屏
 <p align="center">
- <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from 2026-02-19 20-14-22.png" width="500">
+ <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from lock.png" width="500">
 </p>
 
 `Mod+M`打开灵动岛天气
 <p align="center">
- <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from 2026-02-01 14-18-07.png" width="500"></p>
+ <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from dashboard.png" width="500"></p>
 
 `Mod+Shift+W`打开灵动岛壁纸
 <p align="center">
- <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from 2026-02-01 14-35-57.png" width="500">
+ <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from wallpaper_select.png" width="500">
 </p>
 
 `Mod+A`打开灵动岛app启动器。
 <p align="center">
- <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from 2026-02-19 20-13-35.png" width="500">
+ <img src="https://raw.githubusercontent.com/Archirithm/picture/main/Screenshot from launcher.png" width="500">
 </p>
 
 现在快捷键全部变成quickshell自己的ipc接口。

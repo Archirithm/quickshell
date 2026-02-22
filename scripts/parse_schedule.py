@@ -59,6 +59,7 @@ def parse_markdown():
 
             text = body[r][c] if c < len(body[r]) else ""
             row_span = 1
+            color_id = 0
 
             if text != "":
                 # 纵向合并逻辑
@@ -70,19 +71,26 @@ def parse_markdown():
                     skip[r + row_span][c] = True
                     row_span += 1
 
-                # 给新课程发号
-                if text not in course_color_map:
-                    course_color_map[text] = next_color_id
+                # +++ 核心魔法：提取“纯课名”作为发号凭证 +++
+                # 以半角 "(" 或全角 "（" 为界，砍掉后面的内容，并去掉两边空格
+                base_name = text.split("(")[0].split("（")[0].strip()
+
+                # 给“纯课名”发号，而不是给包含教室的全名发号
+                if base_name not in course_color_map:
+                    course_color_map[base_name] = next_color_id
                     next_color_id += 1
+
+                # 获取这门课分配到的统一 ID
+                color_id = course_color_map[base_name]
 
             parsed_items.append(
                 {
                     "row": r,
                     "col": c - 1,
                     "rowSpan": row_span,
-                    "text": text,
+                    "text": text,  # UI 上依然显示完整的名字和教室
                     "isEmpty": (text == ""),
-                    "colorId": course_color_map.get(text, 0),  # 写入分配好的纯净 ID
+                    "colorId": color_id,  # 但底层绑定的颜色 ID 已经统一了！
                 }
             )
 

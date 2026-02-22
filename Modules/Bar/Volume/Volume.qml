@@ -12,7 +12,7 @@ Rectangle {
     id: root
 
     // --- 样式配置 ---
-    color: Colorsheme.background
+    color: Colorscheme.background
     radius: Sizes.cornerRadius
     implicitHeight: Sizes.barHeight
     implicitWidth: layout.width + 24
@@ -56,7 +56,7 @@ Rectangle {
         Text {
             // font.family: "Font Awesome 6 Free Regular" 
             font.pixelSize: 16
-            color: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? "#ff5555" : Colorsheme.on_tertiary_container
+            color: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? "#ff5555" : Colorscheme.on_tertiary_container
             text: {
                 if (Volume.isHeadphone) return ""
                 if (Volume.sinkMuted || Volume.sinkVolume <= 0) return ""
@@ -68,7 +68,7 @@ Rectangle {
         Text {
             font.bold: true
             font.pixelSize: 14
-            color: Colorsheme.on_primary_container
+            color: Colorscheme.on_primary_container
             text: Math.round(Volume.sinkVolume * 100) + "%"
         }
     }

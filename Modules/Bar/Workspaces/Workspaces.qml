@@ -10,7 +10,7 @@ Rectangle {
 
     // 【修改点 1】 原 Colorscheme.surface 替换为固定深色背景
     // 你可以修改这里改变整个条的背景色
-    color: Colorsheme.background 
+    color: Colorscheme.background 
     
     radius: Sizes.cornerRadius
     implicitHeight: Sizes.barHeight
@@ -31,7 +31,7 @@ Rectangle {
         radius: 14
 
         // 之前修改的高亮色
-        color: Colorsheme.on_primary_container
+        color: Colorscheme.on_primary_container
 
         Behavior on x { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
         Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }

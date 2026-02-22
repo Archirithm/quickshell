@@ -60,7 +60,7 @@ Item {
             Rectangle {
                 width: 140; height: 78
                 anchors.centerIn: parent
-                color: Colorsheme.background
+                color: Colorscheme.background
                 scale: isCurrent ? 1.6 : 0.9
                 opacity: isCurrent ? 1.0 : 0.5
                 z: isCurrent ? 100 : 0

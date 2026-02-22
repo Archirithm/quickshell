@@ -31,7 +31,7 @@ Item {
         anchors.bottom: parent.bottom
         width: root.width 
         
-        color: Colorsheme.background
+        color: Colorscheme.background
         radius: 10
         
         MouseArea {
@@ -60,7 +60,7 @@ Item {
             Text {
                 id: iconText 
                 text: "󰎈" 
-                color: root.expanded ? Colorsheme.on_primary_container : "#ffffff"
+                color: root.expanded ? Colorscheme.on_primary_container : "#ffffff"
                 font.family: Sizes.fontIcon
                 font.pixelSize: 18
                 
@@ -89,7 +89,7 @@ Item {
                 Text {
                     id: cavaText
                     text: "" 
-                    color: Colorsheme.on_primary_container
+                    color: Colorscheme.on_primary_container
                     
                     font.family: Sizes.fontFamily 
                     font.pixelSize: 8       

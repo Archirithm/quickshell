@@ -20,13 +20,13 @@ PanelWindow {
     // --- 内部通用逻辑 ---
     QtObject {
         id: theme
-        property color background: Colorsheme.background
-        property color surface: Colorsheme.surface
-        property color primary: Colorsheme.primary
-        property color error: Colorsheme.error
-        property color text: Colorsheme.on_background
-        property color subtext: Colorsheme.tertiary
-        property color outline: Colorsheme.outline
+        property color background: Colorscheme.background
+        property color surface: Colorscheme.surface
+        property color primary: Colorscheme.primary
+        property color error: Colorscheme.error
+        property color text: Colorscheme.on_background
+        property color subtext: Colorscheme.tertiary
+        property color outline: Colorscheme.outline
         property int radius: 16
         property int padding: 16
     }

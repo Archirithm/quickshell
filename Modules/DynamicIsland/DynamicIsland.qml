@@ -33,37 +33,46 @@ Rectangle {
     property bool isNotifMode: notifManager.hasNotifs && !expanded && !showVolume && !showLauncher && !showWallpaper && !showDashboard && !isLyricsMode
 
     // ================= 尺寸定义 =================
-    // 【修改点】大幅增加了 Dashboard 的宽高，以容纳全新布局
     property int dashW: 810
     property int dashH: 420
     
-    property int wallW: 810; property int wallH: 180
-    property int launchW: 400; property int launchH: 500
-    property int lyricsW: 480; property int lyricsH: 42 
-    property int expandedW: 420; property int expandedH: 180
-    property int collapsedW: 220; property int collapsedH: 32
-    property int notifW: 380; property int notifH: (notifManager.model.count * 70) + 20
-    property int volW: 220; property int volH: 40
+    property int wallW: 810
+    property int wallH: 180
+    property int launchW: 400
+    property int launchH: 420 
+    property int lyricsW: 480
+    property int lyricsH: 42 
+    property int expandedW: 420
+    property int expandedH: 180
+    property int collapsedW: 220
+    property int collapsedH: 32
+    property int notifW: 380
+    property int notifH: (notifManager.model.count * 70) + 20
+    property int volW: 220
+    property int volH: 40
     
-    color: Colorsheme.background
+    color: Colorscheme.background
     clip: true
     z: 100
     
-    radius: (expanded || isNotifMode || isVolumeMode || isLauncherMode || isWallpaperMode || isDashboardMode || isLyricsMode) ? 24 : height / 2
+    radius: (expanded || isNotifMode || isVolumeMode || isLauncherMode || isWallpaperMode || isDashboardMode || isLyricsMode) ?
+    24 : height / 2
 
-    width: isDashboardMode ? dashW : (isWallpaperMode ? wallW : (isLyricsMode ? lyricsW : (isLauncherMode ? launchW : (expanded ? expandedW : (isVolumeMode ? volW : (isNotifMode ? notifW : collapsedW))))))
-    height: isDashboardMode ? dashH : (isWallpaperMode ? wallH : (isLyricsMode ? lyricsH : (isLauncherMode ? launchH : (expanded ? expandedH : (isVolumeMode ? volH : (isNotifMode ? notifH : collapsedH))))))
+    width: isDashboardMode ?
+    dashW : (isWallpaperMode ? wallW : (isLyricsMode ? lyricsW : (isLauncherMode ? launchW : (expanded ? expandedW : (isVolumeMode ? volW : (isNotifMode ? notifW : collapsedW))))))
+    height: isDashboardMode ?
+    dashH : (isWallpaperMode ? wallH : (isLyricsMode ? lyricsH : (isLauncherMode ? launchH : (expanded ? expandedH : (isVolumeMode ? volH : (isNotifMode ? notifH : collapsedH))))))
 
-    property bool useSmoothAnim: root.isLauncherMode || root.height > 400
 
     transform: Translate {
         y: isLyricsMode ? -((lyricsH - collapsedH) / 2) : 0
         Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutBack; easing.overshoot: 1.0 } }
     }
 
-    Behavior on width { NumberAnimation { duration: root.useSmoothAnim ? 400 : 500; easing.type: root.useSmoothAnim ? Easing.OutExpo : Easing.OutBack; easing.overshoot: root.useSmoothAnim ? 0.0 : 1.0 } }
-    Behavior on height { NumberAnimation { duration: root.useSmoothAnim ? 400 : 500; easing.type: root.useSmoothAnim ? Easing.OutExpo : Easing.OutBack; easing.overshoot: root.useSmoothAnim ? 0.0 : 1.0 } }
-    Behavior on radius { NumberAnimation { duration: root.useSmoothAnim ? 400 : 500; easing.type: root.useSmoothAnim ? Easing.OutExpo : Easing.OutBack } }
+    // 将所有的形变动画强制统一为 500ms 的 OutBack 弹簧动画
+    Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutBack; easing.overshoot: 1.0 } }
+    Behavior on height { NumberAnimation { duration: 500; easing.type: Easing.OutBack; easing.overshoot: 1.0 } }
+    Behavior on radius { NumberAnimation { duration: 500; easing.type: Easing.OutBack } }
 
     IpcHandler {
         target: "island"

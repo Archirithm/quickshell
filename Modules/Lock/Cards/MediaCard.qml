@@ -61,14 +61,14 @@ Rectangle {
     Rectangle {
         anchors.fill: parent
         visible: root.artUrl === ""
-        color: Colorsheme.surface_container
+        color: Colorscheme.surface_container
         
         Text {
             anchors.centerIn: parent
             text: ""
             font.family: Sizes.fontFamilyMono
             font.pixelSize: 40
-            color: Colorsheme.on_surface_variant
+            color: Colorscheme.on_surface_variant
             opacity: 0.2
         }
     }
@@ -85,7 +85,7 @@ Rectangle {
         // 标签
         Text {
             text: "Now playing"
-            color: Colorsheme.primary
+            color: Colorscheme.primary
             font.family: Sizes.fontFamilyMono
             font.pixelSize: 12
             font.bold: true
@@ -132,13 +132,13 @@ Rectangle {
             // 播放/暂停 (圆形按钮)
             Rectangle {
                 width: 40; height: 40; radius: 20
-                color: Colorsheme.primary
+                color: Colorscheme.primary
                 
                 Text { 
                     anchors.centerIn: parent
                     text: root.isPlaying ? "" : ""
                     font.family: Sizes.fontFamilyMono; font.pixelSize: 16
-                    color: Colorsheme.on_primary
+                    color: Colorscheme.on_primary
                 }
                 MouseArea { anchors.fill: parent; onClicked: if(root.player) root.player.togglePlaying() }
             }

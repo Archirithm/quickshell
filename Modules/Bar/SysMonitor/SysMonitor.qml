@@ -9,7 +9,7 @@ Rectangle {
     id: root
 
     // ================= 1. 样式与尺寸 =================
-    color: Colorsheme.background
+    color: Colorscheme.background
     radius: Sizes.cornerRadius
     clip: true // 裁剪内容，用于展开动画
 

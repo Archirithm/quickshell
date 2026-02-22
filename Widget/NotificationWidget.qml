@@ -36,7 +36,13 @@ SlideWindow {
     // --- 界面内容 ---
     Text {
         Theme { id: bgTheme }
-        anchors.centerIn: parent
+     
+        // 【已修复】：去掉 anchors，改用 Layout 填充并让文本居中对齐
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        
         visible: NotificationStore.model.count === 0
         text: "没有新通知"
         color: bgTheme.subtext

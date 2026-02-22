@@ -47,7 +47,7 @@ Item {
             Layout.preferredHeight: 6
             Layout.alignment: Qt.AlignVCenter
             
-            color: Colorsheme.background
+            color: Colorscheme.background
             radius: 3
 
             // 进度填充

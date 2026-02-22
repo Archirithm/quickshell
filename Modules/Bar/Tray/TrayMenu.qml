@@ -89,11 +89,11 @@ PopupWindow {
     Rectangle {
         anchors.fill: parent
         // [背景] 深色容器背景
-        color: Colorsheme.surface_container
+        color: Colorscheme.surface_container
         radius: 12
         border.width: 1
         // [边框] 使用 Outline 颜色
-        border.color: Colorsheme.outline_variant
+        border.color: Colorscheme.outline_variant
         clip: true 
 
         ColumnLayout {
@@ -113,7 +113,7 @@ PopupWindow {
                     anchors.centerIn: parent
                     font.bold: true
                     // [颜色] Primary 主色
-                    color: Colorsheme.primary
+                    color: Colorscheme.primary
                     font.pixelSize: 15
                     width: parent.width - 60
                     horizontalAlignment: Text.AlignHCenter
@@ -129,13 +129,13 @@ PopupWindow {
                     width: 28
                     height: 28
                     radius: 6
-                    color: backMa.containsMouse ? Colorsheme.secondary_container : "transparent"
+                    color: backMa.containsMouse ? Colorscheme.secondary_container : "transparent"
 
                     Text {
                         text: "⬅" 
                         anchors.centerIn: parent
                         // [颜色] 返回箭头
-                        color: Colorsheme.on_secondary_container
+                        color: Colorscheme.on_secondary_container
                         font.bold: true
                     }
 
@@ -154,7 +154,7 @@ PopupWindow {
                     width: parent.width
                     height: 1
                     // [颜色] 分割线
-                    color: Colorsheme.primary
+                    color: Colorscheme.primary
                     opacity: 0.2
                 }
             }
@@ -172,7 +172,7 @@ PopupWindow {
                 Text {
                     visible: (!parent.currentModel || parent.currentModel.length === 0)
                     text: (menuStack.count > 0) ? "Loading..." : "No Items"
-                    color: Colorsheme.secondary
+                    color: Colorscheme.secondary
                     font.italic: true
                     Layout.alignment: Qt.AlignHCenter
                     Layout.margins: 10
@@ -192,7 +192,7 @@ PopupWindow {
                         radius: 8
                         
                         // [交互] 悬停背景
-                        color: (itemMa.containsMouse && !isSeparator) ? Colorsheme.secondary_container : "transparent"
+                        color: (itemMa.containsMouse && !isSeparator) ? Colorscheme.secondary_container : "transparent"
                         
                         Behavior on color { ColorAnimation { duration: 100 } }
 
@@ -202,7 +202,7 @@ PopupWindow {
                             anchors.centerIn: parent
                             width: parent.width - 20
                             height: 1
-                            color: Colorsheme.outline_variant
+                            color: Colorscheme.outline_variant
                             opacity: 0.5
                         }
 
@@ -232,7 +232,7 @@ PopupWindow {
                                     anchors.fill: iconRaw
                                     source: iconRaw
                                     // [颜色] 图标变色
-                                    color: itemMa.containsMouse ? Colorsheme.on_secondary_container : Colorsheme.secondary
+                                    color: itemMa.containsMouse ? Colorscheme.on_secondary_container : Colorscheme.secondary
                                     visible: iconRaw.status === Image.Ready
                                     cached: true
                                 }
@@ -242,7 +242,7 @@ PopupWindow {
                             Text {
                                 visible: modelData.toggleState === 1
                                 text: "✔"
-                                color: Colorsheme.primary
+                                color: Colorscheme.primary
                                 font.bold: true
                             }
 
@@ -254,9 +254,9 @@ PopupWindow {
                                 
                                 // [颜色] 文字颜色逻辑
                                 color: {
-                                    if (modelData.enabled === false) return Colorsheme.outline;
-                                    if (itemMa.containsMouse) return Colorsheme.on_secondary_container;
-                                    return Colorsheme.on_surface;
+                                    if (modelData.enabled === false) return Colorscheme.outline;
+                                    if (itemMa.containsMouse) return Colorscheme.on_secondary_container;
+                                    return Colorscheme.on_surface;
                                 }
                                 font.pixelSize: 14
                                 font.weight: itemMa.containsMouse ? Font.DemiBold : Font.Normal
@@ -268,7 +268,7 @@ PopupWindow {
                                 text: "›"
                                 font.pixelSize: 20
                                 font.bold: true
-                                color: itemMa.containsMouse ? Colorsheme.on_secondary_container : Colorsheme.tertiary
+                                color: itemMa.containsMouse ? Colorscheme.on_secondary_container : Colorscheme.tertiary
                             }
                         }
 

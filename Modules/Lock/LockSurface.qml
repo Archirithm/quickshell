@@ -93,7 +93,7 @@ Item {
         height: iconSize + (root.targetHeight - iconSize) * root.animProgress
         
         radius: 30
-        color: Colorsheme.surface 
+        color: Colorscheme.surface 
         
         // A. 锁图标
         Item {
@@ -120,7 +120,7 @@ Item {
                 anchors.fill: lockIconSource
                 source: lockIconSource
                 colorization: 1.0 
-                colorizationColor: Colorsheme.on_surface 
+                colorizationColor: Colorscheme.on_surface 
                 brightness: 1.0
             }
         }
@@ -164,7 +164,7 @@ Item {
                         Text {
                             id: timeText
                             text: Qt.formatTime(new Date(), "HH:mm")
-                            color: Colorsheme.primary
+                            color: Colorscheme.primary
                             font.family: Sizes.fontFamilyMono
                             font.pixelSize: 96
                             font.bold: true
@@ -172,7 +172,7 @@ Item {
                         }
                         Text {
                             text: Qt.formatDate(new Date(), "dddd, d MMMM yyyy")
-                            color: Colorsheme.on_surface_variant
+                            color: Colorscheme.on_surface_variant
                             font.family: Sizes.fontFamilyMono
                             font.pixelSize: 18
                             font.bold: true
@@ -211,7 +211,7 @@ Item {
                             anchors.fill: parent
                             radius: 90
                             color: "transparent"
-                            border.color: Colorsheme.outline
+                            border.color: Colorscheme.outline
                             border.width: 4
                         }
                     }

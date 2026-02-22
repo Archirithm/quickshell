@@ -7,7 +7,7 @@ import qs.config
 
 Rectangle {
     id: root
-    color: Colorsheme.surface_container_high
+    color: Colorscheme.surface_container_high
     radius: 16
 
     // ================== 极致轻量的数据获取逻辑 ==================
@@ -89,7 +89,7 @@ Rectangle {
                 anchors.fill: parent
                 radius: 60
                 color: "transparent"
-                border.color: Colorsheme.primary
+                border.color: Colorscheme.primary
                 border.width: 2
                 opacity: 0.8
             }
@@ -107,7 +107,7 @@ Rectangle {
 
             Text { 
                 text: root.sysUser + " @ " + root.sysHost
-                color: Colorsheme.on_surface_variant 
+                color: Colorscheme.on_surface_variant 
                 font.pixelSize: 14 
                 font.family: Sizes.fontFamily 
                 font.bold: true
@@ -116,7 +116,7 @@ Rectangle {
 
             Text { 
                 text: "Chassis : " + root.sysChassis
-                color: Colorsheme.on_surface_variant 
+                color: Colorscheme.on_surface_variant 
                 font.pixelSize: 14
                 font.family: Sizes.fontFamily 
                 font.bold: true
@@ -125,7 +125,7 @@ Rectangle {
 
             Text { 
                 text: "WM : " + root.sysWm
-                color: Colorsheme.on_surface_variant 
+                color: Colorscheme.on_surface_variant 
                 font.pixelSize: 14
                 font.family: Sizes.fontFamily 
                 font.bold: true

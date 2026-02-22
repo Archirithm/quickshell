@@ -10,7 +10,7 @@ Rectangle {
     Layout.fillWidth: true
     Layout.preferredHeight: 160 // 配合之前的布局高度
     
-    color: Colorsheme.surface_container 
+    color: Colorscheme.surface_container 
     radius: Sizes.lockCardRadius
 
     // ================== 数据属性 ==================
@@ -79,7 +79,7 @@ Rectangle {
                 width: 24; height: 24
                 ShapePath {
                     strokeWidth: 0
-                    fillColor: Colorsheme.primary 
+                    fillColor: Colorscheme.primary 
                     PathSvg { path: root.iconPath }
                 }
             }
@@ -94,7 +94,7 @@ Rectangle {
             // 1. 巨大的温度数字
             Text {
                 text: root.temp
-                color: Colorsheme.on_surface
+                color: Colorscheme.on_surface
                 font.family: Sizes.fontFamily
                 // 【修改】字体加大到 42
                 font.pixelSize: 42 
@@ -105,7 +105,7 @@ Rectangle {
             // 2. 城市名 (小标题)
             Text {
                 text: root.loc ? root.loc : "Location"
-                color: Colorsheme.primary
+                color: Colorscheme.primary
                 font.family: Sizes.fontFamily
                 font.pixelSize: 14
                 font.bold: true
@@ -117,7 +117,7 @@ Rectangle {
             // 3. 天气状况
             Text {
                 text: root.cond 
-                color: Colorsheme.on_surface_variant
+                color: Colorscheme.on_surface_variant
                 font.family: Sizes.fontFamily
                 font.pixelSize: 18
                 Layout.fillWidth: true

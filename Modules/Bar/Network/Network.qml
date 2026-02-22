@@ -14,7 +14,7 @@ Rectangle {
     id: root
     
     // --- 胶囊样式 ---
-    color: Colorsheme.background
+    color: Colorscheme.background
     radius: Sizes.cornerRadius
     implicitHeight: Sizes.barHeight
     implicitWidth: layout.width + 24
@@ -25,7 +25,7 @@ Rectangle {
         // 默认是关闭的
         isOpen: false
         
-        // 如果你想让面板的配色跟随全局 Colorsheme，可以在这里覆盖内部属性
+        // 如果你想让面板的配色跟随全局 Colorscheme，可以在这里覆盖内部属性
         // (前提是 NetworkWidget 内部没有把这些属性写死，而是开放了别名或者属性)
         // 目前你的 NetworkWidget 是自包含配色的，直接用即可。
     }
@@ -53,7 +53,7 @@ Rectangle {
             font.pixelSize: 16
             
             // 颜色：连上是青色，断开是红色
-            color: Network.connected ? Colorsheme.on_tertiary_container : "#ff5555"
+            color: Network.connected ? Colorscheme.on_tertiary_container : "#ff5555"
             
             text: {
                 if (Network.activeConnectionType === "WIFI") return ""
@@ -65,7 +65,7 @@ Rectangle {
         Text {
             font.bold: true
             font.pixelSize: 14
-            color: Colorsheme.on_primary_container
+            color: Colorscheme.on_primary_container
             // 直接读取 Service 数据
             text: Network.activeConnection
         }

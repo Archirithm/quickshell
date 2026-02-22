@@ -11,7 +11,7 @@ Rectangle {
     // ============================================================
     // 样式配置
     // ============================================================
-    color: Colorsheme.background      
+    color: Colorscheme.background      
     radius: Sizes.cornerRadius             
     
     property bool expanded: false

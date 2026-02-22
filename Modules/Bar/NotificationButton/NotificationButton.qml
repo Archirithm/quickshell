@@ -7,7 +7,7 @@ Rectangle {
     id: root
 
     // --- 样式设定 (完全仿照 PowerButton) ---
-    color: Colorsheme.on_primary_container 
+    color: Colorscheme.on_primary_container 
     
     radius: Sizes.cornerRadius
     implicitHeight: Sizes.barHeight
@@ -42,6 +42,6 @@ Rectangle {
         font.pixelSize: 15
         font.bold: true
         
-        color: Colorsheme.background 
+        color: Colorscheme.background 
     }
 }

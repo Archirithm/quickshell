@@ -10,7 +10,7 @@ Rectangle {
     Layout.fillWidth: true
     Layout.preferredHeight: 280
     
-    color: Colorsheme.surface_container
+    color: Colorscheme.surface_container
     radius: Sizes.lockCardRadius
 
     // ================== 数据属性 (初始化为 0 防止 undefined 报错) ==================
@@ -111,7 +111,7 @@ Rectangle {
         // 每个格子的背景
         Rectangle {
             anchors.fill: parent
-            color: Colorsheme.surface_container_highest
+            color: Colorscheme.surface_container_highest
             radius: 16
         }
 
@@ -132,7 +132,7 @@ Rectangle {
                     
                     // 1. 底部轨道 (暗色)
                     ShapePath {
-                        strokeColor: Qt.rgba(Colorsheme.on_surface.r, Colorsheme.on_surface.g, Colorsheme.on_surface.b, 0.1)
+                        strokeColor: Qt.rgba(Colorscheme.on_surface.r, Colorscheme.on_surface.g, Colorscheme.on_surface.b, 0.1)
                         strokeWidth: 6
                         fillColor: "transparent"
                         capStyle: ShapePath.RoundCap
@@ -167,7 +167,7 @@ Rectangle {
             // 底部文字 (标题 + 数值)
             Text {
                 text: display
-                color: Colorsheme.on_surface
+                color: Colorscheme.on_surface
                 font.family: Sizes.fontFamilyMono
                 font.pixelSize: 12
                 font.bold: true

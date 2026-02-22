@@ -8,7 +8,7 @@ Rectangle {
     Layout.fillWidth: true
     Layout.fillHeight: true
     
-    color: Colorsheme.surface_container
+    color: Colorscheme.surface_container
     radius: Sizes.lockCardRadius
     clip: true
 
@@ -25,7 +25,7 @@ Rectangle {
             
             Text {
                 text: "Notifications"
-                color: Colorsheme.on_surface_variant
+                color: Colorscheme.on_surface_variant
                 font.family: Sizes.fontFamilyMono
                 font.pixelSize: 12
                 font.bold: true
@@ -37,12 +37,12 @@ Rectangle {
                 width: countText.contentWidth + 12
                 height: 18
                 radius: 9
-                color: Colorsheme.primary_container
+                color: Colorscheme.primary_container
                 Text {
                     id: countText
                     anchors.centerIn: parent
                     text: NotificationStore.model.count
-                    color: Colorsheme.on_primary_container
+                    color: Colorscheme.on_primary_container
                     font.family: Sizes.fontFamilyMono
                     font.pixelSize: 10
                     font.bold: true
@@ -55,7 +55,7 @@ Rectangle {
             Text {
                 text: "Clear All"
                 visible: NotificationStore.model.count > 0
-                color: Colorsheme.primary
+                color: Colorscheme.primary
                 font.family: Sizes.fontFamilyMono
                 font.pixelSize: 12
                 font.underline: true
@@ -70,7 +70,7 @@ Rectangle {
 
         Rectangle {
             Layout.fillWidth: true; height: 1
-            color: Colorsheme.outline; opacity: 0.2
+            color: Colorscheme.outline; opacity: 0.2
         }
 
         // 通知列表
@@ -88,7 +88,7 @@ Rectangle {
                 anchors.centerIn: parent
                 visible: NotificationStore.model.count === 0
                 text: "No new notifications"
-                color: Colorsheme.on_surface_variant
+                color: Colorscheme.on_surface_variant
                 font.family: Sizes.fontFamily
                 font.pixelSize: 14
                 opacity: 0.5
@@ -106,7 +106,7 @@ Rectangle {
                     // 1. 图标容器
                     Rectangle {
                         width: 40; height: 40; radius: 12
-                        color: Colorsheme.surface_container_highest
+                        color: Colorscheme.surface_container_highest
                         
                         // A. 图片图标 (如果有)
                         Image {
@@ -125,7 +125,7 @@ Rectangle {
                             anchors.centerIn: parent
                             text: "\uf0e5" // FontAwesome Comment-alt 图标
                             visible: !iconImg.visible
-                            color: Colorsheme.on_surface_variant
+                            color: Colorscheme.on_surface_variant
                             // 这里要确保用支持图标的字体，通常 Nerd Font 兼容 FontAwesome
                             font.family: "Font Awesome 6 Free Solid" 
                             // 如果你的环境里主要是 Nerd Font，也可以试用 "JetBrainsMono Nerd Font"
@@ -144,7 +144,7 @@ Rectangle {
                             Layout.fillWidth: true
                             Text {
                                 text: model.appName
-                                color: Colorsheme.primary
+                                color: Colorscheme.primary
                                 font.family: Sizes.fontFamilyMono
                                 font.pixelSize: 10
                                 font.bold: true
@@ -152,7 +152,7 @@ Rectangle {
                             Item { Layout.fillWidth: true }
                             Text {
                                 text: model.time
-                                color: Colorsheme.on_surface_variant
+                                color: Colorscheme.on_surface_variant
                                 font.family: Sizes.fontFamilyMono
                                 font.pixelSize: 10
                                 opacity: 0.7
@@ -161,7 +161,7 @@ Rectangle {
 
                         Text {
                             text: model.summary
-                            color: Colorsheme.on_surface
+                            color: Colorscheme.on_surface
                             font.family: Sizes.fontFamily
                             font.pixelSize: 13
                             font.bold: true
@@ -171,7 +171,7 @@ Rectangle {
                         
                         Text {
                             text: model.body
-                            color: Colorsheme.on_surface_variant
+                            color: Colorscheme.on_surface_variant
                             font.family: Sizes.fontFamily
                             font.pixelSize: 12
                             elide: Text.ElideRight
@@ -183,7 +183,7 @@ Rectangle {
                     // 单条删除
                     Text {
                         text: "×"
-                        color: Colorsheme.on_surface_variant
+                        color: Colorscheme.on_surface_variant
                         font.pixelSize: 18
                         MouseArea {
                             anchors.fill: parent

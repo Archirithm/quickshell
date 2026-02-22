@@ -7,7 +7,7 @@ Rectangle {
     id: root
     
     // 使用主题色替代硬编码
-    color: Colorsheme.surface_container_high 
+    color: Colorscheme.surface_container_high 
     radius: 16 // 与其他组件对齐
 
     ListModel { id: calendarModel }
@@ -62,14 +62,14 @@ Rectangle {
             
             Text {
                 text: root.currentMonthName
-                color: Colorsheme.on_surface
+                color: Colorscheme.on_surface
                 font.family: Sizes.fontFamily
                 font.pixelSize: 18
                 font.bold: true
             }
             Text {
                 text: root.currentYear + "年"
-                color: Colorsheme.on_surface_variant // 年份稍暗，形成层次感
+                color: Colorscheme.on_surface_variant // 年份稍暗，形成层次感
                 font.family: Sizes.fontFamily
                 font.pixelSize: 18
                 font.bold: true
@@ -89,7 +89,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: modelData
                         // 周末颜色变暗，工作日高亮
-                        color: (index === 5 || index === 6) ? Colorsheme.outline : Colorsheme.on_surface_variant
+                        color: (index === 5 || index === 6) ? Colorscheme.outline : Colorscheme.on_surface_variant
                         font.family: Sizes.fontFamily
                         font.pixelSize: 12
                         font.bold: true 
@@ -111,7 +111,7 @@ Rectangle {
                     Rectangle {
                         width: 28; height: 28; radius: 14 // 稍微放大一点点
                         anchors.centerIn: parent
-                        color: model.isToday ? Colorsheme.primary : "transparent"
+                        color: model.isToday ? Colorscheme.primary : "transparent"
                     }
                     
                     // 日期文字
@@ -123,10 +123,10 @@ Rectangle {
                         font.bold: model.isToday
                         // 精致的颜色判断逻辑
                         color: {
-                            if (model.isToday) return Colorsheme.on_primary; // 当天：使用高亮底色上的文字颜色
-                            if (!model.isCurrentMonth) return Colorsheme.outline_variant; // 非本月：极其暗淡
-                            if (model.isWeekend) return Colorsheme.on_surface_variant; // 本月周末：稍微暗淡
-                            return Colorsheme.on_surface; // 本月工作日：正常高亮
+                            if (model.isToday) return Colorscheme.on_primary; // 当天：使用高亮底色上的文字颜色
+                            if (!model.isCurrentMonth) return Colorscheme.outline_variant; // 非本月：极其暗淡
+                            if (model.isWeekend) return Colorscheme.on_surface_variant; // 本月周末：稍微暗淡
+                            return Colorscheme.on_surface; // 本月工作日：正常高亮
                         }
                     }
                 }

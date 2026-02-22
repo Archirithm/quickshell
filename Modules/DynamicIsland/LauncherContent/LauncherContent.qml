@@ -14,9 +14,6 @@ Item {
     property bool isLoading: true
     property var tempAppsData: ({}) 
 
-    // 图标路径
-    property string iconThemePath: Quickshell.env("HOME") + "/.local/share/icons/Tela-circle-dracula/scalable/apps/"
-
     // ============================================================
     // 【核心策略：预加载】
     // ============================================================
@@ -150,13 +147,11 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: 48
             
-            // 使用最高层级的容器颜色，突出搜索框
-            color: Colorsheme.surface_container_highest 
-            radius: 24 // 更圆润的胶囊形状
+            color: Colorscheme.surface_container_highest 
+            radius: 24 
             
-            // 获取焦点时显示主色边框，否则透明
             border.width: 1
-            border.color: searchBox.activeFocus ? Colorsheme.primary : "transparent"
+            border.color: searchBox.activeFocus ? Colorscheme.primary : "transparent"
             Behavior on border.color { ColorAnimation { duration: 150 } }
 
             RowLayout {
@@ -166,8 +161,8 @@ Item {
                 spacing: 12
                 
                 Text { 
-                    text: "" // 也可以用 Nerd Font 的放大镜
-                    color: searchBox.activeFocus ? Colorsheme.primary : Colorsheme.on_surface_variant 
+                    text: "" 
+                    color: searchBox.activeFocus ? Colorscheme.primary : Colorscheme.on_surface_variant 
                     font.family: "Font Awesome 6 Free Solid"
                     font.pixelSize: 14 
                     Behavior on color { ColorAnimation { duration: 150 } }
@@ -176,7 +171,7 @@ Item {
                 TextInput {
                     id: searchBox
                     Layout.fillWidth: true
-                    color: Colorsheme.on_surface 
+                    color: Colorscheme.on_surface 
                     font.pixelSize: 16
                     verticalAlignment: Text.AlignVCenter
                     selectByMouse: true
@@ -184,17 +179,17 @@ Item {
                     
                     Text {
                         text: root.isLoading ? "Loading apps..." : "Search apps..."
-                        color: Colorsheme.on_surface_variant
+                        color: Colorscheme.on_surface_variant
                         visible: parent.text === ""
                         anchors.left: parent.left
                         anchors.verticalCenter: parent.verticalCenter
                     }
                     
                     onTextChanged: root.search(text)
-                    Keys.onUpPressed: appsList.decrementCurrentIndex()
-                    Keys.onDownPressed: appsList.incrementCurrentIndex()
-                    Keys.onReturnPressed: runSelectedApp()
-                    Keys.onEnterPressed: runSelectedApp()
+                    Keys.onUpPressed: (event) => { appsList.decrementCurrentIndex(); event.accepted = true; }
+                    Keys.onDownPressed: (event) => { appsList.incrementCurrentIndex(); event.accepted = true; }
+                    Keys.onReturnPressed: (event) => { runSelectedApp(); event.accepted = true; }
+                    Keys.onEnterPressed: (event) => { runSelectedApp(); event.accepted = true; }
                 }
             }
         }
@@ -209,12 +204,11 @@ Item {
             spacing: 4
             cacheBuffer: 200 
             
-            // 高亮效果：使用带透明度的 primary_container
             highlight: Rectangle { 
-                color: Colorsheme.primary_container
+                color: Colorscheme.primary_container
                 radius: 12 
             }
-            highlightMoveDuration: 150 // 增加一点丝滑的移动动画
+            highlightMoveDuration: 150 
 
             delegate: Item {
                 width: ListView.view.width
@@ -242,12 +236,12 @@ Item {
                         Rectangle {
                             anchors.fill: parent
                             radius: 10
-                            color: Colorsheme.surface_variant
+                            color: Colorscheme.surface_variant
                             
                             Text {
                                 anchors.centerIn: parent
                                 text: model.name ? model.name.charAt(0).toUpperCase() : "?"
-                                color: Colorsheme.on_surface_variant
+                                color: Colorscheme.on_surface_variant
                                 font.bold: true
                                 font.pixelSize: 18
                             }
@@ -271,28 +265,13 @@ Item {
                             }
                             
                             visible: status === Image.Ready
-
-                            onStatusChanged: {
-                                if (status === Image.Error) {
-                                    let src = source.toString();
-                                    if (src.indexOf("image://icon/") !== -1) {
-                                        source = "file://" + root.iconThemePath + model.icon + ".svg";
-                                    }
-                                    else if (src.indexOf("Tela") !== -1) {
-                                        if (/[A-Z]/.test(model.icon)) {
-                                            source = "file://" + root.iconThemePath + model.icon.toLowerCase() + ".svg";
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
 
                     // 应用名称
                     Text {
                         text: model.name
-                        // 选中时文字变色
-                        color: ListView.isCurrentItem ? Colorsheme.on_primary_container : Colorsheme.on_surface
+                        color: ListView.isCurrentItem ? Colorscheme.on_primary_container : Colorscheme.on_surface
                         font.pixelSize: 15
                         font.bold: ListView.isCurrentItem
                         Layout.fillWidth: true
@@ -303,7 +282,7 @@ Item {
                     // 回车提示图标
                     Text { 
                         text: "⏎"
-                        color: Colorsheme.primary 
+                        color: Colorscheme.primary 
                         visible: ListView.isCurrentItem 
                         font.pixelSize: 16
                         font.bold: true

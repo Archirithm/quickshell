@@ -7,7 +7,7 @@ Rectangle {
     id: root
     
     // --- 样式：与其他模块完全统一 ---
-    color: Colorsheme.background
+    color: Colorscheme.background
     radius: Sizes.cornerRadius
     
     // 高度固定为 40

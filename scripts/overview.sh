@@ -38,13 +38,17 @@ swww img -n overview "$BLURRED_WALLPAPER_OVERVIEW" \
   --transition-duration 0.5
 
 # ============================================================
-# 核心保存逻辑
+# 核心保存逻辑 (已修复软链接穿透覆盖的致命 Bug)
 # ============================================================
 CACHE_ROFI="$HOME/.cache/wallpaper_rofi"
 mkdir -p "$CACHE_ROFI"
 
-# 强制复制，记录结果
-cp -f "$WALLPAPER" "$CACHE_ROFI/current" && echo "Saved current" >>/tmp/wp_debug.log || echo "Failed to save current" >>/tmp/wp_debug.log
-cp -f "$BLURRED_WALLPAPER" "$CACHE_ROFI/blurred" && echo "Saved blurred" >>/tmp/wp_debug.log || echo "Failed to save blurred" >>/tmp/wp_debug.log
+# 绝对不要用 cp 覆盖！先用 rm 彻底清除可能的旧链接或文件
+rm -f "$CACHE_ROFI/current"
+rm -f "$CACHE_ROFI/blurred"
 
-echo "$(date) - Done" >>/tmp/wp_debug.log
+# 统一使用 ln -sf 创建软链接，速度极快且不伤硬盘
+ln -sf "$WALLPAPER" "$CACHE_ROFI/current"
+ln -sf "$BLURRED_WALLPAPER" "$CACHE_ROFI/blurred"
+
+echo "$(date) - Done: Safely linked $FILENAME" >>/tmp/wp_debug.log

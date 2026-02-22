@@ -19,12 +19,12 @@ FocusScope {
     // 背景胶囊
     Rectangle {
         anchors.fill: parent
-        color: Colorsheme.surface_container_highest 
+        color: Colorscheme.surface_container_highest 
         radius: 25 
 
         // 焦点指示器 (微弱的边框)
         border.width: 1
-        border.color: input.activeFocus ? Qt.rgba(Colorsheme.primary.r, Colorsheme.primary.g, Colorsheme.primary.b, 0.5) : "transparent"
+        border.color: input.activeFocus ? Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.5) : "transparent"
         
         // 错误震动动画 (可选)
         SequentialAnimation {
@@ -43,7 +43,7 @@ FocusScope {
             // 1. 左侧锁图标 (垂直居中)
             Text {
                 text: ""
-                color: Colorsheme.on_surface_variant
+                color: Colorscheme.on_surface_variant
                 font.family: Sizes.fontFamilyMono
                 font.pixelSize: 16
                 Layout.alignment: Qt.AlignVCenter // 确保居中
@@ -55,7 +55,7 @@ FocusScope {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
                 
-                color: Colorsheme.on_surface
+                color: Colorscheme.on_surface
                 
                 // 【样式修改】增大字号让圆点看起来更大
                 font.family: Sizes.fontFamilyMono
@@ -116,9 +116,9 @@ FocusScope {
                 // 【Feature 实现】有密码时显示主色，无密码时透明/灰色
                 property bool hasText: input.text.length > 0
                 
-                color: hasText ? Colorsheme.primary : "transparent"
+                color: hasText ? Colorscheme.primary : "transparent"
                 border.width: hasText ? 0 : 1
-                border.color: hasText ? "transparent" : Colorsheme.outline
+                border.color: hasText ? "transparent" : Colorscheme.outline
                 
                 // 动画过渡
                 Behavior on color { ColorAnimation { duration: 200 } }
@@ -127,7 +127,7 @@ FocusScope {
                     anchors.centerIn: parent
                     text: "➜"
                     // 有密码时文字反色，无密码时灰色
-                    color: parent.hasText ? Colorsheme.on_primary : Colorsheme.outline
+                    color: parent.hasText ? Colorscheme.on_primary : Colorscheme.outline
                     font.pixelSize: 14
                     font.bold: true
                 }

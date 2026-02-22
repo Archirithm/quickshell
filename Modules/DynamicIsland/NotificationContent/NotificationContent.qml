@@ -35,7 +35,7 @@ Item {
                 Rectangle {
                     Layout.preferredWidth: 40; Layout.preferredHeight: 40
                     radius: 10
-                    color: Colorsheme.background
+                    color: Colorscheme.background
                     clip: true // 这一步很关键，切圆角
 
                     // 预处理路径

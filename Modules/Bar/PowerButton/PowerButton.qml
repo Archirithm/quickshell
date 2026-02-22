@@ -6,7 +6,7 @@ Rectangle {
     id: root
 
     // --- 样式设定 ---
-    color: Colorsheme.error 
+    color: Colorscheme.error 
     
     // 圆角和高度保持和其他胶囊一致
     radius: Sizes.cornerRadius
@@ -36,6 +36,6 @@ Rectangle {
         font.pixelSize: 15 //稍微大一点，突出电源键
         font.bold: true
         
-        color: Colorsheme.background 
+        color: Colorscheme.background 
     }
 }

@@ -8,7 +8,7 @@ import qs.config
 Rectangle {
     id: root
     // 使用主题色作为卡片底色
-    color: Colorsheme.surface_container_high 
+    color: Colorscheme.surface_container_high 
     radius: 16
 
     // ================== 图标数据 ==================
@@ -81,12 +81,12 @@ Rectangle {
                     Shape {
                         scale: 32/24; anchors.centerIn: parent; width: 24; height: 24
                         // 图标采用主题的主打色 (或者 tertiary 色)
-                        ShapePath { strokeWidth: 0; fillColor: Colorsheme.tertiary; PathSvg { path: root.weatherIconPath } }
+                        ShapePath { strokeWidth: 0; fillColor: Colorscheme.tertiary; PathSvg { path: root.weatherIconPath } }
                     }
                 }
                 Text { 
                     text: root.weatherTemp
-                    color: Colorsheme.on_surface 
+                    color: Colorscheme.on_surface 
                     font.family: Sizes.fontFamily
                     font.pixelSize: 28 
                     font.bold: true 
@@ -101,7 +101,7 @@ Rectangle {
                 
                 Text { 
                     text: root.weatherDesc
-                    color: Colorsheme.on_surface_variant
+                    color: Colorscheme.on_surface_variant
                     font.family: Sizes.fontFamily
                     font.pixelSize: 12
                     font.bold: true
@@ -111,7 +111,7 @@ Rectangle {
                 
                 Text { 
                     text: root.weatherCity
-                    color: Colorsheme.outline
+                    color: Colorscheme.outline
                     font.family: Sizes.fontFamily
                     font.pixelSize: 11
                     elide: Text.ElideRight
@@ -126,7 +126,7 @@ Rectangle {
             Layout.fillHeight: true
             Layout.topMargin: 5
             Layout.bottomMargin: 5
-            color: Colorsheme.outline_variant
+            color: Colorscheme.outline_variant
         }
 
         // 【右半边】：未来 6 天的宽裕排列
@@ -148,7 +148,7 @@ Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     // 单个日期的卡片底色
-                    color: Colorsheme.surface_container_highest 
+                    color: Colorscheme.surface_container_highest 
                     radius: 10
                     
                     ColumnLayout {
@@ -157,7 +157,7 @@ Rectangle {
                         
                         Text { 
                             text: modelData.day 
-                            color: Colorsheme.on_surface_variant
+                            color: Colorscheme.on_surface_variant
                             font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily
                             Layout.alignment: Qt.AlignHCenter 
                         }
@@ -168,7 +168,7 @@ Rectangle {
                             Shape {
                                 scale: 18/24; anchors.centerIn: parent; width: 24; height: 24
                                 ShapePath { 
-                                    strokeWidth: 0; fillColor: Colorsheme.tertiary
+                                    strokeWidth: 0; fillColor: Colorscheme.tertiary
                                     PathSvg { path: icons.getPath(modelData.desc, true) } 
                                 }
                             }
@@ -176,7 +176,7 @@ Rectangle {
                         
                         Text { 
                             text: modelData.temp
-                            color: Colorsheme.on_surface
+                            color: Colorscheme.on_surface
                             font.pixelSize: 12; font.bold: true; font.family: Sizes.fontFamily
                             Layout.alignment: Qt.AlignHCenter 
                         }

@@ -7,7 +7,7 @@ import qs.config
 
 Rectangle {
     id: root
-    color: Colorsheme.surface_container_high
+    color: Colorscheme.surface_container_high
     radius: 16
 
     property var scheduleItems: []
@@ -26,15 +26,15 @@ Rectangle {
     function getColorById(id) {
         let colors = [
             // 前 4 个：主题固定的暗色容器
-            Colorsheme.primary_container, 
-            Colorsheme.secondary_container, 
-            Colorsheme.tertiary_container, 
-            Colorsheme.surface_variant, 
+            Colorscheme.primary_container, 
+            Colorscheme.secondary_container, 
+            Colorscheme.tertiary_container, 
+            Colorscheme.surface_variant, 
             // 后 4 个：壁纸的高亮主色，强行压暗 3.5 倍作为底色
-            Qt.darker(Colorsheme.primary, 3.5), 
-            Qt.darker(Colorsheme.secondary, 3.5), 
-            Qt.darker(Colorsheme.tertiary, 3.5), 
-            Qt.darker(Colorsheme.error, 3.5)
+            Qt.darker(Colorscheme.primary, 3.5), 
+            Qt.darker(Colorscheme.secondary, 3.5), 
+            Qt.darker(Colorscheme.tertiary, 3.5), 
+            Qt.darker(Colorscheme.error, 3.5)
         ];
         return colors[id % colors.length]; // 无限循环轮询
     }
@@ -42,15 +42,15 @@ Rectangle {
     function getTextColorById(id) {
         let colors = [
             // 前 4 个：对应容器的柔和文字色
-            Colorsheme.on_primary_container, 
-            Colorsheme.on_secondary_container, 
-            Colorsheme.on_tertiary_container, 
-            Colorsheme.on_surface_variant, 
+            Colorscheme.on_primary_container, 
+            Colorscheme.on_secondary_container, 
+            Colorscheme.on_tertiary_container, 
+            Colorscheme.on_surface_variant, 
             // 后 4 个：对应底色的原版亮色，极致清晰
-            Colorsheme.primary, 
-            Colorsheme.secondary, 
-            Colorsheme.tertiary, 
-            Colorsheme.error
+            Colorscheme.primary, 
+            Colorscheme.secondary, 
+            Colorscheme.tertiary, 
+            Colorscheme.error
         ];
         return colors[id % colors.length]; // 无限循环轮询
     }
@@ -98,7 +98,7 @@ Rectangle {
             Text {
                 anchors.centerIn: parent
                 text: "Time"
-                color: Colorsheme.on_surface_variant
+                color: Colorscheme.on_surface_variant
                 font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily
             }
             MouseArea {
@@ -124,7 +124,7 @@ Rectangle {
                     model: root.headers
                     Rectangle {
                         width: cellW; height: headerH; color: "transparent"
-                        Text { anchors.centerIn: parent; text: modelData; color: Colorsheme.on_surface_variant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily }
+                        Text { anchors.centerIn: parent; text: modelData; color: Colorscheme.on_surface_variant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily }
                     }
                 }
             }
@@ -146,7 +146,7 @@ Rectangle {
                         Text { 
                             anchors.centerIn: parent
                             text: modelData.replace(" - ", "\n") 
-                            color: Colorsheme.outline
+                            color: Colorscheme.outline
                             font.pixelSize: 9; font.family: Sizes.fontFamily
                             horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                         }
@@ -183,7 +183,7 @@ Rectangle {
                         // 彻底抛弃名字计算，直接通过 Python 传入的 ID 调用颜色
                         color: modelData.isEmpty ? "transparent" : root.getColorById(modelData.colorId)
                         border.width: modelData.isEmpty ? 1 : 0
-                        border.color: Colorsheme.outline_variant
+                        border.color: Colorscheme.outline_variant
 
                         Text {
                             anchors.fill: parent; anchors.margins: 4

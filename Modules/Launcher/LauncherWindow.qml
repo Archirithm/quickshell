@@ -68,8 +68,8 @@ PanelWindow {
     // ==========================================
     Rectangle {
         id: mainUI
-        width: 1000
-        height: 562
+        width: 1120
+        height: 630
         
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
@@ -159,7 +159,7 @@ PanelWindow {
                 
                 // --- 左侧：海报区 ---
                 Item {
-                    Layout.preferredWidth: 600 
+                    Layout.preferredWidth: 720 
                     Layout.fillHeight: true
                     clip: true 
                     
@@ -170,16 +170,16 @@ PanelWindow {
 
                     Image {
                         id: rawPreviewForBlur
-                        width: 1000
-                        height: 562
+                        width: 1120
+                        height: 630
                         x: 0 
                         y: 0
                         source: root.previewImage
                         fillMode: Image.PreserveAspectCrop 
                         asynchronous: true
                         visible: false 
-                        sourceSize.width: 1000
-                        sourceSize.height: 562
+                        sourceSize.width: 1120
+                        sourceSize.height: 630
                     }
 
                     FastBlur {
@@ -200,15 +200,15 @@ PanelWindow {
                         clip: true 
                         
                         Image {
-                            width: 1000
-                            height: 562
+                            width: 1120
+                            height: 630
                             x: -80 
                             y: 0
                             fillMode: Image.PreserveAspectCrop
                             source: root.previewImage
                             asynchronous: true 
-                            sourceSize.width: 1000
-                            sourceSize.height: 562
+                            sourceSize.width: 1120
+                            sourceSize.height: 630
                         }
                     }
 

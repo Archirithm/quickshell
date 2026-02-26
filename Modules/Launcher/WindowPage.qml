@@ -91,7 +91,7 @@ Item {
     ListView {
         id: windowsList
         width: parent.width
-        height: 490 
+        height: 552 
         anchors.verticalCenter: parent.verticalCenter 
         clip: true
         model: filteredWindows

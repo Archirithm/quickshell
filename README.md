@@ -20,21 +20,17 @@
 matugen的配置可以参考[dotfiles/matugen](https://github.com/Archirithm/dotfiles/tree/master/matugen)
 ```
 ...
-[templates.Colorsheme]
+[templates.Colorscheme]
 input_path = '~/.config/matugen/templates/Colorscheme.qml'
-output_path = '~/.config/quickshell/config/Colorsheme.qml'
+output_path = '~/.cache/quickshell_colors.json'
 ...
 ```
 Colorscheme.qml:
 ```
-pragma Singleton
-
-import Quickshell
-import QtQuick
-
-Singleton {
+{
+    "matugen_dummy_key": "ignore_me"
 <* for name, value in colors *>
-    readonly property color {{name}} : "{{value.default.hex}}"
+    , "{{name}}": "{{value.default.hex}}"
 <* endfor *>
 }
 ```

@@ -3,6 +3,14 @@
 我在虚拟机里试了一下能打开，没问题。但克隆前还是要做好备份。现在的配置还不能碰瓷dms、noctalia这些大佬的qs，有的地方太糙了，如果你想试试看的话可以跟着安装。
  b站演示视频[爱吹笛子的托儿索](https://www.bilibili.com/video/BV1MmFQzGE7i/?share_source=copy_web&vd_source=4e3ba27da89beb0783bf65abc13f8a81)
  ，**完整的~/.config配置在[dotfiles](https://github.com/Archirithm/dotfiles)**。
+ ### 
+ 看了大佬配置的源码之后才知道差距有多大，以后得慢慢改进。
+ - [ ] 彻底的前后端分离，我现在的配置里动不动就一个bash命令，应该写个专门的后端进程来把干净的数据推给quickshell，quickshell只负责渲染。
+ - [ ] 做个设置面板。这就意味着要把之前写死的所有数值全部换成变量，把这些变量的值保存到外面的json文件里然后让quickshell读它。
+ - [ ] 规范结构树，我现在的项目文件夹名字是瞎填的，应该区分module、Widget、common、service这些文件夹的作用。
+ 
+ 等我把这几点实现了再来发布大版本吧，一键脚本也是，我现在都不好意思端了个半成品上来给大家用了。
+
 ## 必要的包
 - niri（只能是niri，因为配置里有用到niri的命令。）
 - quickshell
@@ -104,6 +112,7 @@ mkdir -p ~/.config/environment.d && echo "QT_QPA_PLATFORMTHEME=gtk3" > ~/.config
 
 2. 播放歌曲的时候如果在播放器里面手动调整进度条会发现灵动岛歌词和媒体进度条没有同步变过去，这个时候只需要暂停播放就能同步进度条了。这个问题我发现dms中也没解决，如果有大佬有方法可以教教我。
 3. up的两个屏幕都是2k屏幕，所有配置文件的高宽都写死了，低分辨率下组件会很大，这个尺寸我以后得重写一遍。
+
 
 
 

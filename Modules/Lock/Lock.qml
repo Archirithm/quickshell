@@ -55,15 +55,14 @@ ShellRoot {
             Loader {
                 id: uiLoader
                 anchors.fill: parent
-                // 使用绝对路径
-                source: "/home/archirithm/.config/quickshell/Modules/Lock/LockSurface.qml"
+                
+                // 【已修改】使用 HOME 环境变量拼接标准的文件 URL
+                source: "file://" + Quickshell.env("HOME") + "/.config/quickshell/Modules/Lock/LockSurface.qml"
                 
                 onLoaded: {
                     if (item) item.context = internalContext
                 }
             }
-            
-            
         }
     }
 }

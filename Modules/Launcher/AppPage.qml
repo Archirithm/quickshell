@@ -2,113 +2,50 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
-import Quickshell.Io
 import qs.config
+
+import "../../JS/AppManager.js" as AppManager
 
 Item {
     id: root
     
     signal requestCloseLauncher()
 
-    ListModel { id: allAppsModel }
-    ListModel { id: filteredApps }
-    property bool isLoading: true
-    property var tempAppsData: ({}) 
+    property var filteredAppsModel: []
+    
 
     function decrementCurrentIndex() { appsList.decrementCurrentIndex() }
     function incrementCurrentIndex() { appsList.incrementCurrentIndex() }
     function forceSearchFocus() { searchBox.forceActiveFocus() }
 
-    Component.onCompleted: {
-        appScanner.running = true
-    }
-
-    Process {
-        id: appScanner
-        command: ["bash", "-c", "find /usr/share/applications ~/.local/share/applications -name '*.desktop' 2>/dev/null -exec grep -H -E '^(Name|Exec|Icon|NoDisplay)=' {} + > /tmp/qs_apps.txt"]
-        running: false 
-        onExited: (code, status) => {
-            if (code === 0) {
-                root.tempAppsData = {}
-                appReader.running = true
-            } else {
-                root.isLoading = false
-            }
-        }
-    }
-
-    Process {
-        id: appReader
-        command: ["cat", "/tmp/qs_apps.txt"]
-        running: false
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: (line) => root.parseSingleLine(line)
-        }
-        onExited: (code, status) => root.finalizeApps()
-    }
-
-    function parseSingleLine(line) {
-        line = line.trim()
-        if (!line) return
-        let firstColon = line.indexOf(":")
-        if (firstColon === -1) return
-        let path = line.substring(0, firstColon)
-        let content = line.substring(firstColon + 1)
-        let firstEq = content.indexOf("=")
-        if (firstEq === -1) return
-        let key = content.substring(0, firstEq)
-        let value = content.substring(firstEq + 1)
-
-        if (!root.tempAppsData[path]) {
-            root.tempAppsData[path] = { name: "", exec: "", icon: "", noDisplay: false }
-        }
-
-        if (key === "Name" && !root.tempAppsData[path].name) root.tempAppsData[path].name = value
-        else if (key === "Exec" && !root.tempAppsData[path].exec) root.tempAppsData[path].exec = value.replace(/ %[fFuUdDnNickvm].*/, "").trim()
-        else if (key === "Icon" && !root.tempAppsData[path].icon) root.tempAppsData[path].icon = value
-        else if (key === "NoDisplay" && value === "true") root.tempAppsData[path].noDisplay = true
-    }
-
-    function finalizeApps() {
-        allAppsModel.clear()
-        for (let path in root.tempAppsData) {
-            let app = root.tempAppsData[path]
-            if (app.name && app.exec && !app.noDisplay) {
-                allAppsModel.append(app)
-            }
-        }
-        root.isLoading = false
-        root.tempAppsData = {} 
-        search("") 
-    }
-
     function search(text) {
-        filteredApps.clear()
-        let q = text.toLowerCase()
-        let count = 0
-        
-        if (root.isLoading) return
+        filteredAppsModel = AppManager.updateFilter(text, DesktopEntries)
+        appsList.currentIndex = 0
+    }
 
-        for(let i = 0; i < allAppsModel.count; i++) {
-            let item = allAppsModel.get(i)
-            if(item.name.toLowerCase().includes(q) || item.exec.toLowerCase().includes(q)) {
-                filteredApps.append(item)
-                count++
-                if (count >= 40) break 
+    // ==========================================
+    // 异步等待机制
+    // ==========================================
+    Timer {
+        id: startupPollTimer
+        interval: 50 // 频率加快到 50 毫秒（0.05秒）
+        repeat: true
+        running: true 
+        onTriggered: {
+            // 直接去底层看一眼，有数据了吗？
+            if (DesktopEntries.applications.values.length > 0) {
+                // 有数据了！立刻执行搜索并渲染
+                root.search(searchBox.text)
+                // 任务完成，当场自毁。
+                running = false 
             }
         }
-        appsList.currentIndex = 0
     }
 
     onVisibleChanged: {
         if (visible) {
             searchBox.text = ""
-            if (allAppsModel.count === 0 && !root.isLoading) {
-                appScanner.running = true
-            } else {
-                search("")
-            }
+            search("")
         }
     }
 
@@ -120,10 +57,6 @@ Item {
         return safeText.replace(regex, "<u><b>$1</b></u>")
     }
 
-    // ==========================================
-    // UI 渲染层
-    // ==========================================
-    
     TextInput {
         id: searchBox
         x: -1000 
@@ -140,22 +73,14 @@ Item {
         Keys.onDownPressed: (event) => { appsList.incrementCurrentIndex(); event.accepted = true }
     }
 
-    Text {
-        anchors.centerIn: parent 
-        text: "Loading applications..."
-        color: Colorscheme.on_surface_variant
-        font.pixelSize: 16
-        visible: root.isLoading
-    }
-
     ListView {
         id: appsList
         width: parent.width
-        height: 552 
+        height: 504 
         anchors.verticalCenter: parent.verticalCenter 
         clip: true
-        model: filteredApps
-        spacing: 6
+        
+        model: filteredAppsModel
         
         boundsBehavior: Flickable.StopAtBounds
         highlightRangeMode: ListView.StrictlyEnforceRange 
@@ -200,9 +125,11 @@ Item {
                         smooth: true
 
                         source: {
-                            if (!model.icon) return ""
-                            if (model.icon.indexOf("/") !== -1) return "file://" + model.icon
-                            return "image://icon/" + model.icon
+                            let ic = modelData.icon
+                            if (!ic) return ""
+                            if (ic.startsWith("/")) return "file://" + ic
+                            if (ic.startsWith("file://") || ic.startsWith("image://")) return ic
+                            return "image://icon/" + ic
                         }
                         
                         property bool hasFallenBack: false
@@ -217,7 +144,7 @@ Item {
                 }
 
                 Text {
-                    text: root.highlightText(model.name, searchBox.text)
+                    text: root.highlightText(modelData.name, searchBox.text)
                     textFormat: Text.StyledText 
                     color: delegateItem.ListView.isCurrentItem ? Colorscheme.on_primary : Colorscheme.on_surface
                     font.pixelSize: 16
@@ -229,16 +156,12 @@ Item {
     }
 
     function runSelectedApp() {
-        if (filteredApps.count > 0 && appsList.currentIndex >= 0) {
-            let cmd = filteredApps.get(appsList.currentIndex).exec
-            launchProcess.command = ["bash", "-c", "nohup " + cmd + " > /dev/null 2>&1 &"]
-            launchProcess.running = true
+        if (filteredAppsModel.length > 0 && appsList.currentIndex >= 0) {
+            let appData = filteredAppsModel[appsList.currentIndex]
+            if (appData && appData.appObj) {
+                appData.appObj.execute()
+            }
             root.requestCloseLauncher() 
         }
-    }
-    
-    Process { 
-        id: launchProcess
-        onExited: running = false 
     }
 }

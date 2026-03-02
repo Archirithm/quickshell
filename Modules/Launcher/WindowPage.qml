@@ -91,11 +91,10 @@ Item {
     ListView {
         id: windowsList
         width: parent.width
-        height: 552 
+        height: 504 
         anchors.verticalCenter: parent.verticalCenter 
         clip: true
         model: filteredWindows
-        spacing: 6
         
         snapMode: ListView.SnapToItem         
         boundsBehavior: Flickable.StopAtBounds

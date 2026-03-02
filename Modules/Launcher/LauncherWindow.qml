@@ -10,9 +10,14 @@ PanelWindow {
     id: root
     
     visible: false
-    
     color: "transparent" 
-    anchors { top: true; bottom: true; left: true; right: true }
+    
+    anchors {
+        top: true
+        bottom: true
+        left: true
+        right: true
+    }
     
     WlrLayershell.namespace: "rofi-launcher-overlay"
     WlrLayershell.layer: WlrLayer.Overlay 
@@ -24,7 +29,7 @@ PanelWindow {
     // 始终优先读取实时选中的壁纸预览图，否则读取软链接
     property string previewImage: (currentMode === 2 && wallpaperPage.currentSelectedPreview !== "") 
                                   ? wallpaperPage.currentSelectedPreview 
-                                  : "file:///home/archirithm/.cache/wallpaper_rofi/current"
+                                  : "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current"
 
     onVisibleChanged: {
         if (visible) {
@@ -68,8 +73,8 @@ PanelWindow {
     // ==========================================
     Rectangle {
         id: mainUI
-        width: 1120
-        height: 630
+        width: 1008
+        height: 567
         
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
@@ -83,14 +88,39 @@ PanelWindow {
         
         ParallelAnimation {
             id: openAnim
-            NumberAnimation { target: mainUI; property: "opacity"; to: 1.0; duration: 400; easing.type: Easing.OutCubic }
-            NumberAnimation { target: uiTranslate; property: "y"; to: 0; duration: 700; easing.type: Easing.OutBack; easing.overshoot: 2.5 }
+            NumberAnimation {
+                target: mainUI
+                property: "opacity"
+                to: 1.0
+                duration: 400
+                easing.type: Easing.OutCubic
+            }
+            NumberAnimation {
+                target: uiTranslate
+                property: "y"
+                to: 0
+                duration: 700
+                easing.type: Easing.OutBack
+                easing.overshoot: 2.5
+            }
         }
 
         ParallelAnimation {
             id: closeAnim
-            NumberAnimation { target: mainUI; property: "opacity"; to: 0.0; duration: 300; easing.type: Easing.InCubic }
-            NumberAnimation { target: uiTranslate; property: "y"; to: 300; duration: 300; easing.type: Easing.InCubic }
+            NumberAnimation {
+                target: mainUI
+                property: "opacity"
+                to: 0.0
+                duration: 300
+                easing.type: Easing.InCubic
+            }
+            NumberAnimation {
+                target: uiTranslate
+                property: "y"
+                to: 300
+                duration: 300
+                easing.type: Easing.InCubic
+            }
             onFinished: root.visible = false 
         }
         
@@ -98,7 +128,7 @@ PanelWindow {
         radius: 20 
         focus: true 
         
-        // 全局键盘网关 (已修复参数注入警告)
+        // 全局键盘网关
         Keys.onUpPressed: (event) => {
             if (root.currentMode === 0) appPage.decrementCurrentIndex()
             else if (root.currentMode === 1) windowPage.decrementCurrentIndex()
@@ -159,7 +189,7 @@ PanelWindow {
                 
                 // --- 左侧：海报区 ---
                 Item {
-                    Layout.preferredWidth: 720 
+                    Layout.preferredWidth: 640 
                     Layout.fillHeight: true
                     clip: true 
                     
@@ -170,16 +200,16 @@ PanelWindow {
 
                     Image {
                         id: rawPreviewForBlur
-                        width: 1120
-                        height: 630
+                        width: 1008
+                        height: 567
                         x: 0 
                         y: 0
                         source: root.previewImage
                         fillMode: Image.PreserveAspectCrop 
                         asynchronous: true
                         visible: false 
-                        sourceSize.width: 1120
-                        sourceSize.height: 630
+                        sourceSize.width: 1008
+                        sourceSize.height: 567
                     }
 
                     FastBlur {
@@ -200,15 +230,15 @@ PanelWindow {
                         clip: true 
                         
                         Image {
-                            width: 1120
-                            height: 630
-                            x: -80 
+                            width: 1008
+                            height: 567
+                            x: -80  
                             y: 0
                             fillMode: Image.PreserveAspectCrop
                             source: root.previewImage
-                            asynchronous: true 
-                            sourceSize.width: 1120
-                            sourceSize.height: 630
+                            asynchronous: true  
+                            sourceSize.width: 1008
+                            sourceSize.height: 567
                         }
                     }
 
@@ -218,23 +248,55 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 24
                         
+                        // 标签页 1：应用
                         Rectangle {
-                            width: 48; height: 48; radius: 24
+                            width: 48
+                            height: 48
+                            radius: 24
                             anchors.horizontalCenter: parent.horizontalCenter
                             color: root.currentMode === 0 ? Colorscheme.secondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
-                            Text { anchors.centerIn: parent; text: ""; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 20; color: root.currentMode === 0 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Colorscheme.secondary }
+                            
+                            Text {
+                                anchors.centerIn: parent
+                                text: ""
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: 20
+                                color: root.currentMode === 0 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Colorscheme.secondary
+                            }
                         }
+                        
+                        // 标签页 2：窗口
                         Rectangle {
-                            width: 48; height: 48; radius: 24
+                            width: 48
+                            height: 48
+                            radius: 24
                             anchors.horizontalCenter: parent.horizontalCenter
                             color: root.currentMode === 1 ? Colorscheme.secondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
-                            Text { anchors.centerIn: parent; text: ""; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 20; color: root.currentMode === 1 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Colorscheme.secondary }
+                            
+                            Text {
+                                anchors.centerIn: parent
+                                text: ""
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: 20
+                                color: root.currentMode === 1 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Colorscheme.secondary
+                            }
                         }
+                        
+                        // 标签页 3：壁纸
                         Rectangle {
-                            width: 48; height: 48; radius: 24
+                            width: 48
+                            height: 48
+                            radius: 24
                             anchors.horizontalCenter: parent.horizontalCenter
                             color: root.currentMode === 2 ? Colorscheme.secondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
-                            Text { anchors.centerIn: parent; text: ""; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 20; color: root.currentMode === 2 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Colorscheme.secondary }
+                            
+                            Text {
+                                anchors.centerIn: parent
+                                text: ""
+                                font.family: "JetBrainsMono Nerd Font"
+                                font.pixelSize: 20
+                                color: root.currentMode === 2 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Colorscheme.secondary
+                            }
                         }
                     }
                 }
@@ -252,18 +314,18 @@ PanelWindow {
                     StackLayout {
                         anchors.fill: parent
                         anchors.margins: 30
-                        currentIndex: root.currentMode
+                        currentIndex: root.currentMode 
                         
                         AppPage { 
                             id: appPage 
                             onRequestCloseLauncher: root.requestClose()
                         }
                         WindowPage { 
-                            id: windowPage
+                            id: windowPage 
                             onRequestCloseLauncher: root.requestClose()
                         }
                         WallpaperPage { 
-                            id: wallpaperPage 
+                            id: wallpaperPage  
                             onRequestCloseLauncher: root.requestClose()
                         }
                     }

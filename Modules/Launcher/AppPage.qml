@@ -127,17 +127,25 @@ Item {
                         source: {
                             let ic = modelData.icon
                             if (!ic) return ""
+                            // 因为我们在 JS 里已经拼接成 /usr 开头了，所以这里会自动加上 file://
                             if (ic.startsWith("/")) return "file://" + ic
                             if (ic.startsWith("file://") || ic.startsWith("image://")) return ic
                             return "image://icon/" + ic
                         }
                         
-                        property bool hasFallenBack: false
+                        property int failCount: 0
                         
                         onStatusChanged: {
-                            if (status === Image.Error && !hasFallenBack) {
-                                hasFallenBack = true
-                                source = "image://icon/application-x-executable"
+                            // 【兜底策略】：
+                            if (status === Image.Error) {
+                                failCount++
+                                if (failCount === 1) {
+                                    // 第一次失败：说明 Tela 库里没有这个 svg，我们退回让系统用原名去找
+                                    source = "image://icon/" + modelData.fallbackIcon
+                                } else if (failCount === 2) {
+                                    // 第二次失败：系统里也彻底找不到，那就显示一个通用的执行文件图标
+                                    source = "image://icon/application-x-executable"
+                                }
                             }
                         }
                     }

@@ -18,7 +18,6 @@ function fuzzySearch(inputText, appName) {
 
 function updateFilter(inputText, DesktopEntries) {
     let lowerInput = (inputText || "").toLowerCase();
-    // 获取原生异步列表
     const apps = DesktopEntries.applications.values;
     let filterApps = [];
 
@@ -28,10 +27,10 @@ function updateFilter(inputText, DesktopEntries) {
         filterApps = apps.filter((app) => fuzzySearch(lowerInput, app.name));
     }
 
-    // 1. 过滤掉不可见的后台挂件
+    // 过滤掉不可见的后台挂件
     filterApps = filterApps.filter(app => !app.noDisplay);
 
-    // 2. 【核心修复】：强制按首字母 A-Z 排序，彻底解决每次重启顺序不一样的问题！
+    // 强制按首字母 A-Z 排序
     filterApps.sort((a, b) => {
         let nameA = a.name ? a.name.toLowerCase() : "";
         let nameB = b.name ? b.name.toLowerCase() : "";
@@ -44,13 +43,21 @@ function updateFilter(inputText, DesktopEntries) {
     for (let i = 0; i < filterApps.length; i++) {
         let app = filterApps[i];
         
+        let rawIcon = app.icon || "";
+        let finalPath = rawIcon;
+
+        // 【核心修改】：如果自带图标名不是绝对路径，强行劫持到 Tela 图标库！
+        if (rawIcon && rawIcon.indexOf("/") === -1) {
+            finalPath = "/usr/share/icons/Tela-circle-dracula/scalable/apps/" + rawIcon + ".svg";
+        }
+
         result.push({
             name: app.name,
-            icon: app.icon || "",
+            icon: finalPath,         // 传给 QML 的主要路径（Tela 的绝对路径）
+            fallbackIcon: rawIcon,   // 【重点】把原始图标名也传过去，留作兜底备用！
             appObj: app 
         });
         
-        // 渲染性能保护：最多显示 50 个
         if (result.length >= 50) break;
     }
 

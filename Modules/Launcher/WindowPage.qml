@@ -12,10 +12,31 @@ Item {
     signal requestCloseLauncher()
 
     ListModel { id: filteredWindows }
-
+    
     function decrementCurrentIndex() { windowsList.decrementCurrentIndex() }
     function incrementCurrentIndex() { windowsList.incrementCurrentIndex() }
     function forceSearchFocus() { searchBox.forceActiveFocus() }
+
+    // ==========================================
+    // 正则清洗器：去除前后缀，保留原本的首字母大小写
+    // ==========================================
+    function cleanAppName(rawName, isAppId) {
+        if (!rawName) return ""
+        let name = rawName
+
+        if (isAppId) {
+            // 切掉域名前缀 (如 org.kde.dolphin -> dolphin)
+            name = name.replace(/^([a-z0-9\-]+\.)+/gi, "")
+            // 切掉 .desktop 后缀
+            name = name.replace(/\.desktop$/gi, "")
+            // 注意：已移除首字母强制大写的逻辑，保留原生大小写
+        } else {
+            // 切掉窗口标题后面的浏览器/编辑器后缀尾巴
+            name = name.replace(/\s*[-—|]\s*(Mozilla Firefox|Google Chrome|Chromium|Brave|Edge|Vivaldi|Visual Studio Code|Kate|KWrite).*$/gi, "")
+        }
+
+        return name
+    }
 
     function search(text) {
         filteredWindows.clear()
@@ -24,7 +45,12 @@ Item {
         for(let i = 0; i < Niri.windows.count; i++) {
             let item = Niri.windows.get(i)
             if(item.title.toLowerCase().includes(q) || item.appId.toLowerCase().includes(q)) {
-                filteredWindows.append(item)
+                
+                filteredWindows.append({
+                    title: item.title,
+                    appId: item.appId, 
+                    winId: item.winId
+                })
             }
         }
         if (windowsList.currentIndex >= filteredWindows.count) {
@@ -32,11 +58,9 @@ Item {
         }
     }
 
-    // 【神经反射核心】：监听 Niri 发出的更新信号
     Connections {
         target: Niri
         function onWindowsUpdated() {
-            // 如果 Launcher 是开着的，背景窗口发生了变化，立刻重绘搜索列表！
             if (root.visible) {
                 root.search(searchBox.text)
             }
@@ -45,7 +69,6 @@ Item {
 
     onVisibleChanged: {
         if (visible) {
-            // 每次打开时，顺手要一份最新数据，确保万无一失
             Niri.reloadWindows()
             searchBox.text = ""
             search("")
@@ -73,93 +96,125 @@ Item {
             root.search(text)
             windowsList.currentIndex = 0 
         }
-        // 注意：这里的回车事件被保留作为底层备份，实际上全局的 LauncherWindow 会抢先执行
         Keys.onReturnPressed: (event) => { focusSelectedWindow(); event.accepted = true }
         Keys.onEnterPressed: (event) => { focusSelectedWindow(); event.accepted = true }
         Keys.onUpPressed: (event) => { windowsList.decrementCurrentIndex(); event.accepted = true }
         Keys.onDownPressed: (event) => { windowsList.incrementCurrentIndex(); event.accepted = true }
     }
 
-    Text {
-        anchors.centerIn: parent 
-        text: "No windows opened."
-        color: Colorscheme.on_surface_variant
-        font.pixelSize: 16
-        visible: filteredWindows.count === 0
-    }
+    Item {
+        anchors.fill: parent
 
-    ListView {
-        id: windowsList
-        width: parent.width
-        height: 504 
-        anchors.verticalCenter: parent.verticalCenter 
-        clip: true
-        model: filteredWindows
-        
-        snapMode: ListView.SnapToItem         
-        boundsBehavior: Flickable.StopAtBounds
-        highlightRangeMode: ListView.StrictlyEnforceRange 
-        preferredHighlightBegin: 0
-        preferredHighlightEnd: height - 56 
-        
-        highlight: Rectangle { 
-            color: Colorscheme.primary
-            radius: 12 
+        Text {
+            anchors.centerIn: parent 
+            text: "No windows opened."
+            color: Colorscheme.on_surface_variant
+            font.pixelSize: 16
+            visible: filteredWindows.count === 0
         }
-        highlightMoveDuration: 0 
 
-        delegate: Item {
-            id: delegateItem 
-            width: ListView.view.width
-            height: 56
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    windowsList.currentIndex = index
-                    focusSelectedWindow()
-                }
+        // ==========================================
+        // 统一高度和样式的 ListView
+        // ==========================================
+        ListView {
+            id: windowsList
+            width: parent.width
+            height: 504 
+            anchors.verticalCenter: parent.verticalCenter 
+            clip: true
+            
+            model: filteredWindows
+            
+            boundsBehavior: Flickable.StopAtBounds
+            highlightRangeMode: ListView.StrictlyEnforceRange 
+            preferredHighlightBegin: 0
+            preferredHighlightEnd: height - 56 
+            
+            highlight: Rectangle { 
+                color: Colorscheme.primary
+                radius: 12 
             }
+            highlightMoveDuration: 0 
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 16
-                spacing: 16
+            delegate: Item {
+                id: delegateItem 
+                width: ListView.view.width
+                height: 56
 
-                Item {
-                    Layout.preferredWidth: 36
-                    Layout.preferredHeight: 36
-
-                    Image {
-                        anchors.fill: parent
-                        sourceSize.width: 64
-                        sourceSize.height: 64
-                        fillMode: Image.PreserveAspectFit
-                        asynchronous: true
-                        smooth: true
-                        
-                        // 极致清爽：只负责请求图标，找不到就算了，警告随它去
-                        source: "image://icon/" + model.appId.toLowerCase()
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        windowsList.currentIndex = index
+                        focusSelectedWindow()
                     }
                 }
 
-                Text {
-                    text: root.highlightText(model.title, searchBox.text)
-                    textFormat: Text.StyledText 
-                    color: delegateItem.ListView.isCurrentItem ? Colorscheme.on_primary : Colorscheme.on_surface
-                    font.pixelSize: 16
-                    font.bold: false 
-                    elide: Text.ElideRight 
-                    Layout.fillWidth: true
-                }
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 16
+                    spacing: 16
 
-                Text {
-                    text: root.highlightText(model.appId, searchBox.text)
-                    textFormat: Text.StyledText 
-                    color: delegateItem.ListView.isCurrentItem ? Qt.rgba(1, 1, 1, 0.7) : Colorscheme.on_surface_variant
-                    font.pixelSize: 12
-                    font.family: "JetBrainsMono Nerd Font"
+                    Item {
+                        Layout.preferredWidth: 36
+                        Layout.preferredHeight: 36
+
+                        Image {
+                            id: windowIcon
+                            anchors.fill: parent
+                            sourceSize.width: 64
+                            sourceSize.height: 64
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                            smooth: true
+                            
+                            property int attempt: 0
+                            
+                            property string rawId: model.appId || ""
+                            property string lowerId: rawId.toLowerCase()
+
+                            // 5 发子弹智能图标匹配阵列
+                            property var candidates: [
+                                "/usr/share/icons/Tela-circle-dracula/scalable/apps/" + lowerId + ".svg", 
+                                "/usr/share/icons/Tela-circle-dracula/scalable/apps/" + rawId + ".svg",   
+                                "image://icon/" + rawId,                                                  
+                                "image://icon/" + lowerId,                                                
+                                "image://icon/application-x-executable"                                   
+                            ]
+                            
+                            source: {
+                                let ic = candidates[attempt]
+                                if (ic.startsWith("/")) return "file://" + ic
+                                return ic
+                            }
+                            
+                            onStatusChanged: {
+                                if (status === Image.Error) {
+                                    if (attempt < candidates.length - 1) {
+                                        attempt++ 
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: root.highlightText(root.cleanAppName(model.title, false), searchBox.text)
+                        textFormat: Text.StyledText 
+                        color: delegateItem.ListView.isCurrentItem ? Colorscheme.on_primary : Colorscheme.on_surface
+                        font.pixelSize: 16
+                        font.bold: false 
+                        elide: Text.ElideRight 
+                        Layout.fillWidth: true
+                    }
+
+                    Text {
+                        text: root.highlightText(root.cleanAppName(model.appId, true), searchBox.text)
+                        textFormat: Text.StyledText 
+                        color: delegateItem.ListView.isCurrentItem ? Qt.rgba(1, 1, 1, 0.7) : Colorscheme.on_surface_variant
+                        font.pixelSize: 12
+                        font.family: "JetBrainsMono Nerd Font"
+                    }
                 }
             }
         }
@@ -170,13 +225,14 @@ Item {
             let winId = filteredWindows.get(windowsList.currentIndex).winId
             focusProcess.command = ["niri", "msg", "action", "focus-window", "--id", winId]
             focusProcess.running = true
-            // 【已移除】：去掉了 root.requestCloseLauncher()
-            // 现在按下回车，后台会自动切换焦点，但 Launcher 窗口依然为你保留！
         }
     }
     
     Process { 
         id: focusProcess
-        onExited: running = false 
+        onExited: {
+            running = false 
+            root.requestCloseLauncher()
+        }
     }
 }

@@ -14,7 +14,7 @@ import qs.Modules.Bar.PowerProfile
 import qs.Modules.Bar.SysMonitor
 import qs.Modules.Bar.NotificationButton
 import qs.Modules.Bar.DayNightSwitch
-import qs.Modules.DynamicIsland
+// 删除了对 DynamicIsland 的引入
 
 Variants {
     model: Quickshell.screens
@@ -29,18 +29,12 @@ Variants {
         
         property real barHeight: 52
         
-        implicitHeight: Math.max(barWindow.barHeight, island.height + island.anchors.topMargin + 5)
+        // 高度不再受灵动岛影响
+        implicitHeight: barWindow.barHeight
         
         exclusiveZone: barHeight
         
         WlrLayershell.layer: WlrLayer.Top
-
-        // ============================================================
-        // 动态控制键盘焦点 (灵动岛展开时截获输入)
-        // ============================================================
-        WlrLayershell.keyboardFocus: (island.showLauncher || island.showWallpaper || island.showDashboard)
-            ? WlrKeyboardFocus.Exclusive 
-            : WlrKeyboardFocus.None
 
         // --- 内容容器 ---
         Item {
@@ -58,55 +52,19 @@ Variants {
                 DayNightSwitch {}
             }
 
-            // --- 中间：灵动岛 ---
-            DynamicIsland {
-                id: island  
-                
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: 10
-                
-            }
-
-            // --- 右侧组件 ---
-            // ... 上面的代码保持不变 ...
-
             // --- 右侧组件 ---
             RowLayout {
-                // 钉在右边
                 anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
                 spacing: 10
                 
-                // 【恢复自然顺序】
-                // 1. 托盘
-
-                SysMonitor {
-                    Layout.alignment: Qt.AlignVCenter
-                }
-
+                SysMonitor { Layout.alignment: Qt.AlignVCenter }
                 Tray {}
                 
-                // 4. 电源模式胶囊
-                // 因为我们在 PowerProfile.qml 里加了 implicitWidth: width
-                // 所以当它动画变宽时，Layout 会实时把左边的组件（Volume, Network...）往左推
-                PowerProfile {
-                    Layout.alignment: Qt.AlignVCenter
-                } 
-                
-                // 2. 网络
+                PowerProfile { Layout.alignment: Qt.AlignVCenter } 
                 Network {}
-                
-                // 3. 音量
                 Volume {}
-
-
                 
-                
-                NotificationButton {
-                    Layout.alignment: Qt.AlignVCenter
-                }
-
-                // 5. 电源按钮 (在最右边，因为 Layout 锚定在右边，所以它位置不动)
+                NotificationButton { Layout.alignment: Qt.AlignVCenter }
                 PowerButton {}
             }
         }

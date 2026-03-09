@@ -164,10 +164,29 @@ Item {
     // 界面渲染层
     // ==========================================
     Rectangle {
+        id: mainBg
         anchors.fill: parent
-        radius: 24
+        
+        // 【修改 1】：增加外边距，特别是底部留白，不让它紧贴 hub 底边
+        anchors.topMargin: 5
+        anchors.leftMargin: 5
+        anchors.rightMargin: 5
+        anchors.bottomMargin: 25 
+        
+        // 【修改 2】：增大圆角让它看起来更现代
+        radius: 24 
         color: Colorscheme.surface_container_low
-        clip: true 
+
+        // 【核心修复】：废弃 clip: true，改用图层遮罩！
+        // 只有使用 OpacityMask，内部的封面图和模糊层才会被完美限制在圆角内
+        layer.enabled: true
+        layer.effect: OpacityMask {
+            maskSource: Rectangle {
+                width: mainBg.width
+                height: mainBg.height
+                radius: mainBg.radius
+            }
+        }
 
         Image {
             id: bgSource; source: root.artUrl

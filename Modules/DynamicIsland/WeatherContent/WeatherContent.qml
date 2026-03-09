@@ -234,13 +234,14 @@ Item {
             anchors.fill: parent
             spacing: 4 
 
+            // 12 Hrs 按键
             Rectangle {
-                width: (parent.width - parent.spacing) / 2; height: parent.height
+                width: (parent.width - 4) / 2; height: parent.height
                 color: root.isHourly ? Colorscheme.primary : Colorscheme.surface_variant
                 
                 topLeftRadius: 20; bottomLeftRadius: 20
-                topRightRadius: root.isHourly ? 20 : 0
-                bottomRightRadius: root.isHourly ? 20 : 0
+                topRightRadius: root.isHourly ? 20 : 6
+                bottomRightRadius: root.isHourly ? 20 : 6
                 
                 Behavior on topRightRadius { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 Behavior on bottomRightRadius { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
@@ -255,13 +256,14 @@ Item {
                 MouseArea { anchors.fill: parent; onClicked: root.isHourly = true }
             }
 
+            // 7 Days 按键
             Rectangle {
-                width: (parent.width - parent.spacing) / 2; height: parent.height
+                width: (parent.width - 4) / 2; height: parent.height
                 color: !root.isHourly ? Colorscheme.primary : Colorscheme.surface_variant
                 
                 topRightRadius: 20; bottomRightRadius: 20
-                topLeftRadius: !root.isHourly ? 20 : 0
-                bottomLeftRadius: !root.isHourly ? 20 : 0
+                topLeftRadius: !root.isHourly ? 20 : 6
+                bottomLeftRadius: !root.isHourly ? 20 : 6
                 
                 Behavior on topLeftRadius { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 Behavior on bottomLeftRadius { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
@@ -292,13 +294,21 @@ Item {
             anchors.fill: parent
             renderTarget: Canvas.FramebufferObject
 
+            // 【新增：监听主题色变化并强制重绘】
+            Connections {
+                target: Colorscheme
+                function onPrimaryChanged() {
+                    skyCanvas.requestPaint()
+                }
+            }
+
             onPaint: {
                 if(root.latitude === 0) return;
                 var ctx = getContext("2d");
                 ctx.clearRect(0, 0, width, height);
                 var cx = width / 2;
                 var cy = height / 2;
-                var R = 135; 
+                var R = 125; 
 
                 function project(az, alt) {
                     var r = R * (1 - alt / (Math.PI / 2));
@@ -456,6 +466,14 @@ Item {
                 opacity: root.isHourly ? 1.0 : 0.0
                 visible: opacity > 0
                 Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutSine } }
+
+                // 【新增：监听主题色变化并强制重绘】
+                Connections {
+                    target: Colorscheme
+                    function onPrimaryChanged() {
+                        hourlyCanvas.requestPaint()
+                    }
+                }
 
                 onPaint: {
                     if (!root.hourlyData || root.hourlyData.length === 0) return;

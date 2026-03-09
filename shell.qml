@@ -4,13 +4,17 @@ import Quickshell.Wayland
 import Quickshell.Io  
 import QtQuick        
 import qs.Modules.Bar
-
-// 【新增】引入你的启动器模块（路径取决于你 qmldir 的配置，如果是按之前的路径，可以直接这样引入）
 import qs.Modules.Launcher 
 
+// 【新增】引入独立出来的灵动岛
+import qs.Modules.DynamicIsland
+
 ShellRoot {
-    // 你的状态栏保持不变
+    // 你的状态栏
     Bar {}
+    
+    // 【新增】实例化独立的灵动岛窗口
+    DynamicIsland {}
 
     // ================= 锁屏管理器 =================
     Loader {
@@ -43,7 +47,6 @@ ShellRoot {
 
     // ================= 启动器 (Launcher) =================
     
-    // 【新增】实例化启动器窗口，默认隐藏 (预加载模式，保证零延迟弹出)
     LauncherWindow {
         id: rofiLauncher
     }
@@ -52,7 +55,6 @@ ShellRoot {
         target: "launcher"
         
         function toggle() {
-            // 【关键】：这里一定要调用我们自定义的优雅开关接口！
             rofiLauncher.toggleWindow(); 
             return "LAUNCHER_TOGGLED";
         }

@@ -3,8 +3,7 @@ import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Services.Mpris
-import qs.Components
-import qs.config
+import qs.config 
 
 Item {
     id: root
@@ -15,228 +14,367 @@ Item {
 
     property string artUrl: (isActive && player.trackArtUrl) ? player.trackArtUrl : ""
     property string title: (isActive && player.trackTitle) ? player.trackTitle : "No Media"
-    property string artist: (isActive && player.trackArtist) ? player.trackArtist : ""
+    property string artist: (isActive && player.trackArtist) ? player.trackArtist : "Unknown Artist"
+    property string playerName: (isActive && player.identity) ? player.identity : "Media"
     
-    // 进度百分比 (0.0 ~ 1.0)
-    property double progress: (isActive && player.length > 0) ? (player.position / player.length) : 0
+    property double currentPos: 0
+    Timer {
+        interval: 100
+        running: root.isActive
+        repeat: true
+        onTriggered: {
+            if (root.player && !seekMa.pressed) {
+                root.currentPos = root.player.position;
+            }
+        }
+    }
+    
+    property double progress: (isActive && player.length > 0) ? (root.currentPos / player.length) : 0
 
-    ColumnLayout {
+    RowLayout {
         anchors.fill: parent
-        spacing: 15
+        // 【核心修复】：移除了 anchors.margins: 20，消除双重边距，彻底释放空间！
+        spacing: 24
 
-        // --- 顶部信息栏 (封面 + 歌名) ---
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 60
-            spacing: 15
+        // ==========================================
+        // 左侧：顶部对齐、重阴影封面
+        // ==========================================
+        Item {
+            Layout.preferredWidth: 120 
+            Layout.preferredHeight: 120
+            Layout.minimumWidth: 120
+            Layout.maximumWidth: 120
+            Layout.minimumHeight: 120
+            Layout.maximumHeight: 120
+            
+            Layout.alignment: Qt.AlignTop 
+            Layout.topMargin: 2 
 
-            // 专辑封面
-            Rectangle {
-                Layout.preferredWidth: 60
-                Layout.preferredHeight: 60
-                radius: 12
-                color: Colorscheme.background
-                clip: true
-                
+            DropShadow {
+                anchors.fill: coverContainer
+                source: coverContainer
+                color: Qt.rgba(0, 0, 0, 0.85) // 极深的透明度
+                radius: 24
+                samples: 49
+                verticalOffset: 8 
+            }
+
+            Item {
+                id: coverContainer
+                anchors.fill: parent
+
+                Rectangle {
+                    id: fallbackBg
+                    anchors.fill: parent
+                    radius: 16 
+                    color: Colorscheme.surface_container_high
+                    visible: root.artUrl === ""
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "🎵"
+                        font.pixelSize: 56
+                    }
+                }
+
                 Image {
+                    id: rawImg
                     anchors.fill: parent
                     source: root.artUrl
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
-                    visible: root.artUrl !== "" && status === Image.Ready
+                    visible: false 
                 }
-                
-                // 没封面时显示的图标
-                Text {
-                    anchors.centerIn: parent
-                    text: "♫"
-                    color: "#555"
-                    font.pixelSize: 28
-                    visible: root.artUrl === ""
-                }
-            }
 
-            // 文本信息
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                spacing: 4
-                
-                Text {
-                    text: root.title
-                    color: "white"
-                    font.bold: true
-                    font.pixelSize: 16
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
+                Rectangle {
+                    id: maskRect
+                    anchors.fill: parent
+                    radius: 16
+                    visible: false
                 }
-                Text {
-                    text: root.artist
-                    color: "#aaa"
-                    font.pixelSize: 13
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
+
+                OpacityMask {
+                    anchors.fill: parent
+                    source: rawImg
+                    maskSource: maskRect
+                    visible: root.artUrl !== "" && rawImg.status === Image.Ready
                 }
             }
         }
 
-        // --- 进度条 (可拖动 & 防爆音版) ---
-        Item {
+        // ==========================================
+        // 右侧：信息、进度条与控制台
+        // ==========================================
+        ColumnLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 10 // 稍微给点高度方便布局
+            Layout.fillHeight: true
+            spacing: 12
 
-            Rectangle {
-                id: trackBg
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                height: 6
-                color: "#333333"
-                radius: 3
-
-                // 进度填充 (白色条)
-                Rectangle {
-                    id: progressFill
-                    height: parent.height
-                    radius: 3
-                    color: "white"
-
-                    width: {
-                        if (seekMa.pressed) {
-                            let w = seekMa.mouseX;
-                            if (w < 0) return 0;
-                            if (w > trackBg.width) return trackBg.width;
-                            return w;
-                        }
-                        return Math.max(0, root.progress * trackBg.width)
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+                    
+                    Text {
+                        text: root.title
+                        color: Colorscheme.on_surface
+                        font.bold: true
+                        font.pixelSize: 20
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
                     }
-
-                    // 【优化后的动画】
-                    Behavior on width { 
-                        enabled: root.visible && !seekMa.pressed
-                        
-                        SmoothedAnimation { 
-                            // 这里的 velocity 是像素/秒。
-                            // 设为 200 意味着它不紧不慢地滑过去，不会瞬间跳变
-                            velocity: 200 
-                            
-                            // 设定一个最大时长作为保底，防止距离太远跑太久
-                            duration: 1500
-                            
-                            // 关键：设置为 Sync 模式，让它更跟手
-                            reversingMode: SmoothedAnimation.Sync
-                        } 
+                    Text {
+                        text: root.artist
+                        color: Colorscheme.on_surface_variant
+                        font.pixelSize: 14
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
                     }
                 }
 
-                // 交互区域
+                Item {
+                    Layout.preferredWidth: pillRect.width
+                    Layout.preferredHeight: pillRect.height
+                    Layout.alignment: Qt.AlignTop | Qt.AlignRight
+
+                    DropShadow {
+                        anchors.fill: pillRect
+                        source: pillRect
+                        color: Qt.rgba(0, 0, 0, 0.75)
+                        radius: 12
+                        samples: 25
+                        verticalOffset: 4
+                    }
+
+                    Rectangle {
+                        id: pillRect
+                        width: pillText.width + 24
+                        height: 26
+                        radius: 13
+                        color: Colorscheme.surface_container_highest
+
+                        Text {
+                            id: pillText
+                            anchors.centerIn: parent
+                            text: root.playerName
+                            color: Colorscheme.on_surface
+                            font.pixelSize: 11
+                            font.bold: true
+                        }
+                    }
+                }
+            }
+
+            Item { Layout.fillHeight: true } // 弹性占位符
+
+            Item {
+                id: waveContainer
+                Layout.fillWidth: true
+                Layout.preferredHeight: 36
+                
+                property real currentX: root.progress * waveContainer.width
+                property real activeX: seekMa.pressed ? Math.max(0, Math.min(seekMa.mouseX, waveContainer.width)) : currentX
+
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    height: 6
+                    radius: 3
+                    color: Colorscheme.surface_variant
+                }
+
+                Canvas {
+                    id: waveCanvas
+                    anchors.left: parent.left
+                    width: Math.max(6, waveContainer.activeX) 
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    
+                    property real phase: 0
+                    NumberAnimation on phase {
+                        loops: Animation.Infinite
+                        from: 0
+                        to: Math.PI * 2
+                        duration: 1200
+                        easing.type: Easing.Linear 
+                        running: root.isActive && root.player && root.player.isPlaying
+                    }
+                    
+                    onPhaseChanged: requestPaint()
+                    Connections {
+                        target: waveContainer
+                        function onActiveXChanged() { waveCanvas.requestPaint() }
+                    }
+
+                    onPaint: {
+                        var ctx = getContext("2d");
+                        ctx.clearRect(0, 0, width, height);
+                        
+                        let trackHeight = 6;
+                        let radius = 3;
+                        let centerY = height / 2;
+                        
+                        let w = width; 
+                        if (w < radius * 2) return;
+
+                        ctx.beginPath();
+                        ctx.moveTo(w, centerY + trackHeight/2);
+                        ctx.lineTo(radius, centerY + trackHeight/2);
+                        ctx.arcTo(0, centerY + trackHeight/2, 0, centerY, radius);
+                        ctx.arcTo(0, centerY - trackHeight/2, radius, centerY - trackHeight/2, radius);
+                        
+                        let freq1 = 0.05;
+                        let maxAmp = 6; 
+                        let fadeLen = 30; 
+                        
+                        for (let x = radius; x <= w; x++) {
+                            let leftDist = x - radius;
+                            let rightDist = w - x;
+                            let envelope = 1.0;
+                            
+                            if (leftDist < fadeLen) {
+                                envelope = Math.sin((leftDist / fadeLen) * (Math.PI / 2));
+                            }
+                            if (rightDist < fadeLen) {
+                                let envRight = Math.sin((rightDist / fadeLen) * (Math.PI / 2));
+                                if (envRight < envelope) envelope = envRight;
+                            }
+                            
+                            let wave1 = Math.sin(x * freq1 - phase);
+                            let wave2 = Math.sin(x * freq1 * 1.5 - phase * 2.0) * 0.3;
+                            
+                            let combined = (wave1 + wave2 + 1.3) / 2.6;
+                            if (combined < 0) combined = 0;
+                            if (combined > 1) combined = 1;
+                            
+                            let y = (centerY - trackHeight/2) - (combined * maxAmp * envelope);
+                            ctx.lineTo(x, y);
+                        }
+                        
+                        ctx.lineTo(w, centerY - trackHeight/2);
+                        ctx.lineTo(w, centerY + trackHeight/2);
+                        ctx.closePath();
+                        
+                        ctx.fillStyle = String(Colorscheme.primary);
+                        ctx.fill();
+                    }
+                }
+
+                Rectangle {
+                    id: progressThumb
+                    width: 14
+                    height: 14
+                    radius: 7
+                    color: Colorscheme.primary
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: waveContainer.activeX - width/2
+                    
+                    Behavior on x {
+                        enabled: !seekMa.pressed
+                        SmoothedAnimation { velocity: 400; duration: 300 }
+                    }
+                }
+
                 MouseArea {
                     id: seekMa
                     anchors.fill: parent
-                    // 上下扩大点击范围，不用瞄准那6像素
-                    anchors.margins: -6 
+                    anchors.margins: -10 
                     cursorShape: Qt.PointingHandCursor
-                    
-                    // 【核心修改 3】只在松开鼠标时发送指令，防止音频鬼畜
                     onReleased: (mouse) => {
-                        if (!root.player || root.player.length <= 0) return;
-
-                        // 限制范围
-                        let val = mouse.x;
-                        if (val < 0) val = 0;
-                        if (val > trackBg.width) val = trackBg.width;
-                        
-                        // 计算并跳转
-                        let percent = val / trackBg.width;
-                        root.player.position = percent * root.player.length;
+                        if (root.player && root.player.length > 0) {
+                            let clampedX = Math.max(0, Math.min(mouse.x, waveContainer.width));
+                            let targetPos = (clampedX / waveContainer.width) * root.player.length;
+                            root.player.position = targetPos;
+                            root.currentPos = targetPos;
+                        }
                     }
-                    
-                    // 注意：这里不需要 onClicked 或 onPositionChanged
-                    // onReleased 完美覆盖了点击跳转和拖拽跳转两种情况
                 }
             }
-        }
 
-        // --- 控制按钮 (上一曲/暂停/下一曲) ---
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            
             RowLayout {
-                anchors.centerIn: parent
-                spacing: 45 
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 40 
+
+                component CtrlBtn : Text {
+                    property bool active: false
+                    font.family: "Material Symbols Outlined"
+                    font.pixelSize: 26 
+                    color: active ? Colorscheme.primary : Colorscheme.on_surface
+                    opacity: active ? 1.0 : 0.7
+                    scale: ma.pressed ? 0.8 : (ma.containsMouse ? 1.1 : 1.0)
+                    
+                    Behavior on scale { NumberAnimation { duration: 150 } }
+                    
+                    MouseArea { 
+                        id: ma
+                        anchors.fill: parent
+                        anchors.margins: -10
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: parent.triggered() 
+                    }
+                    signal triggered() 
+                }
+
+                CtrlBtn { 
+                    text: "shuffle"
+                    active: root.player && root.player.shuffle
+                    onTriggered: if(root.player && root.player.shuffleSupported) root.player.shuffle = !root.player.shuffle 
+                } 
                 
-                // 1. 上一曲
-                MouseArea {
-                    Layout.preferredWidth: 40
-                    Layout.preferredHeight: 40
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: if(root.player) root.player.previous()
+                CtrlBtn { 
+                    text: "skip_previous"
+                    font.pixelSize: 32
+                    onTriggered: if(root.player) root.player.previous() 
+                } 
+                
+                Rectangle {
+                    width: 54 
+                    height: 54
+                    radius: 27
+                    color: Colorscheme.primary 
+                    scale: playMa.pressed ? 0.9 : (playMa.containsMouse ? 1.05 : 1.0)
                     
-                    Image {
-                        id: prevIcon
+                    Behavior on scale { NumberAnimation { duration: 150 } }
+                    
+                    Text { 
                         anchors.centerIn: parent
-                        width: 24
-                        height: 24
-                        source: SvgIcon.previous
-                        fillMode: Image.PreserveAspectFit
-                        smooth: true
-                        visible: false
+                        text: (root.player && root.player.isPlaying) ? "pause" : "play_arrow"
+                        color: Colorscheme.on_primary
+                        font.family: "Material Symbols Outlined"
+                        font.pixelSize: 34 
                     }
-                    ColorOverlay {
-                        anchors.fill: prevIcon
-                        source: prevIcon
-                        color: "white"
+                    
+                    MouseArea { 
+                        id: playMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: if(root.player) root.player.togglePlaying() 
                     }
                 }
 
-                // 2. 播放/暂停
-                MouseArea {
-                    Layout.preferredWidth: 40
-                    Layout.preferredHeight: 40
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: if(root.player) root.player.togglePlaying()
-                    
-                    Image {
-                        id: playPauseIcon
-                        anchors.centerIn: parent
-                        width: 32
-                        height: 32
-                        source: (root.player && root.player.isPlaying) ? SvgIcon.pause : SvgIcon.play
-                        fillMode: Image.PreserveAspectFit
-                        smooth: true
-                        visible: false
+                CtrlBtn { 
+                    text: "skip_next"
+                    font.pixelSize: 32
+                    onTriggered: if(root.player) root.player.next() 
+                } 
+                
+                CtrlBtn { 
+                    active: root.player && root.player.loopState !== MprisLoopState.None
+                    text: (!root.player) ? "repeat" : (root.player.loopState === MprisLoopState.Track ? "repeat_one" : "repeat")
+                    onTriggered: {
+                        if(!root.player || !root.player.loopSupported) return;
+                        if (root.player.loopState === MprisLoopState.None) root.player.loopState = MprisLoopState.Playlist; 
+                        else if (root.player.loopState === MprisLoopState.Playlist) root.player.loopState = MprisLoopState.Track; 
+                        else root.player.loopState = MprisLoopState.None;
                     }
-                    ColorOverlay {
-                        anchors.fill: playPauseIcon
-                        source: playPauseIcon
-                        color: "white"
-                    }
-                }
-
-                // 3. 下一曲
-                MouseArea {
-                    Layout.preferredWidth: 40
-                    Layout.preferredHeight: 40
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: if(root.player) root.player.next()
-                    
-                    Image {
-                        id: nextIcon
-                        anchors.centerIn: parent
-                        width: 24
-                        height: 24
-                        source: SvgIcon.next
-                        fillMode: Image.PreserveAspectFit
-                        smooth: true
-                        visible: false
-                    }
-                    ColorOverlay {
-                        anchors.fill: nextIcon
-                        source: nextIcon
-                        color: "white"
-                    }
-                }
+                } 
             }
         }
     }

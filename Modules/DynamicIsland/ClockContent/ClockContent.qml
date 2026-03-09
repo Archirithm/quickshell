@@ -108,14 +108,14 @@ Item {
                 RollingDigit {
                     targetDigit: root.h0
                     digitColor: Colorscheme.inverse_primary 
-                    digitRotation: -6 // 各自独立的倾斜角度
+                    digitRotation: -3 // 各自独立的倾斜角度
                     digitOffset: -2    // 各自独立的高低落差
                 }
                 RollingDigit {
                     targetDigit: root.h1
                     digitColor: Colorscheme.primary // 不透明的主题亮色
                     digitRotation: 3  
-                    digitOffset: -1   
+                    digitOffset: 1   
                 }
             }
 

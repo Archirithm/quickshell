@@ -16,6 +16,7 @@ import qs.Modules.DynamicIsland.LauncherContent
 import qs.Modules.DynamicIsland.DashboardContent
 import qs.Modules.DynamicIsland.LyricsContent 
 import qs.Modules.DynamicIsland.Hub
+import qs.Modules.DynamicIsland.Tools // 引入新增的工具模块
 
 Variants {
     model: Quickshell.screens
@@ -39,7 +40,7 @@ Variants {
         exclusiveZone: -1
         WlrLayershell.layer: WlrLayer.Top
 
-        WlrLayershell.keyboardFocus: (root.showLauncher || root.showDashboard || root.showHub)
+        WlrLayershell.keyboardFocus: (root.showLauncher || root.showDashboard || root.showHub || root.showTools)
             ? WlrKeyboardFocus.Exclusive 
             : WlrKeyboardFocus.None
 
@@ -71,7 +72,8 @@ Variants {
                     ctx.arc(0, height, width, 0, -Math.PI/2, true); ctx.fill();
                 }
                 Connections { 
-                    target: Colorscheme; function onBackgroundChanged() { shadowLeftEar.requestPaint() }
+                    target: Colorscheme;
+                    function onBackgroundChanged() { shadowLeftEar.requestPaint() }
                 }
             }
 
@@ -103,12 +105,14 @@ Variants {
                 width: islandWindow.earRadius
                 height: islandWindow.earRadius
                 onPaint: {
-                    var ctx = getContext("2d"); ctx.reset(); ctx.fillStyle = "black";
+                    var ctx = getContext("2d"); ctx.reset();
+                    ctx.fillStyle = "black";
                     ctx.beginPath(); ctx.moveTo(width, 0); ctx.lineTo(0, 0); ctx.lineTo(0, height);
                     ctx.arc(width, height, width, Math.PI, Math.PI*1.5, false); ctx.fill();
                 }
                 Connections { 
-                    target: Colorscheme; function onBackgroundChanged() { shadowRightEar.requestPaint() } 
+                    target: Colorscheme;
+                    function onBackgroundChanged() { shadowRightEar.requestPaint() } 
                 }
             }
         }
@@ -145,7 +149,8 @@ Variants {
                 width: islandWindow.earRadius
                 height: islandWindow.earRadius
                 onPaint: {
-                    var ctx = getContext("2d"); ctx.reset();
+                    var ctx = getContext("2d");
+                    ctx.reset();
                     ctx.fillStyle = Colorscheme.background;
                     ctx.beginPath();
                     ctx.moveTo(0, 0);                 
@@ -172,29 +177,33 @@ Variants {
                 property bool showLyrics: false 
                 property bool expanded: false
                 property bool showVolume: false
-                
                 property bool showHub: false
+                property bool showTools: false // 新增 Tools 状态
                 property int hubTabIndex: 0 
 
                 // ================= 互斥模式判定 =================
                 property bool isDashboardMode: showDashboard
                 property bool isLyricsMode: showLyrics && !showDashboard
                 property bool isLauncherMode: showLauncher && !isLyricsMode && !showDashboard
-                property bool isHubMode: showHub && !isLauncherMode && !isLyricsMode && !showDashboard
-                property bool isVolumeMode: showVolume && !expanded && !isHubMode && !isLauncherMode && !isLyricsMode && !showDashboard
-                property bool isNotifMode: notifManager.hasNotifs && !expanded && !showVolume && !isHubMode && !isLauncherMode && !isLyricsMode && !showDashboard
-                property bool isCollapsedMode: !expanded && !isNotifMode && !isVolumeMode && !isLauncherMode && !isDashboardMode && !isLyricsMode && !isHubMode
+                property bool isToolsMode: showTools && !isLauncherMode && !isLyricsMode && !showDashboard // 新增 Tools 互斥层级
+                property bool isHubMode: showHub && !isToolsMode && !isLauncherMode && !isLyricsMode && !showDashboard
+                property bool isVolumeMode: showVolume && !expanded && !isHubMode && !isToolsMode && !isLauncherMode && !isLyricsMode && !showDashboard
+                
+                // 【核心修改】：绑定全局的 NotificationManager
+                property bool isNotifMode: NotificationManager.hasNotifs && !expanded && !showVolume && !isHubMode && !isToolsMode && !isLauncherMode && !isLyricsMode && !showDashboard
+                property bool isCollapsedMode: !expanded && !isNotifMode && !isVolumeMode && !isLauncherMode && !isDashboardMode && !isLyricsMode && !isHubMode && !isToolsMode
 
                 // ================= 尺寸定义 =================
                 property int dashW: 810; property int dashH: 420
                 property int launchW: 400; property int launchH: 420 
-                
-                // 【核心修改】：绑定歌词组件的动态宽度
                 property int lyricsW: lyricsWidget.implicitWidth; property int lyricsH: 42 
-                
                 property int expandedW: 540; property int expandedH: 210
                 property int collapsedW: 220; property int collapsedH: 42 
-                property int notifW: 380; property int notifH: (notifManager.model.count * 70) + 20
+                property int toolsW: 420; property int toolsH: 72 // 新增 Tools 尺寸
+                
+                // 【核心修改】：绑定全局的 NotificationManager 动态计算高度
+                property int notifW: 380; property int notifH: (NotificationManager.model.count * 70) + 20
+                
                 property int volW: 220; property int volH: 40
                 
                 // ================= 视觉与基础属性 =================
@@ -204,10 +213,11 @@ Variants {
 
                 // ================= 目标尺寸与防时序错乱重构 =================
                 property int targetR: (expanded || isNotifMode || isVolumeMode || isLauncherMode || 
-                        isDashboardMode || isLyricsMode || isHubMode) 
+                        isDashboardMode || isLyricsMode || isHubMode || isToolsMode) 
                         ? 24 : (isCollapsedMode && islandMouseArea.containsMouse ? 18 : 16) 
 
                 property int targetW: isDashboardMode ? dashW : 
+                    isToolsMode     ? toolsW : // 插入 Tools 宽度逻辑
                     isHubMode       ? hub.implicitWidth : 
                     isLyricsMode    ? lyricsW : 
                     isLauncherMode  ? launchW : 
@@ -216,6 +226,7 @@ Variants {
                     isNotifMode     ? notifW : (collapsedW + (isCollapsedMode && islandMouseArea.containsMouse ? 16 : 0))
 
                 property int targetH: isDashboardMode ? dashH : 
+                        isToolsMode     ? toolsH : // 插入 Tools 高度逻辑
                         isHubMode       ? hub.implicitHeight : 
                         isLyricsMode    ? lyricsH : 
                         isLauncherMode  ? launchH : 
@@ -228,7 +239,6 @@ Variants {
                 property real hDamping: 1.0
                 property real rDamping: 1.0
 
-                // 恢复 QML 原生的声明式绑定
                 width: targetW
                 height: targetH
                 radius: targetR
@@ -244,15 +254,18 @@ Variants {
 
                 // ================= 动态阻尼控制 =================
                 onTargetWChanged: {
-                    let isExpanding = (targetW > width); wDamping = isExpanding ? 0.7 : 0.8; 
+                    let isExpanding = (targetW > width);
+                    wDamping = isExpanding ? 0.7 : 0.8; 
                 }
                 
                 onTargetHChanged: {
-                    let isExpanding = (targetH > height); hDamping = isExpanding ? 0.7 : 0.8;
+                    let isExpanding = (targetH > height);
+                    hDamping = isExpanding ? 0.7 : 0.8;
                 }
                 
                 onTargetRChanged: {
-                    let isExpanding = (targetR > radius); rDamping = isExpanding ? 0.7 : 0.8;
+                    let isExpanding = (targetR > radius);
+                    rDamping = isExpanding ? 0.7 : 0.8;
                 }
 
                 // ================= 官方正统物理引擎 =================
@@ -289,6 +302,7 @@ Variants {
                         root.showDashboard = false;
                         root.showLauncher = false;
                         root.showLyrics = false;
+                        root.showTools = false; // 清理 Tools 状态
                         root.expanded = false;
                     }
 
@@ -309,6 +323,14 @@ Variants {
                             closeAllOthers(); root.showHub = true; return "HUB_OPENED" 
                         }
                     }
+
+                    function tools() {
+                        if (root.showTools) { 
+                            root.showTools = false; return "TOOLS_CLOSED" 
+                        } else { 
+                            closeAllOthers(); root.showHub = false; root.showTools = true; return "TOOLS_OPENED" 
+                        }
+                    }
                 }
 
                 // ================= 音频与通知 =================
@@ -324,11 +346,10 @@ Variants {
                 }
             
                 function triggerVolumeOSD() {
-                    if (root.showDashboard || root.showHub || root.showLauncher || root.expanded || root.showLyrics) return
+                    // 当任何大型面板打开时，不触发音量OSD
+                    if (root.showDashboard || root.showHub || root.showLauncher || root.showTools || root.expanded || root.showLyrics) return
                     root.showVolume = true; volHideTimer.restart()
                 }
-
-                NotificationManager { id: notifManager }
                 
                 // ================= 媒体播放器逻辑 =================
                 property var currentPlayer: null
@@ -363,9 +384,7 @@ Variants {
                 MouseArea {
                     id: islandMouseArea  
                     anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                    
                     hoverEnabled: true   
-                    
                     enabled: !root.isNotifMode && !root.isVolumeMode 
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton
                     
@@ -373,8 +392,8 @@ Variants {
                         if (mouse.button === Qt.MiddleButton) {
                             if (root.showDashboard) root.showDashboard = false
                             else if (root.showHub) root.showHub = false 
+                            else if (root.showTools) root.showTools = false // 中键收起 Tools
                             else if (root.showLauncher) root.showLauncher = false
-                            
                             root.showLyrics = !root.showLyrics
                             if (root.showLyrics) root.expanded = false
                         } else {
@@ -382,6 +401,7 @@ Variants {
                             else if (root.showLyrics) root.showLyrics = false 
                             else if (root.showLauncher) root.showLauncher = false
                             else if (root.showHub) root.showHub = false   
+                            else if (root.showTools) root.showTools = false // 左键收起 Tools
                             else root.expanded = !root.expanded
                         }
                     }
@@ -402,7 +422,7 @@ Variants {
                         height: root.collapsedH
                         
                         player: root.currentPlayer
-                        opacity: (!root.expanded && !root.isNotifMode && !root.isVolumeMode && !root.isLauncherMode && !root.isDashboardMode && !root.isLyricsMode && !root.isHubMode) ? 1 : 0
+                        opacity: (!root.expanded && !root.isNotifMode && !root.isVolumeMode && !root.isLauncherMode && !root.isDashboardMode && !root.isLyricsMode && !root.isHubMode && !root.isToolsMode) ? 1 : 0
                         visible: opacity > 0.01; Behavior on opacity { NumberAnimation { duration: 200 } } 
                     }
                         
@@ -424,12 +444,11 @@ Variants {
                         width: root.notifW - 20
                         height: root.notifH - 20
 
-                        manager: notifManager
+                        manager: NotificationManager
                         opacity: root.isNotifMode ? 1 : 0
                         visible: opacity > 0.01; Behavior on opacity { NumberAnimation { duration: 200 } } 
                     }
                         
-                    // 【核心修改】：添加 ID
                     LyricsContent { 
                         id: lyricsWidget 
                         anchors.top: parent.top
@@ -491,6 +510,18 @@ Variants {
                         visible: opacity > 0.01
                         Behavior on opacity { NumberAnimation { duration: 200 } }
                     }
+
+                    // --- 新增的工具栏组件挂载 ---
+                    ToolsContent {
+                        anchors.top: parent.top
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: root.toolsW
+                        height: root.toolsH
+
+                        opacity: root.isToolsMode ? 1 : 0
+                        visible: opacity > 0.01
+                        Behavior on opacity { NumberAnimation { duration: 200 } }
+                    }
                 }
             }
 
@@ -502,7 +533,8 @@ Variants {
                 width: islandWindow.earRadius
                 height: islandWindow.earRadius
                 onPaint: {
-                    var ctx = getContext("2d"); ctx.reset();
+                    var ctx = getContext("2d");
+                    ctx.reset();
                     ctx.fillStyle = Colorscheme.background;
                     ctx.beginPath();
                     ctx.moveTo(width, 0);             

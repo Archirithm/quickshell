@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.config 
 
 Singleton {
     id: root
@@ -10,7 +11,9 @@ Singleton {
     property int refCount: 0
     property bool cavaAvailable: false
 
-    // 1. 检查环境是否安装了 cava
+    // 内部运行状态锁，用于配合钩子打破声明式绑定
+    property bool _internalRun: true
+
     Process {
         id: cavaCheck
         command: ["which", "cava"]
@@ -20,11 +23,31 @@ Singleton {
         }
     }
 
-    // 2. 核心：运行 Cava 并获取纯文本数字
+    // 重启缓冲定时器
+    Timer {
+        id: reviveTimer
+        interval: 500 
+        onTriggered: root._internalRun = true
+    }
+
+    // ============================================================
+    // 【保留】：精准打击的主题变更钩子
+    // ============================================================
+    Connections {
+        target: Colorscheme
+        function onBackgroundChanged() {
+            if (root.refCount > 0) {
+                // 监听到主题切换，主动打断 cava 进程并触发重启缓冲
+                root._internalRun = false; 
+                reviveTimer.restart();
+            }
+        }
+    }
+
     Process {
         id: cavaProcess
-        // 只有当有组件需要律动 (refCount > 0) 且 cava 存在时才运行，绝不浪费后台性能
-        running: root.cavaAvailable && root.refCount > 0
+        running: root.cavaAvailable && root.refCount > 0 && root._internalRun
+        
         command: ["sh", "-c", `cat <<'EOF' | cava -p /dev/stdin
 [general]
 framerate=60
@@ -46,7 +69,17 @@ monstercat=1.5
 EOF`]
 
         onRunningChanged: {
-            if (!running) root.values = new Array(30).fill(0);
+            if (!running) {
+                root.values = new Array(30).fill(0);
+            }
+        }
+
+        // 保留最基础的意外退出捕获，防止 cava 自己崩溃时彻底罢工
+        onExited: exitCode => {
+            if (root.refCount > 0) {
+                root._internalRun = false;
+                reviveTimer.restart();
+            }
         }
 
         stdout: SplitParser {

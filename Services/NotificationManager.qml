@@ -1,85 +1,113 @@
+pragma Singleton
+
 import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
+import qs.Modules.DynamicIsland.OverviewContent 
 
 Item {
     id: root
 
-    property alias model: notifModel
-    property bool hasNotifs: notifModel.count > 0
+    property alias model: popupList           
+    property bool hasNotifs: popupList.count > 0 
+    
+    property alias sysHistoryModel: sysHistoryList 
+    property alias appHistoryModel: appHistoryList 
 
-    ListModel { id: notifModel }
+    ListModel { id: popupList }
+    ListModel { id: sysHistoryList }
+    ListModel { id: appHistoryList }
 
     NotificationServer {
         id: server
         
         onNotification: (n) => {
-            // 1. 过滤播放器
             if (n.desktopEntry === "spotify" || n.desktopEntry.includes("player")) return;
 
-            // 2. 队列管理
-            if (notifModel.count >= 2) notifModel.remove(0);
-
-            // ====================================================
-            // 3. 【智能图标策略】
-            // ====================================================
-            
-            // 定义“强制使用图标”的黑名单
-            // 这些 App 的头像往往显示效果不好，我们强制它们显示 App Logo
-            const forceIconApps = [
+            const imApps = [
                 "qq", "com.tencent.qq", "linuxqq",
                 "wechat", "com.tencent.wechat", "electronic-wechat",
-                "telegram", "org.telegram.desktop", "telegram-desktop"
+                "telegram", "org.telegram.desktop", "telegram-desktop",
+                "discord", "slack", "element"
             ];
             
-            // 判断当前通知是否来自黑名单 App
-            const shouldForceIcon = forceIconApps.includes(n.desktopEntry.toLowerCase());
+            let appNameLower = (n.desktopEntry || n.appName || "").toLowerCase();
+            const isIMApp = imApps.includes(appNameLower) || 
+                            appNameLower.includes("qq") || 
+                            appNameLower.includes("wechat") || 
+                            appNameLower.includes("telegram") || 
+                            appNameLower.includes("discord");
 
             let finalImage = "";
+            let homePath = Quickshell.env("HOME") || "/home/archirithm";
 
-            // --- 分支 A: 允许显示图片 (截图工具走这里) ---
-            // 条件：不在黑名单里，且通知真的带了图片路径
-            if (!shouldForceIcon && n.image && (n.image.startsWith("/") || n.image.startsWith("file://"))) {
-                 finalImage = n.image.startsWith("/") ? "file://" + n.image : n.image;
-            }
-            // --- 分支 B: 强制/兜底显示 App 图标 (QQ走这里) ---
-            else {
-                // 依次尝试获取图标名
+            if (appNameLower.includes("qq")) {
+                finalImage = "file://" + homePath + "/.config/quickshell/assets/apps/qq.svg";
+            } else if (appNameLower.includes("wechat")) {
+                finalImage = "file://" + homePath + "/.config/quickshell/assets/apps/wechat.svg";
+            } else if (appNameLower.includes("discord")) {
+                finalImage = "file://" + homePath + "/.config/quickshell/assets/apps/discord.svg";
+            } else if (appNameLower.includes("telegram")) {
+                finalImage = "file://" + homePath + "/.config/quickshell/assets/apps/telegram.svg";
+            } 
+            else if (!isIMApp && n.image && (n.image.startsWith("/") || n.image.startsWith("file://"))) {
+                finalImage = n.image.startsWith("/") ? "file://" + n.image : n.image;
+            } else {
                 let iconName = n.appIcon || n.desktopEntry || n.icon || "";
-                
                 if (iconName !== "") {
                     if (iconName.startsWith("/") || iconName.startsWith("file://")) {
                         finalImage = iconName.startsWith("/") ? "file://" + iconName : iconName;
                     } else {
-                        // 标准系统图标
                         finalImage = "icon:" + iconName;
                     }
                 }
             }
 
-            // 4. 添加到模型
-            notifModel.append({
-                "id": n.id,
+            // 【核心修复 1】：将 id 改名为 notifId，防止在 QML UI 引擎中引起 id 关键字冲突
+            let notifData = {
+                "notifId": n.id,
                 "summary": n.summary,
                 "body": n.body,
-                "imagePath": finalImage
-            });
+                "imagePath": finalImage,
+                "time": Qt.formatTime(new Date(), "hh:mm")
+            };
 
-            // 5. 计时器
-            dismissTimer.restart();
+            if (isIMApp) {
+                appHistoryList.insert(0, notifData);
+                if (appHistoryList.count > 20) appHistoryList.remove(20);
+            } else {
+                sysHistoryList.insert(0, notifData);
+                if (sysHistoryList.count > 20) sysHistoryList.remove(20);
+            }
+
+            if (!ControlBackend.dndEnabled) {
+                popupList.insert(0, notifData);
+                if (popupList.count > 3) popupList.remove(3);
+                // 【核心修复 2】：去掉了这里的 dismissTimer.restart()，把生命周期管理权交给前端卡片
+            }
         }
     }
 
-    Timer {
-        id: dismissTimer
-        interval: 3000
-        repeat: false
-        onTriggered: notifModel.clear()
+    // 【核心修复 3】：新增唯一的 ID 追踪销毁机制，无论队列怎么上下排挤，都能精准删掉倒计时结束的那条
+    function removeByNotifId(targetId) {
+        for (let i = 0; i < popupList.count; i++) {
+            if (popupList.get(i).notifId === targetId) {
+                popupList.remove(i);
+                break;
+            }
+        }
+    }
+    
+    function removeSysHistory(index) {
+        if (index >= 0 && index < sysHistoryList.count) sysHistoryList.remove(index);
     }
 
-    function remove(index) {
-        if (index >= 0 && index < notifModel.count) notifModel.remove(index);
-        if (notifModel.count > 0) dismissTimer.restart();
-        else dismissTimer.stop();
+    function removeAppHistory(index) {
+        if (index >= 0 && index < appHistoryList.count) appHistoryList.remove(index);
+    }
+
+    function clearAllHistory() {
+        sysHistoryList.clear();
+        appHistoryList.clear();
     }
 }

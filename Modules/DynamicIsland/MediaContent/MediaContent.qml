@@ -11,6 +11,8 @@ Item {
     required property var player
     
     readonly property bool isActive: root.visible && root.player
+    // 【新增】：全局播放状态属性，用于驱动封面的缩放和阴影
+    property bool isPlaying: isActive && player && player.isPlaying
 
     property string artUrl: (isActive && player.trackArtUrl) ? player.trackArtUrl : ""
     property string title: (isActive && player.trackTitle) ? player.trackTitle : "No Media"
@@ -33,7 +35,6 @@ Item {
 
     RowLayout {
         anchors.fill: parent
-        // 【布局精调】：独立控制上下左右边距，完美避开灵动岛的圆角，防止右下角视觉下坠
         anchors.leftMargin: 16
         anchors.rightMargin: 16
         anchors.topMargin: 4
@@ -41,7 +42,7 @@ Item {
         spacing: 24
 
         // ==========================================
-        // 左侧：顶部对齐、重阴影封面 (保持你喜欢的极深阴影)
+        // 左侧：动态缩放与立体呼吸阴影封面
         // ==========================================
         Item {
             Layout.preferredWidth: 120 
@@ -50,58 +51,77 @@ Item {
             Layout.maximumWidth: 120
             Layout.minimumHeight: 120
             Layout.maximumHeight: 120
-            
             Layout.alignment: Qt.AlignTop 
             Layout.topMargin: 2 
 
-            DropShadow {
-                anchors.fill: coverContainer
-                source: coverContainer
-                color: Qt.rgba(0, 0, 0, 0.85) 
-                radius: 24
-                samples: 49
-                verticalOffset: 8 
-            }
-
+            // 【核心重构】：用一个包裹层负责所有的缩放动画，防止破坏外层 Layout
             Item {
-                id: coverContainer
-                anchors.fill: parent
+                id: scaleWrapper
+                anchors.centerIn: parent
+                width: 120
+                height: 120
+                
+                // 动画魔法：播放时保持 100% 尺寸，暂停时优雅地缩小到 80%
+                scale: root.isPlaying ? 1.0 : 0.8
+                Behavior on scale { 
+                    NumberAnimation { duration: 400; easing.type: Easing.OutQuint } 
+                }
 
-                Rectangle {
-                    id: fallbackBg
-                    anchors.fill: parent
-                    radius: 16 
-                    color: Colorscheme.surface_container_high
-                    visible: root.artUrl === ""
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "🎵"
-                        font.pixelSize: 56
+                DropShadow {
+                    anchors.fill: coverContainer
+                    source: coverContainer
+                    color: Qt.rgba(0, 0, 0, 0.85) 
+                    radius: 24
+                    samples: 49
+                    verticalOffset: 8 
+                    
+                    // 阴影魔法：播放时显现深邃立体阴影，暂停时阴影消散显得扁平
+                    opacity: root.isPlaying ? 1.0 : 0.0
+                    Behavior on opacity { 
+                        NumberAnimation { duration: 400; easing.type: Easing.OutQuint } 
                     }
                 }
 
-                Image {
-                    id: rawImg
+                Item {
+                    id: coverContainer
                     anchors.fill: parent
-                    source: root.artUrl
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    visible: false 
-                }
 
-                Rectangle {
-                    id: maskRect
-                    anchors.fill: parent
-                    radius: 16
-                    visible: false
-                }
+                    Rectangle {
+                        id: fallbackBg
+                        anchors.fill: parent
+                        radius: 16 
+                        color: Colorscheme.surface_container_high
+                        visible: root.artUrl === ""
 
-                OpacityMask {
-                    anchors.fill: parent
-                    source: rawImg
-                    maskSource: maskRect
-                    visible: root.artUrl !== "" && rawImg.status === Image.Ready
+                        Text {
+                            anchors.centerIn: parent
+                            text: "🎵"
+                            font.pixelSize: 56
+                        }
+                    }
+
+                    Image {
+                        id: rawImg
+                        anchors.fill: parent
+                        source: root.artUrl
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        visible: false 
+                    }
+
+                    Rectangle {
+                        id: maskRect
+                        anchors.fill: parent
+                        radius: 16
+                        visible: false
+                    }
+
+                    OpacityMask {
+                        anchors.fill: parent
+                        source: rawImg
+                        maskSource: maskRect
+                        visible: root.artUrl !== "" && rawImg.status === Image.Ready
+                    }
                 }
             }
         }
@@ -175,7 +195,7 @@ Item {
             Item { Layout.fillHeight: true } 
 
             // ==========================================
-            // 中间：核心重构！绝对绑定的平移波浪引擎
+            // 中间：平移波浪引擎
             // ==========================================
             Item {
                 id: waveContainer
@@ -185,7 +205,6 @@ Item {
                 property real targetX: root.progress * waveContainer.width
                 property real activeX: seekMa.pressed ? Math.max(0, Math.min(seekMa.mouseX, waveContainer.width)) : targetX
 
-                // 【物理动画核心】：统一的视觉 X 坐标，接管原本属于圆球的 SmoothedAnimation
                 property real visualX: activeX
                 Behavior on visualX {
                     enabled: root.visible && !seekMa.pressed
@@ -204,7 +223,6 @@ Item {
                 Canvas {
                     id: waveCanvas
                     anchors.left: parent.left
-                    // 【绝对绑定 1】：画布宽度强行绑定到统一的视觉坐标上
                     width: Math.max(6, waveContainer.visualX) 
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
@@ -222,7 +240,6 @@ Item {
                     onPhaseChanged: requestPaint()
                     Connections {
                         target: waveContainer
-                        // 监听 visualX 的改变以高频重绘，实现丝滑移动
                         function onVisualXChanged() { waveCanvas.requestPaint() } 
                     }
 
@@ -233,7 +250,6 @@ Item {
                         let trackHeight = 6;
                         let radius = 3;
                         let centerY = height / 2;
-                        
                         let w = width; 
                         if (w < radius * 2) return;
 
@@ -251,7 +267,6 @@ Item {
                             let leftDist = x - radius;
                             let rightDist = w - x;
                             let envelope = 1.0;
-                            
                             if (leftDist < fadeLen) {
                                 envelope = Math.sin((leftDist / fadeLen) * (Math.PI / 2));
                             }
@@ -262,7 +277,6 @@ Item {
                             
                             let wave1 = Math.sin(x * freq1 - phase);
                             let wave2 = Math.sin(x * freq1 * 1.5 - phase * 2.0) * 0.3;
-                            
                             let combined = (wave1 + wave2 + 1.3) / 2.6;
                             if (combined < 0) combined = 0;
                             if (combined > 1) combined = 1;
@@ -287,7 +301,6 @@ Item {
                     radius: 7
                     color: Colorscheme.primary
                     anchors.verticalCenter: parent.verticalCenter
-                    // 【绝对绑定 2】：圆球位置同样强行读取统一坐标，彻底移除它自身的 Behavior
                     x: waveContainer.visualX - width/2
                 }
 

@@ -1,262 +1,359 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import Qt5Compat.GraphicalEffects 
+import Quickshell
 import qs.config
+import qs.Services
 
 Item {
     id: root
     signal closeRequested() 
 
-    // 总体面板尺寸
-    implicitWidth: 720
-    implicitHeight: 360
+    implicitWidth: 860 
+    implicitHeight: 520 
+
+    property int activeSliderIndex: 0 
 
     // ============================================================
-    // 【Material You 精密几何组件库】
+    // 【组件：自带动态追踪折射的真实悬浮玻璃卡片】
     // ============================================================
-
-    // 1. 锁死为 64x64 的完美正圆 (1x1)
-    component MiniCircleBtn : Item {
-        property string icon: ""
-        property bool active: false
-        property string activeColor: Colorscheme.primary
-        property string inactiveColor: Colorscheme.surface_container_highest
-        property string iconActiveColor: Colorscheme.on_primary
-        property string iconInactiveColor: Colorscheme.on_surface
-        
-        Layout.preferredWidth: 64
-        Layout.preferredHeight: 64
-
-        Rectangle {
-            anchors.fill: parent
-            radius: width / 2 
-            
-            color: active ? activeColor : inactiveColor
-            Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutCubic } }
-            scale: btnArea.pressed ? 0.85 : (btnArea.containsMouse ? 1.05 : 1.0)
-            Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutBack } }
-
-            Text { anchors.centerIn: parent; text: icon; color: active ? iconActiveColor : iconInactiveColor; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20 }
-            MouseArea { id: btnArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: parent.parent.active = !parent.parent.active }
-        }
-    }
-
-    // 2. 动态形变胶囊 (2x1，宽度 140，高度 64)
-    component ShapeShiftTile : Rectangle {
-        id: tile
-        property string icon: ""; property string title: ""; property string subtitle: ""; property bool active: false
-        
-        Layout.columnSpan: 2
-        Layout.preferredWidth: 140 // 64*2 + 12 = 140
-        Layout.preferredHeight: 64
-        
-        radius: active ? 16 : height / 2
-        Behavior on radius { NumberAnimation { duration: 350; easing.type: Easing.OutQuint } }
-        color: active ? Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.15) : Colorscheme.surface_container_highest
-        Behavior on color { ColorAnimation { duration: 250 } }
-        scale: tileArea.pressed ? 0.94 : (tileArea.containsMouse ? 1.02 : 1.0)
-        Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutBack } }
-
-        // 【修改点】：内部色块退回小巧精致的 40x40 尺寸
-        Rectangle {
-            id: innerBlock; width: 40; height: 40; anchors.left: parent.left; anchors.leftMargin: 8; anchors.verticalCenter: parent.verticalCenter
-            radius: tile.active ? 12 : width / 2
-            Behavior on radius { NumberAnimation { duration: 350; easing.type: Easing.OutQuint } }
-            color: tile.active ? Colorscheme.primary : Colorscheme.surface_variant
-            Behavior on color { ColorAnimation { duration: 250 } }
-            Text { anchors.centerIn: parent; text: tile.icon; color: tile.active ? Colorscheme.on_primary : Colorscheme.on_surface; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 16 }
-        }
-        ColumnLayout {
-            anchors.left: innerBlock.right; anchors.leftMargin: 12; anchors.verticalCenter: parent.verticalCenter; spacing: -2
-            Text { text: tile.title; font.pixelSize: 14; font.bold: true; color: Colorscheme.on_surface }
-            Text { text: tile.subtitle; font.pixelSize: 11; opacity: 0.8; color: Colorscheme.on_surface; visible: tile.subtitle !== "" }
-        }
-        MouseArea { id: tileArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: tile.active = !tile.active }
-    }
-
-    // 3. 完美水滴滑块卡片 (彻底修复拖拽与气泡)
-    component SliderCard : Rectangle {
+    component FrostedGlassCard : Item {
         id: cardRoot
-        property string iconName: ""; property string muteIconName: ""; property bool isMuted: false; property real sliderValue: 0.5; property bool canMute: false
-        Layout.fillWidth: true; Layout.fillHeight: true 
-        radius: 24; color: Colorscheme.surface_container_low 
+        default property alias content: innerContainer.data
+        anchors.fill: parent
 
-        RowLayout {
-            anchors.fill: parent; anchors.leftMargin: 20; anchors.rightMargin: 24; spacing: 18
+        Item {
+            id: blurSourceContainer
+            anchors.fill: parent
+            visible: false
+            clip: true
 
-            Text { 
-                text: cardRoot.isMuted ? cardRoot.muteIconName : cardRoot.iconName; color: cardRoot.isMuted ? Colorscheme.error : Colorscheme.on_surface_variant; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20; Layout.preferredWidth: 26; horizontalAlignment: Text.AlignHCenter
-                MouseArea { anchors.fill: parent; anchors.margins: -10; enabled: cardRoot.canMute; cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor; onClicked: cardRoot.isMuted = !cardRoot.isMuted }
+            Image {
+                source: Colorscheme.currentWallpaperPreview
+                width: 2560; height: 1440
+                sourceSize.width: 2560; sourceSize.height: 1440
+                fillMode: Image.PreserveAspectCrop
+                
+                property real delegateX: cardRoot.parent ? cardRoot.parent.x : 0
+                property real delegateY: cardRoot.parent ? cardRoot.parent.y : 0
+                x: -1318 - delegateX - 10
+                y: -132 - delegateY - 10
+                
+                cache: false
+                asynchronous: true
+            }
+        }
+
+        FastBlur {
+            id: cardBlur
+            anchors.fill: blurSourceContainer
+            source: blurSourceContainer
+            radius: 64 
+            transparentBorder: false
+            visible: false
+        }
+
+        Rectangle { id: cardMask; anchors.fill: parent; radius: 24; visible: false }
+        OpacityMask { anchors.fill: parent; source: cardBlur; maskSource: cardMask }
+
+        Rectangle {
+            anchors.fill: parent; radius: 24
+            color: Qt.rgba(Colorscheme.surface_container_lowest.r, Colorscheme.surface_container_lowest.g, Colorscheme.surface_container_lowest.b, 0.6)
+            border.color: Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.5)
+            border.width: 1.5
+        }
+        Item { id: innerContainer; anchors.fill: parent; anchors.margins: 16 }
+    }
+
+    // ============================================================
+    // 【重构：带事件抛出的手风琴动态滑块】
+    // ============================================================
+    component ExpandableVertSlider : Item {
+        id: sliderCol
+        property int sliderIndex: 0 
+        property string icon: ""
+        property real sliderValue: 0.5
+        property bool expanded: false
+        
+        signal sliderMoved(real val) // 【新增】：向外抛出滑块拖动事件！
+
+        property real expandProgress: expanded ? 1.0 : 0.0
+        Behavior on expandProgress { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
+
+        width: 48
+        implicitHeight: 48 + (128 * expandProgress)
+
+        Rectangle {
+            width: 48; height: 48; radius: 24
+            color: sliderCol.expanded ? Colorscheme.primary : Colorscheme.surface_container_highest
+            Behavior on color { ColorAnimation { duration: 250 } }
+            Text {
+                anchors.centerIn: parent; text: sliderCol.icon; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 18
+                color: sliderCol.expanded ? Colorscheme.on_primary : Colorscheme.on_surface
+            }
+            MouseArea { 
+                anchors.fill: parent; cursorShape: Qt.PointingHandCursor; 
+                onClicked: root.activeSliderIndex = (root.activeSliderIndex === sliderCol.sliderIndex ? -1 : sliderCol.sliderIndex) 
+            }
+        }
+
+        Item {
+            y: 48 + (8 * sliderCol.expandProgress)
+            width: 48
+            height: 120 * sliderCol.expandProgress
+            opacity: sliderCol.expandProgress
+            
+            Item {
+                anchors.centerIn: parent
+                width: 16; height: parent.height - 4
+                clip: true
+
+                Rectangle {
+                    anchors.fill: parent; radius: 8
+                    color: Colorscheme.surface_container_lowest
+
+                    Rectangle {
+                        x: parent.width / 2 - width / 2; y: 4
+                        width: 4; height: parent.height - 8; radius: 2; color: Colorscheme.surface_container_highest
+                        Rectangle {
+                            width: parent.width; height: (1.0 - vSlider.visualPosition) * parent.height; y: vSlider.visualPosition * parent.height
+                            radius: 2; color: Colorscheme.primary
+                        }
+                    }
+                }
             }
 
             Slider {
-                id: control
-                Layout.fillWidth: true
-                implicitHeight: 32 // 必须设置，否则热区为 0
-                hoverEnabled: true 
-                enabled: !cardRoot.isMuted
-                opacity: cardRoot.isMuted ? 0.4 : 1.0
+                id: vSlider
+                orientation: Qt.Vertical
+                anchors.fill: parent; anchors.margins: 4
+                value: sliderCol.sliderValue
+                hoverEnabled: true
+                background: Item {} 
                 
-                Binding { target: control; property: "value"; value: cardRoot.isMuted ? 0 : cardRoot.sliderValue; when: !control.pressed }
-                onMoved: { if (!cardRoot.isMuted) cardRoot.sliderValue = control.value }
+                // 【核心联动】：当用户拖拽时，向外抛出事件通知后端！
+                onMoved: sliderCol.sliderMoved(value)
 
-                background: Item {
-                    x: control.leftPadding; y: control.topPadding + control.availableHeight / 2 - height / 2; width: control.availableWidth; height: 16 
-                    Rectangle { anchors.fill: parent; radius: 8; color: Colorscheme.surface_container_highest }
-                    Rectangle { width: Math.max(0, control.visualPosition * parent.width); height: parent.height; color: Colorscheme.primary; radius: 8 }
-                }
-                
                 handle: Rectangle {
-                    x: control.leftPadding + control.visualPosition * (control.availableWidth - width); y: control.topPadding + control.availableHeight / 2 - height / 2; width: 4; height: 32; radius: 2; color: Colorscheme.on_surface 
+                    x: vSlider.leftPadding + vSlider.availableWidth / 2 - width / 2
+                    y: vSlider.topPadding + vSlider.visualPosition * (vSlider.availableHeight - height)
+                    width: 12; height: 12; radius: 6; color: Colorscheme.primary
+
                     Item {
-                        anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.top; anchors.bottomMargin: 8; width: 36; height: 36
-                        visible: control.pressed || control.hovered; opacity: visible ? 1 : 0
+                        anchors.left: parent.right
+                        anchors.leftMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 36; height: 36
+                        visible: vSlider.pressed || vSlider.hovered
+                        opacity: visible ? 1.0 : 0.0
                         Behavior on opacity { NumberAnimation { duration: 150 } }
+
                         Rectangle { anchors.fill: parent; radius: 18; color: Colorscheme.primary_container }
-                        Rectangle { width: 14; height: 14; radius: 2; color: Colorscheme.primary_container; rotation: 45; anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: -4; z: -1 }
-                        Text { anchors.centerIn: parent; text: Math.round(control.value * 100); color: Colorscheme.on_primary_container; font.pixelSize: 14; font.bold: true; font.family: "JetBrainsMono Nerd Font" }
+                        Rectangle { 
+                            width: 12; height: 12; radius: 2; color: Colorscheme.primary_container; rotation: 45
+                            anchors.left: parent.left; anchors.leftMargin: -4; anchors.verticalCenter: parent.verticalCenter
+                            z: -1
+                        }
+                        Text { 
+                            anchors.centerIn: parent
+                            text: Math.round(vSlider.value * 100)
+                            color: Colorscheme.on_primary_container
+                            font.pixelSize: 14; font.bold: true
+                            font.family: "JetBrainsMono Nerd Font" 
+                        }
                     }
                 }
             }
-            Text { text: cardRoot.isMuted ? "Muted" : Math.round(control.value * 100) + "%"; color: cardRoot.isMuted ? Colorscheme.error : Colorscheme.on_surface_variant; font.pixelSize: 14; font.bold: true; font.family: "JetBrainsMono Nerd Font"; Layout.preferredWidth: 44; horizontalAlignment: Text.AlignRight }
         }
     }
 
-    // ============================================================
-    // 【主体布局区】
-    // ============================================================
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 24
-        spacing: 24
+        anchors.margins: 32 
+        spacing: 24 
 
-        // ============================================================
-        // 【左半区：精准数学算法，292px 极简居中矩阵】
-        // ============================================================
+        // ==========================================
+        // 【第一列】：绑定真理大脑的实体滑块组
+        // ==========================================
         ColumnLayout {
-            // 左侧总宽: 64*4 + 12*3 = 292
-            Layout.preferredWidth: 292
-            Layout.maximumWidth: 292
-            Layout.minimumWidth: 292
+            z: 100 
+            Layout.preferredWidth: 48
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignTop
+            spacing: 12
+
+            ExpandableVertSlider { 
+                sliderIndex: 0; icon: ""; 
+                expanded: root.activeSliderIndex === 0 
+                // 绑定你原有的 Volume 单例
+                sliderValue: Volume.sinkVolume
+                onSliderMoved: (val) => Volume.setSinkVolume(val)
+            } 
+            ExpandableVertSlider { 
+                sliderIndex: 1; icon: ""; 
+                expanded: root.activeSliderIndex === 1 
+                
+                // 【修改】：绑定到专门的 Audio 服务大脑！
+                sliderValue: Volume.sourceVolume
+                onSliderMoved: (val) => Volume.setSourceVolume(val)
+            }
+            ExpandableVertSlider { 
+                sliderIndex: 2; icon: ""; 
+                expanded: root.activeSliderIndex === 2 
+                // 绑定新建立的 ControlBackend 大脑
+                sliderValue: ControlBackend.brightnessValue
+                onSliderMoved: (val) => ControlBackend.setBrightness(val)
+            }
+            
+            Item { Layout.fillHeight: true } 
+        }
+
+        // ==========================================
+        // 【第二列】：系统状态 + 日历 (320px)
+        // ==========================================
+        ColumnLayout {
+            Layout.preferredWidth: 320 
+            Layout.maximumWidth: 320 
+            Layout.minimumWidth: 320
+            Layout.fillHeight: true
+            spacing: 20
+
+            SysInfoWidget { Layout.fillWidth: true; Layout.preferredHeight: 115 }
+            CalendarWidget { Layout.fillWidth: true; Layout.fillHeight: true }
+        }
+
+        // ==========================================
+        // 【第三列】：壁纸大洞 + 悬浮外溢卡片 + 点缀箭头
+        // ==========================================
+        Item {
+            Layout.fillWidth: true
             Layout.fillHeight: true
 
-            Item { Layout.fillHeight: true } // 上弹性弹簧，保证不被强行拉扯
+            Item {
+                id: wallpaperBase
+                anchors.fill: parent
+                anchors.leftMargin: 20  
+                anchors.rightMargin: 20 
 
-            GridLayout {
-                Layout.fillWidth: true
-                columns: 4
-                rowSpacing: 12
-                columnSpacing: 12
+                Item {
+                    id: wallpaperWrapper
+                    anchors.fill: parent
+                    clip: true 
+                    visible: false
 
-                // --- 第一/二排：2x2 完美的圆角正方形 (140x140) ---
-                Rectangle {
-                    Layout.rowSpan: 2
-                    Layout.columnSpan: 2
-                    Layout.preferredWidth: 140 
-                    Layout.preferredHeight: 140
-                    radius: 32 
-                    color: Colorscheme.surface_container_highest
-
-                    GridLayout {
-                        anchors.fill: parent; anchors.margins: 14 
-                        columns: 2; rowSpacing: 10; columnSpacing: 10
-
-                        component AppBtn : Rectangle {
-                            property string icon: ""; property color bgColor: "transparent"; property color fgColor: "white"
-                            Layout.fillWidth: true; Layout.fillHeight: true; radius: 14 
-                            color: bgColor
-                            scale: appArea.pressed ? 0.88 : (appArea.containsMouse ? 1.08 : 1.0)
-                            Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
-                            Text { anchors.centerIn: parent; text: icon; color: fgColor; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 22 }
-                            MouseArea { id: appArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeRequested() }
-                        }
-
-                        AppBtn { icon: ""; bgColor: Colorscheme.primary; fgColor: Colorscheme.on_primary } // 浏览器
-                        AppBtn { icon: ""; bgColor: Colorscheme.tertiary; fgColor: Colorscheme.on_tertiary } // 网络
-                        AppBtn { icon: ""; bgColor: Colorscheme.inverse_surface; fgColor: Colorscheme.inverse_on_surface } // GitHub
-                        AppBtn { icon: ""; bgColor: Colorscheme.error; fgColor: Colorscheme.on_error } // 哔哩哔哩
+                    Image {
+                        id: rawWallpaper
+                        source: Colorscheme.currentWallpaperPreview
+                        width: 2560; height: 1440
+                        sourceSize.width: 2560; sourceSize.height: 1440
+                        fillMode: Image.PreserveAspectCrop
+                        
+                        x: -1318  
+                        y: -132  
+                        
+                        cache: false
+                        asynchronous: true
                     }
                 }
-                
-                // 右侧自动掉入一、二排的胶囊
-                ShapeShiftTile { icon: ""; title: "Wi-Fi"; subtitle: "Qs_5G"; active: true }
-                ShapeShiftTile { icon: ""; title: "蓝牙"; subtitle: "已连接"; active: true }
 
-                // --- 第三排：Power Profile (216x64) + 明暗模式 (64x64) ---
-                Rectangle {
-                    id: powerBar
-                    Layout.columnSpan: 3
-                    Layout.preferredWidth: 216 // 64*3 + 12*2
-                    Layout.preferredHeight: 64
-                    radius: height / 2; color: Colorscheme.surface_container_highest
+                Rectangle { id: holeMask; anchors.fill: parent; radius: 24; visible: false }
+                OpacityMask { anchors.fill: parent; source: wallpaperWrapper; maskSource: holeMask }
+            }
+
+            // --- 2. 悬浮的毛玻璃轮盘卡片 ---
+            Item {
+                id: carouselContainer
+                anchors.fill: wallpaperBase
+
+                // 【核心修复】：将组件预先打包，避开 ObjectModel
+                Component {
+                    id: scheduleCard
+                    ScheduleWidget { anchors.fill: parent }
+                }
+
+                Component {
+                    id: controlCard
+                    ControlCenterWidget { anchors.fill: parent }
+                }
+
+                PathView {
+                    id: carouselView
+                    anchors.fill: parent
                     
-                    property int currentIndex: 1; property var modes: ["", "", ""]
+                    // 【核心修复】：直接使用纯数字模型 (0 和 1)
+                    model: 2
+                    pathItemCount: 2
                     
-                    Rectangle {
-                        id: indicator; width: 52; height: 52; radius: 26; color: Colorscheme.primary; y: 6 
-                        property real segmentWidth: powerBar.width / 3; x: (powerBar.currentIndex * segmentWidth) + ((segmentWidth - width) / 2)
-                        Behavior on x { NumberAnimation { duration: 350; easing.type: Easing.OutCubic } }
-                        Behavior on color { ColorAnimation { duration: 250 } }
-                    }
-                    Row {
-                        anchors.fill: parent
-                        Repeater {
-                            model: powerBar.modes.length
-                            Item {
-                                width: powerBar.width / 3; height: powerBar.height
-                                Text { anchors.centerIn: parent; text: powerBar.modes[index]; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 18; color: powerBar.currentIndex === index ? Colorscheme.on_primary : Colorscheme.on_surface; Behavior on color { ColorAnimation { duration: 300 } } }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: powerBar.currentIndex = index }
+                    // 使用动态 Loader 进行渲染，100% 稳定不出错
+                    delegate: Item {
+                        width: carouselView.width
+                        height: carouselView.height 
+                        
+                        FrostedGlassCard { 
+                            anchors.fill: parent
+                            anchors.margins: 10 
+                            
+                            Loader {
+                                anchors.fill: parent
+                                // 根据 index 动态决定加载课表还是控制中心
+                                sourceComponent: index === 0 ? scheduleCard : controlCard
                             }
                         }
                     }
-                }
-                MiniCircleBtn { icon: ""; active: true } 
 
-                // --- 第四排：4个 64x64 纯正圆 ---
-                MiniCircleBtn { icon: "" } 
-                MiniCircleBtn { icon: ""; active: true } 
-                MiniCircleBtn { icon: ""; activeColor: Colorscheme.error; iconActiveColor: Colorscheme.on_error; MouseArea { anchors.fill: parent; onClicked: root.closeRequested() } } 
-                MiniCircleBtn { icon: ""; activeColor: Colorscheme.error; iconActiveColor: Colorscheme.on_error; MouseArea { anchors.fill: parent; onClicked: root.closeRequested() } } 
+                    preferredHighlightBegin: 0.5
+                    preferredHighlightEnd: 0.5
+                    highlightRangeMode: PathView.StrictlyEnforceRange
+                    snapMode: PathView.SnapToItem
+                    
+                    clip: true 
+                    interactive: false 
+
+                    path: Path {
+                        startX: -carouselView.width / 2
+                        startY: carouselView.height / 2
+                        PathLine { x: carouselView.width * 1.5; y: carouselView.height / 2 }
+                    }
+                }
             }
 
-            Item { Layout.fillHeight: true } // 下弹性弹簧
-        }
-
-        // ============================================================
-        // 【极简分割线】
-        // ============================================================
-        Rectangle { Layout.preferredWidth: 2; Layout.fillHeight: true; color: Colorscheme.outline; opacity: 0.15; radius: 1 }
-
-        // ============================================================
-        // 【右半区：滑块区 + 底部设置电源组】
-        // ============================================================
-        ColumnLayout {
-            Layout.fillWidth: true; Layout.fillHeight: true; spacing: 18 
-
-            // 三大滑块 (自适应高度，完全释放)
-            SliderCard { iconName: ""; muteIconName: ""; sliderValue: 0.8; canMute: true }
-            SliderCard { iconName: ""; muteIconName: ""; sliderValue: 0.5; canMute: true }
-            SliderCard { iconName: ""; sliderValue: 0.75; canMute: false }
-
-            // 角落控制组
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 52 
-                spacing: 16
-
-                Item { Layout.fillWidth: true } 
-
-                component CornerBtn : Rectangle {
-                    property string icon: ""; property color iconColor: "white"
-                    width: 52; height: 52; radius: 18 // 无边框大圆角
-                    scale: csArea.pressed ? 0.88 : (csArea.containsMouse ? 1.05 : 1.0)
-                    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
-                    Text { anchors.centerIn: parent; text: icon; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 22; color: parent.iconColor }
-                    MouseArea { id: csArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeRequested() }
+            Text {
+                id: leftArrow
+                anchors.right: wallpaperBase.left
+                anchors.rightMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+                text: "" 
+                font.family: "Font Awesome 6 Free Solid"
+                font.pixelSize: 20
+                color: Colorscheme.on_surface_variant
+                opacity: leftMouse.containsMouse ? 1.0 : 0.6
+                Behavior on opacity { NumberAnimation { duration: 150 } }
+                
+                MouseArea { 
+                    id: leftMouse; anchors.fill: parent; anchors.margins: -12; 
+                    cursorShape: Qt.PointingHandCursor; 
+                    onClicked: carouselView.incrementCurrentIndex() 
                 }
+            }
 
-                CornerBtn { icon: ""; color: Colorscheme.tertiary_container; iconColor: Colorscheme.on_tertiary_container } // 设置
-                CornerBtn { icon: ""; color: Colorscheme.error; iconColor: Colorscheme.on_error } // 关机
+            Text {
+                id: rightArrow
+                anchors.left: wallpaperBase.right
+                anchors.leftMargin: 10
+                anchors.verticalCenter: parent.verticalCenter
+                text: "" 
+                font.family: "Font Awesome 6 Free Solid"
+                font.pixelSize: 20
+                color: Colorscheme.on_surface_variant
+                opacity: rightMouse.containsMouse ? 1.0 : 0.6
+                Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                MouseArea { 
+                    id: rightMouse; anchors.fill: parent; anchors.margins: -12; 
+                    cursorShape: Qt.PointingHandCursor; 
+                    onClicked: carouselView.decrementCurrentIndex() 
+                }
             }
         }
     }

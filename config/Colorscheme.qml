@@ -58,6 +58,8 @@ Singleton {
     property color tertiary_fixed : "#e1e0ff"
     property color tertiary_fixed_dim : "#c3c3eb"
 
+    property string currentWallpaperPreview: "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current"
+
     // 纯净版热重载引擎
     FileView {
         id: colorFile

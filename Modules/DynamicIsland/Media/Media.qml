@@ -326,7 +326,7 @@ Item {
                 id: infoContainer
                 width: parent.width
                 x: 0
-                y: coverContainer.y + coverContainer.height + 16
+                y: coverContainer.y + coverContainer.height - 8
                 spacing: 2 
 
                 Text { text: root.title; color: "white"; font.pixelSize: 20; font.bold: true; Layout.alignment: Qt.AlignHCenter; elide: Text.ElideRight; Layout.maximumWidth: root.width - 80 }

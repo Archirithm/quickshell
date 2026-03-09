@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects // <-- 必须引入特效库
+import Qt5Compat.GraphicalEffects 
 import Quickshell
 import Quickshell.Io
 import qs.config
@@ -10,7 +10,7 @@ Item {
     signal wallpaperChanged()
 
     property string wallpaperPath: Quickshell.env("HOME") + "/.config/wallpaper"
-    property var allWallpapers: [] // 缓存数组，用于搜索过滤
+    property var allWallpapers: [] 
     
     ListModel { id: wallpaperModel }
 
@@ -32,15 +32,12 @@ Item {
 
     onVisibleChanged: {
         if (visible) {
-            // 把原来的 view.forceActiveFocus() 改成下面这行：
-            searchInput.forceActiveFocus(); 
-            
+            searchInput.forceActiveFocus();
             if (wallpaperModel.count === 0 && root.allWallpapers.length === 0) scanWallpapers.running = true;
-            searchInput.text = ""; // 每次打开清空搜索
+            searchInput.text = "";
         }
     }
 
-    // 根据搜索词过滤壁纸
     function filterWallpapers(query) {
         wallpaperModel.clear();
         var q = query.toLowerCase();
@@ -62,7 +59,7 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: searchContainer.top // 底部留给搜索框
+        anchors.bottom: searchContainer.top 
         
         pathItemCount: 5
         preferredHighlightBegin: 0.5
@@ -79,45 +76,68 @@ Item {
         Keys.onEnterPressed: applyWallpaper()
 
         path: Path {
-            startX: -81
-            startY: view.height / 2
-            PathLine { x: view.width + 81; y: view.height / 2 }
+            startX: 20
+            startY: view.height / 2 + 15 
+            PathLine { 
+                x: view.width - 20
+                y: view.height / 2 + 15 
+            }
         }
 
         delegate: Item {
-            width: 162; height: 180 // 增加高度以容纳文字
-            property bool isCurrent: PathView.isCurrentItem
+            id: delegateRoot
+            width: 200  
+            height: 240 
             
-            // 缩放和动画的统一外层
-            Item {
-                anchors.centerIn: parent
-                width: 140; height: 110
-                scale: isCurrent ? 1.6 : 0.9
-                opacity: isCurrent ? 1.0 : 0.5
-                z: isCurrent ? 100 : 0
-                
-                Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-                Behavior on opacity { NumberAnimation { duration: 250 } }
+            z: PathView.isCurrentItem ? 100 : 0
+            property bool isCurrent: PathView.isCurrentItem
 
-                // ==========================================
-                // DayNightSwitch 同款的层级遮罩写法
-                // ==========================================
+            Item {
+                id: imageWrapper
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: -20 
+                
+                width: 160  
+                height: 90
+                
+                scale: isCurrent ? 1.5 : 1.0 
+                opacity: isCurrent ? 1.0 : 0.6 
+                
+                Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 8
+                    color: "black"
+                    visible: isCurrent 
+                    opacity: isCurrent ? 1.0 : 0.0
+                    
+                    layer.enabled: true
+                    layer.effect: DropShadow {
+                        transparentBorder: true
+                        radius: 20
+                        samples: 41
+                        color: Qt.rgba(0, 0, 0, 0.6)
+                        verticalOffset: 6
+                    }
+                    Behavior on opacity { NumberAnimation { duration: 300 } }
+                }
+
                 Item {
                     id: imgRect
-                    width: 140; height: 78
-                    anchors.top: parent.top
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.fill: parent
 
                     layer.enabled: true
                     layer.effect: OpacityMask {
                         maskSource: Rectangle {
-                            width: imgRect.width; height: imgRect.height
-                            radius: 8 // 因为有1.6倍放大，8*1.6 实际渲染出约 12.8 的圆角
+                            width: imgRect.width
+                            height: imgRect.height
+                            radius: 8 
                             visible: false
                         }
                     }
 
-                    // 垫一个背景色，防止图片加载时透明
                     Rectangle {
                         anchors.fill: parent
                         color: Colorscheme.background
@@ -127,27 +147,28 @@ Item {
                         anchors.fill: parent
                         source: "file://" + model.path
                         fillMode: Image.PreserveAspectCrop
-                        sourceSize.width: 320 
+                        sourceSize.width: 512
                         asynchronous: true
                         cache: true
                         visible: status === Image.Ready
                     }
                 }
+            }
 
-                // 文件名文字
-                Text {
-                    anchors.top: imgRect.bottom
-                    anchors.topMargin: 8
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    width: parent.width
-                    // 提取文件名并去除后缀
-                    text: model.path.substring(model.path.lastIndexOf('/') + 1).split('.')[0]
-                    color: "white" 
-                    font.pixelSize: 10 // 字体稍小，配合 1.6 倍的 scale
-                    font.weight: isCurrent ? Font.Bold : Font.Normal
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                }
+            Text {
+                anchors.top: imageWrapper.bottom
+                anchors.topMargin: isCurrent ? 30 : 8 
+                Behavior on anchors.topMargin { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width
+                
+                text: model.path.substring(model.path.lastIndexOf('/') + 1).split('.')[0]
+                color: "white" 
+                font.pixelSize: 11
+                font.weight: isCurrent ? Font.Bold : Font.Normal
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
             }
 
             TapHandler {
@@ -166,11 +187,13 @@ Item {
         id: searchContainer
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 15
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: parent.width * 0.9 // 占总宽 90%
-        height: 36
-        radius: 8
-        color: Qt.rgba(0.1, 0.1, 0.1, 0.8) // 半透明深色，可换成 Colorscheme.surface
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: 20
+        anchors.rightMargin: 20
+        height: 40
+        radius: 10
+        color: Qt.rgba(0.12, 0.12, 0.12, 0.85)
 
         Row {
             anchors.fill: parent
@@ -201,15 +224,12 @@ Item {
 
                 onTextChanged: root.filterWallpapers(text)
 
-                // 1. 焦点在输入框时直接回车应用壁纸 [cite: 447]
                 Keys.onReturnPressed: root.applyWallpaper()
                 Keys.onEnterPressed: root.applyWallpaper()
 
-                // 2. 解决焦点冲突：引入上下键来切换壁纸
                 Keys.onUpPressed: (event) => { view.decrementCurrentIndex(); event.accepted = true }
                 Keys.onDownPressed: (event) => { view.incrementCurrentIndex(); event.accepted = true }
 
-                // 3. 智能左右键逻辑：当搜索框为空，或光标在最边缘时，左右键切换壁纸，否则正常移动光标
                 Keys.onLeftPressed: (event) => {
                     if (text.length === 0 || cursorPosition === 0) {
                         view.decrementCurrentIndex();
@@ -225,7 +245,6 @@ Item {
             }
         }
         
-        // 清空按钮 (x)
         MouseArea {
             anchors.right: parent.right
             anchors.top: parent.top
@@ -246,10 +265,14 @@ Item {
             }
         }
     }
-
+    
     function applyWallpaper() {
         if (wallpaperModel.count === 0) return;
         var currentPath = wallpaperModel.get(view.currentIndex).path;
+
+        // 【核心修复】：将最新的壁纸路径立即同步给 Quickshell 全局变量！
+        Colorscheme.currentWallpaperPreview = "file://" + currentPath;
+
         var home = Quickshell.env("HOME");
         
         var swwwCmd = "swww img \"" + currentPath + "\" " +
@@ -260,7 +283,6 @@ Item {
                   
         var matugenCmd = "matugen image \"" + currentPath + "\"";
         var overviewCmd = "bash " + home + "/.config/quickshell/scripts/overview.sh \"" + currentPath + "\"";
-        
         var combinedCmd = swwwCmd + " ; " + matugenCmd + " ; " + overviewCmd + " &";
         runScript.command = ["bash", "-c", combinedCmd];
         runScript.running = true;

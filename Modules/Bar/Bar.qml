@@ -6,14 +6,14 @@ import QtQuick.Layouts
 import qs.Modules.Bar.Workspaces
 import qs.Modules.Bar.Clock
 import qs.Modules.Bar.Tray
-import qs.Modules.Bar.Cava
+// import qs.Modules.Bar.Cava
 import qs.Modules.Bar.Network
 import qs.Modules.Bar.Volume
 import qs.Modules.Bar.PowerButton
-import qs.Modules.Bar.PowerProfile
+// import qs.Modules.Bar.PowerProfile
 import qs.Modules.Bar.SysMonitor
 import qs.Modules.Bar.NotificationButton
-import qs.Modules.Bar.DayNightSwitch
+// import qs.Modules.Bar.DayNightSwitch
 // 删除了对 DynamicIsland 的引入
 
 Variants {
@@ -48,8 +48,8 @@ Variants {
                 anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
                 spacing: 10
                 Workspaces {}
-                Cava {}
-                DayNightSwitch {}
+                // Cava {}
+                // DayNightSwitch {}
             }
 
             // --- 右侧组件 ---
@@ -60,7 +60,7 @@ Variants {
                 SysMonitor { Layout.alignment: Qt.AlignVCenter }
                 Tray {}
                 
-                PowerProfile { Layout.alignment: Qt.AlignVCenter } 
+                // PowerProfile { Layout.alignment: Qt.AlignVCenter } 
                 Network {}
                 Volume {}
                 

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects 
 import Quickshell
+import Quickshell.Io          // 【新增】：必须引入 IO 模块以支持命令行 Process
 import Quickshell.Wayland
 import qs.config
 
@@ -26,13 +27,36 @@ PanelWindow {
 
     property int currentMode: 0 
     
-    // 始终优先读取实时选中的壁纸预览图，否则读取软链接
+    // 【核心修复 1】：废除容易被缓存坑的软链接，直接绑定全局真理变量 Colorscheme.currentWallpaperPreview
     property string previewImage: (currentMode === 2 && wallpaperPage.currentSelectedPreview !== "") 
                                   ? wallpaperPage.currentSelectedPreview 
-                                  : "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current"
+                                  : (Colorscheme.currentWallpaperPreview !== "" ? Colorscheme.currentWallpaperPreview : "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current")
+
+    // ==========================================
+    // 【全局壁纸强制同步引擎】
+    // ==========================================
+    Process {
+        id: syncGlobalWallpaper
+        command: ["bash", "-c", "swww query | awk -F 'image: ' '{print $2}' | head -n 1"]
+        running: false
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: (path) => {
+                let currentPath = path.trim().replace(/^"|"$/g, '');
+                if (currentPath !== "") {
+                    // 获取到真实的绝对路径，强行刷新全局变量，QML 图片缓存瞬间失效并更新
+                    Colorscheme.currentWallpaperPreview = "file://" + currentPath;
+                }
+            }
+        }
+    }
 
     onVisibleChanged: {
         if (visible) {
+            // 【核心修复 2】：每次打开 Launcher，第一时间强制核实并同步系统真实壁纸！
+            syncGlobalWallpaper.running = false;
+            syncGlobalWallpaper.running = true;
+
             // 智能焦点路由
             if (currentMode === 0) appPage.forceSearchFocus()
             else if (currentMode === 1) windowPage.forceSearchFocus()

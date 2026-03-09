@@ -26,7 +26,7 @@ Item {
     Process {
         id: scanWallpapers
         command: ["bash", "-c", "find " + root.wallpaperPath + " -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort"]
-        running: false // 改为默认不运行，在每次打开窗口时由 onVisibleChanged 触发
+        running: false 
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: (file) => {
@@ -38,44 +38,34 @@ Item {
         }
         onExited: {
             root.isLoading = false
-            getCurrentWallpaper.running = true
-        }
-    }
+            
+            // 【核心优化】：彻底抛弃底层的 swww query 进程！
+            // 直接白嫖 LauncherWindow 刚打开时就已经查好的全局变量
+            let currentPath = Colorscheme.currentWallpaperPreview.replace("file://", "");
+            
+            if (currentPath === "") return;
 
-    // ==========================================
-    // 渲染引擎审问器 (swww query)
-    // ==========================================
-    Process {
-        id: getCurrentWallpaper
-        command: ["bash", "-c", "swww query | awk -F 'image: ' '{print $2}' | head -n 1"]
-        running: false
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: (path) => {
-                let currentPath = path.trim();
-                currentPath = currentPath.replace(/^"|"$/g, '');
-                
-                if (currentPath === "") return;
-
-                for (let i = 0; i < wallpaperModel.count; i++) {
-                    if (wallpaperModel.get(i).path === currentPath) {
-                        wallpaperList.currentIndex = i;
-                        root.currentSelectedPreview = "file://" + currentPath;
-                        wallpaperList.positionViewAtIndex(i, ListView.Center);
-                        break;
-                    }
+            for (let i = 0; i < wallpaperModel.count; i++) {
+                if (wallpaperModel.get(i).path === currentPath) {
+                    wallpaperList.currentIndex = i;
+                    // 初始化当前页面的预览变量
+                    root.currentSelectedPreview = Colorscheme.currentWallpaperPreview;
+                    // 自动滚动到当前选中的壁纸位置
+                    wallpaperList.positionViewAtIndex(i, ListView.Center);
+                    break;
                 }
             }
         }
     }
 
-    // 每次 Launcher 显示时触发：清空列表并重新扫描，完美解决新加图片不显示的问题！
+    // 删除了原先冗余的 Process { id: getCurrentWallpaper ... } 
+
     onVisibleChanged: {
         if (visible) {
             wallpaperModel.clear()
             root.isLoading = true
             scanWallpapers.running = true
-        }
+        } 
     }
 
     // ==========================================
@@ -159,32 +149,29 @@ Item {
     }
 
     // ==========================================
-    // 脚本执行引擎：干净的拼接命令
+    // 脚本执行引擎
     // ==========================================
     function applyWallpaper() {
         if (wallpaperModel.count === 0 || wallpaperList.currentIndex < 0) return
         
-        // 【防抖锁】：如果当前正有脚本在后台跑，直接拦截本次重复触发！
         if (runScript.running) {
             console.log("Wallpaper switch in progress, ignoring extra triggers...")
             return
         }
         
         let currentPath = wallpaperModel.get(wallpaperList.currentIndex).path
+        
+        Colorscheme.currentWallpaperPreview = "file://" + currentPath;
+        
         let home = Quickshell.env("HOME")
         
-        // 【剔除冗余】：删掉了 QML 里的 cachePath 变量和 ln -sf 命令
-        // 加上了 60 帧和丝滑的贝塞尔曲线
-        let scriptContent = "swww img '" + currentPath + "' --transition-type any --transition-duration 3 --transition-fps 60 --transition-bezier .43,1.19,1,.4; " +
-                           "matugen image '" + currentPath + "'; " +
+        let scriptContent = "swww img '" + currentPath + "' --transition-type any --transition-duration 3 --transition-fps 60 --transition-bezier .43,1.19,1,.4;\n" +
+                            "matugen image '" + currentPath + "';\n" +
                            "bash '" + home + "/.config/quickshell/scripts/overview.sh' '" + currentPath + "'"
                            
         runScript.command = ["bash", "-c", scriptContent]
         runScript.running = true
     }
 
-    Process { 
-        id: runScript 
-        // 脚本执行完毕后，running 状态会自动恢复为 false，锁自动解开
-    }
+    Process { id: runScript }
 }

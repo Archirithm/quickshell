@@ -7,36 +7,61 @@ import QtQuick
 Singleton {
     id: root
 
-    // 追踪音频对象变化
+    // ============================================================
+    // 【底层追踪引擎】
+    // ============================================================
     PwObjectTracker {
         objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
     }
 
-    // --- 核心逻辑：判断是否是耳机 ---
+    // --- 智能设备判断 ---
     property bool isHeadphone: {
         if (!Pipewire.defaultAudioSink) return false
-        
-        // 获取设备描述 (Description) 或 属性 (Properties)
-        // 转换为小写并查找 "headphone" 关键字
         const desc = (Pipewire.defaultAudioSink.description || "").toLowerCase()
         return desc.includes("headphone")
     }
 
-    // --- 音量与静音状态 ---
+    // ============================================================
+    // 【扬声器 (Sink) 状态与控制】
+    // ============================================================
     property bool sinkMuted: Pipewire.defaultAudioSink ? Pipewire.defaultAudioSink.audio.muted : false
     property real sinkVolume: Pipewire.defaultAudioSink ? Pipewire.defaultAudioSink.audio.volume : 0
 
-    // --- 功能函数 ---
     function toggleSinkMute() {
-        Quickshell.execDetached(["wpctl", "set-mute", "@DEFAULT_SINK@", "toggle"])
+        if (Pipewire.defaultAudioSink) {
+            Pipewire.defaultAudioSink.audio.muted = !Pipewire.defaultAudioSink.audio.muted;
+        }
     }
 
-    // 音量设置 (wpctl 接受 0.0 ~ 1.0 的浮点数)
     function setSinkVolume(volume: real) {
-        // 限制范围防止爆音
-        let safeVol = volume
-        if (safeVol > 1.0) safeVol = 1.0
-        if (safeVol < 0.0) safeVol = 0.0
-        Quickshell.execDetached(["wpctl", "set-volume", "@DEFAULT_SINK@", safeVol])
+        let safeVol = Math.max(0.0, Math.min(1.0, volume));
+        if (Pipewire.defaultAudioSink) {
+            Pipewire.defaultAudioSink.audio.volume = safeVol;
+            if (Pipewire.defaultAudioSink.audio.muted) {
+                Pipewire.defaultAudioSink.audio.muted = false;
+            }
+        }
+    }
+
+    // ============================================================
+    // 【麦克风 (Source) 状态与控制】(全新扩写)
+    // ============================================================
+    property bool sourceMuted: Pipewire.defaultAudioSource ? Pipewire.defaultAudioSource.audio.muted : false
+    property real sourceVolume: Pipewire.defaultAudioSource ? Pipewire.defaultAudioSource.audio.volume : 0
+
+    function toggleSourceMute() {
+        if (Pipewire.defaultAudioSource) {
+            Pipewire.defaultAudioSource.audio.muted = !Pipewire.defaultAudioSource.audio.muted;
+        }
+    }
+
+    function setSourceVolume(volume: real) {
+        let safeVol = Math.max(0.0, Math.min(1.0, volume));
+        if (Pipewire.defaultAudioSource) {
+            Pipewire.defaultAudioSource.audio.volume = safeVol;
+            if (Pipewire.defaultAudioSource.audio.muted) {
+                Pipewire.defaultAudioSource.audio.muted = false;
+            }
+        }
     }
 }

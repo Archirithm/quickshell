@@ -33,11 +33,15 @@ Item {
 
     RowLayout {
         anchors.fill: parent
-        // 【核心修复】：移除了 anchors.margins: 20，消除双重边距，彻底释放空间！
+        // 【布局精调】：独立控制上下左右边距，完美避开灵动岛的圆角，防止右下角视觉下坠
+        anchors.leftMargin: 16
+        anchors.rightMargin: 16
+        anchors.topMargin: 4
+        anchors.bottomMargin: 12 
         spacing: 24
 
         // ==========================================
-        // 左侧：顶部对齐、重阴影封面
+        // 左侧：顶部对齐、重阴影封面 (保持你喜欢的极深阴影)
         // ==========================================
         Item {
             Layout.preferredWidth: 120 
@@ -53,7 +57,7 @@ Item {
             DropShadow {
                 anchors.fill: coverContainer
                 source: coverContainer
-                color: Qt.rgba(0, 0, 0, 0.85) // 极深的透明度
+                color: Qt.rgba(0, 0, 0, 0.85) 
                 radius: 24
                 samples: 49
                 verticalOffset: 8 
@@ -168,15 +172,25 @@ Item {
                 }
             }
 
-            Item { Layout.fillHeight: true } // 弹性占位符
+            Item { Layout.fillHeight: true } 
 
+            // ==========================================
+            // 中间：核心重构！绝对绑定的平移波浪引擎
+            // ==========================================
             Item {
                 id: waveContainer
                 Layout.fillWidth: true
                 Layout.preferredHeight: 36
                 
-                property real currentX: root.progress * waveContainer.width
-                property real activeX: seekMa.pressed ? Math.max(0, Math.min(seekMa.mouseX, waveContainer.width)) : currentX
+                property real targetX: root.progress * waveContainer.width
+                property real activeX: seekMa.pressed ? Math.max(0, Math.min(seekMa.mouseX, waveContainer.width)) : targetX
+
+                // 【物理动画核心】：统一的视觉 X 坐标，接管原本属于圆球的 SmoothedAnimation
+                property real visualX: activeX
+                Behavior on visualX {
+                    enabled: root.visible && !seekMa.pressed
+                    SmoothedAnimation { velocity: 500; duration: 400 } 
+                }
 
                 Rectangle {
                     anchors.left: parent.left
@@ -190,7 +204,8 @@ Item {
                 Canvas {
                     id: waveCanvas
                     anchors.left: parent.left
-                    width: Math.max(6, waveContainer.activeX) 
+                    // 【绝对绑定 1】：画布宽度强行绑定到统一的视觉坐标上
+                    width: Math.max(6, waveContainer.visualX) 
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     
@@ -207,7 +222,8 @@ Item {
                     onPhaseChanged: requestPaint()
                     Connections {
                         target: waveContainer
-                        function onActiveXChanged() { waveCanvas.requestPaint() }
+                        // 监听 visualX 的改变以高频重绘，实现丝滑移动
+                        function onVisualXChanged() { waveCanvas.requestPaint() } 
                     }
 
                     onPaint: {
@@ -271,12 +287,8 @@ Item {
                     radius: 7
                     color: Colorscheme.primary
                     anchors.verticalCenter: parent.verticalCenter
-                    x: waveContainer.activeX - width/2
-                    
-                    Behavior on x {
-                        enabled: !seekMa.pressed
-                        SmoothedAnimation { velocity: 400; duration: 300 }
-                    }
+                    // 【绝对绑定 2】：圆球位置同样强行读取统一坐标，彻底移除它自身的 Behavior
+                    x: waveContainer.visualX - width/2
                 }
 
                 MouseArea {

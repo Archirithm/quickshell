@@ -21,6 +21,15 @@ Item {
     
     property string currentLoadedTitle: ""
 
+    // ============================================================
+    // 【动态自适应宽度引擎】
+    // ============================================================
+    property int defaultTextWidth: 350 // 默认保底宽度，短歌词会保持在这个宽度
+    property int currentTextWidth: defaultTextWidth // 初始宽度
+    
+    // 暴露给外部的真实需要宽度：封面(26) + 左间距(15) + 缝隙(12) + 右间距(15) = 68
+    implicitWidth: 68 + currentTextWidth 
+
     // ================= 1. 歌词获取逻辑 =================
     Process {
         id: lyricsFetcher
@@ -30,8 +39,7 @@ Item {
                 try {
                     var json = JSON.parse(data)
                     if (json.length > 0) { 
-                        root.lyricsModel = json;
-                        root.currentLineIndex = 0;
+                        root.lyricsModel = json; root.currentLineIndex = 0;
                         root.currentLoadedTitle = root.trackTitle
                     } else { 
                         root.lyricsModel = [{time: 0, text: "暂无歌词"}] 
@@ -51,12 +59,10 @@ Item {
     }
 
     Timer { 
-        id: debounceTimer;
-        interval: 300; repeat: false; 
+        id: debounceTimer; interval: 300; repeat: false; 
         onTriggered: {
             if (root.trackTitle !== "") { 
-                root.lyricsModel = [];
-                root.currentLineIndex = 0; 
+                root.lyricsModel = []; root.currentLineIndex = 0; 
                 lyricsFetcher.running = true 
             }
         }
@@ -75,11 +81,10 @@ Item {
             
             var activeIdx = -1
             for (var i = 0; i < root.lyricsModel.length; i++) {
-                if (root.lyricsModel[i].time <= (currentSec + 0.5)) activeIdx = i;
-                else break
+                if (root.lyricsModel[i].time <= (currentSec + 0.5)) activeIdx = i; else break
             }
             
-            // 解决前奏留白问题：如果音乐刚开始还没到第一句，强制对齐第 0 句（即前奏占位符）
+            // 解决前奏留白问题
             if (activeIdx === -1) activeIdx = 0
 
             if (activeIdx !== root.currentLineIndex) {
@@ -96,15 +101,12 @@ Item {
         // 专辑封面
         Item {
             id: albumCoverContainer
-            anchors.left: parent.left;
-            anchors.leftMargin: 15; anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left; anchors.leftMargin: 15; anchors.verticalCenter: parent.verticalCenter
             width: 26; height: 26
             
             Image {
-                id: coverImg;
-                anchors.fill: parent
-                source: root.artUrl;
-                visible: root.artUrl !== ""; fillMode: Image.PreserveAspectCrop
+                id: coverImg; anchors.fill: parent
+                source: root.artUrl; visible: root.artUrl !== ""; fillMode: Image.PreserveAspectCrop
                 layer.enabled: true
                 layer.effect: MultiEffect {
                     maskEnabled: true
@@ -114,22 +116,21 @@ Item {
                 }
             }
             Text {
-                visible: root.artUrl === "";
-                anchors.centerIn: parent
-                text: "\uf001";
-                font.family: "Symbols Nerd Font Mono"; font.pixelSize: 14; color: "#80ffffff"
+                visible: root.artUrl === ""; anchors.centerIn: parent
+                text: "\uf001"; font.family: "Symbols Nerd Font Mono"; font.pixelSize: 14; color: "#80ffffff"
             }
         }
 
-        // 歌词列表 (灵动岛单行呼吸模式)
+        // 歌词列表 (纯粹的纵向滚动模式)
         ListView {
             id: lyricsView
             anchors.left: albumCoverContainer.right
             anchors.leftMargin: 12
-            anchors.right: parent.right
-            anchors.rightMargin: 15
             anchors.top: parent.top
             anchors.bottom: parent.bottom
+            
+            // 宽度跟随当前歌词变化
+            width: root.currentTextWidth
             
             interactive: false
             model: root.lyricsModel
@@ -137,34 +138,34 @@ Item {
             
             highlightRangeMode: ListView.StrictlyEnforceRange
             preferredHighlightBegin: 0
-            preferredHighlightEnd: 42 
-            // 稍微调快了一点滚动速度，让单行切词更加干脆
-            highlightMoveDuration: 300 
+            preferredHighlightEnd: 0 
+            highlightMoveDuration: 400 
 
             delegate: Item {
                 width: ListView.view.width
                 height: 42 
                 property bool isCurrent: ListView.isCurrentItem
 
+                // 【核心机制】：当这行歌词被激活时，测量宽度并与默认保底宽度对比
+                onIsCurrentChanged: {
+                    if (isCurrent) {
+                        root.currentTextWidth = Math.max(root.defaultTextWidth, Math.min(lyricText.implicitWidth, 800))
+                    }
+                }
+
                 Text {
+                    id: lyricText
                     anchors.centerIn: parent
                     text: modelData.text
-                    // 【高级质感强化】：当前行纯白显示，非当前行变成完全透明且带有缩放，形成呼吸感
-                    color: isCurrent ? "white" : "#00ffffff"
-                    font.pixelSize: isCurrent ? 14 : 12
-                    font.bold: true
-                    opacity: isCurrent ? 1.0 : 0.0
-                    scale: isCurrent ? 1.0 : 0.95
                     
-                    elide: Text.ElideRight;
-                    width: parent.width; horizontalAlignment: Text.AlignHCenter 
-                    transformOrigin: Item.Center
+                    color: "white"
                     
-                    // 使用 OutQuart 缓动曲线，让消失和浮现极度顺滑
-                    Behavior on color { ColorAnimation { duration: 300; easing.type: Easing.OutQuart } }
-                    Behavior on opacity { NumberAnimation { duration: 300; easing.type: Easing.OutQuart } }
-                    Behavior on scale { NumberAnimation { duration: 300; easing.type: Easing.OutQuart } }
-                    Behavior on font.pixelSize { NumberAnimation { duration: 300; easing.type: Easing.OutQuart } }
+                    font.family: Sizes.fontFamily
+                    font.pixelSize: 15
+                    font.weight: Font.Bold
+                    
+                    elide: Text.ElideRight
+                    horizontalAlignment: Text.AlignHCenter 
                 }
             }
         }

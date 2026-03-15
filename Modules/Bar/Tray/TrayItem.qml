@@ -6,31 +6,25 @@ MouseArea {
     id: root
     required property var modelData 
     
-    implicitWidth: 24
-    implicitHeight: 24
+    // 保持 20x20 的尺寸，完美适配 36px 高度的药丸背景
+    implicitWidth: 20
+    implicitHeight: 20
     
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
     acceptedButtons: Qt.LeftButton | Qt.RightButton
 
-    // --- 互斥逻辑 ---
-    // 定义一个函数，供外部（兄弟节点）调用以关闭本菜单
     function closeMenu() {
         if (trayMenu.visible) {
             trayMenu.visible = false
         }
     }
 
-    // 关闭其他兄弟菜单的函数
     function closeOtherMenus() {
-        // root.parent 是 RowLayout (在 Tray.qml 中)
-        // root.parent.children 包含了所有的 TrayItem (Repeater 创建的 delegate)
         var siblings = root.parent.children
         for (var i = 0; i < siblings.length; i++) {
             var sibling = siblings[i]
-            // 如果是自己，跳过
             if (sibling === root) continue
-            // 如果兄弟有 closeMenu 函数，就调用它
             if (typeof sibling.closeMenu === "function") {
                 sibling.closeMenu()
             }
@@ -42,12 +36,10 @@ MouseArea {
             modelData.activate();
             trayMenu.visible = false;
         } else if (event.button === Qt.RightButton) {
-            // 如果当前是关的，准备打开 -> 先关闭别人
             if (!trayMenu.visible) {
                 closeOtherMenus()
                 trayMenu.visible = true
             } else {
-                // 如果当前是开的 -> 直接关闭
                 trayMenu.visible = false
             }
         }
@@ -60,7 +52,6 @@ MouseArea {
         trayName: root.modelData.tooltipTitle || root.modelData.id || "Menu"
         
         anchor.item: root
-        // 确保位置正确
         anchor.rect.y: (root.mapToItem(null, 0, 0).y > 500) ? -trayMenu.implicitHeight - 5 : root.height + 5
         anchor.rect.x: 0
     }
@@ -68,7 +59,6 @@ MouseArea {
     Image {
         id: content
         anchors.fill: parent
-        anchors.margins: 2
         
         source: {
             const raw = root.modelData.icon;
@@ -81,5 +71,13 @@ MouseArea {
         cache: true
         asynchronous: true
         fillMode: Image.PreserveAspectFit
+        
+        // 保留这两个属性：抗锯齿和平滑缩放，让原彩图标也保持边缘清晰
+        smooth: true
+        mipmap: true 
+        
+        // 微小的交互细节：平时稍微降低一点点透明度融入背景，鼠标悬浮时恢复 100% 亮度
+        opacity: root.containsMouse ? 1.0 : 0.85
+        Behavior on opacity { NumberAnimation { duration: 150 } }
     }
 }

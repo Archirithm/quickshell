@@ -1,40 +1,112 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Window 
 import qs.config
 
 Item {
     id: toolsRoot
 
+    ToolsBackend {
+        id: toolsBackend
+        
+        // 【核心修复】：接收后端发来的 ESC 取消信号，并关闭主岛的录像状态
+        onRecordCancelled: {
+            console.log("用户按下了 ESC，取消了录制选区。")
+            toolsRoot.requestSetRecording(false)
+        }
+    }
+
+    // 预留给外部监听的关闭信号
+    signal requestHideIsland()
+    // 向 DynamicIsland 发送录制状态变更信号
+    signal requestSetRecording(bool state)
+    signal requestShowAudio(string mode)
+
+    property var toolsModel: [
+        { icon: "colorize",         tip: "取色器" },
+        { icon: "videocam",         tip: "录屏" },        
+        { icon: "gif",              tip: "录制 GIF" },    
+        { icon: "crop_free",        tip: "普通截屏" },
+        { icon: "height",           tip: "截长屏" },
+        { icon: "document_scanner", tip: "OCR 识别" },
+        { icon: "mic",              tip: "录麦克风" },       // 索引 6
+        { icon: "speaker",          tip: "录电脑声音" }      // 【新增】：索引 7
+    ]
+
+    property int selectedIndex: 0
+
+    focus: visible
+    onVisibleChanged: {
+        if (visible) {
+            selectedIndex = 0;
+            forceActiveFocus(); 
+        }
+    }
+
+    Keys.onLeftPressed: {
+        selectedIndex = (selectedIndex - 1 + toolsModel.length) % toolsModel.length
+    }
+    
+    Keys.onRightPressed: {
+        selectedIndex = (selectedIndex + 1) % toolsModel.length
+    }
+    
+    Keys.onReturnPressed: triggerSelected()
+    Keys.onEnterPressed: triggerSelected()
+
+    function triggerSelected() {
+        console.log("触发工具: " + toolsModel[selectedIndex].tip)
+        
+        toolsRoot.requestHideIsland()
+        
+        if (selectedIndex === 0) {
+            toolsBackend.pickColor()
+        } else if (selectedIndex === 1) { // 录屏
+            toolsRoot.requestSetRecording(true)
+            toolsBackend.startRecord("video")
+        } else if (selectedIndex === 2) { // 录制 GIF
+            toolsRoot.requestSetRecording(true)
+            toolsBackend.startRecord("gif")
+        } else if (selectedIndex === 3) {
+            toolsBackend.takeScreenshot()
+        } else if (selectedIndex === 6) { // 录音 - 麦克风
+            toolsRoot.requestShowAudio("mic")
+            toolsBackend.startAudio("audio_mic")
+        } else if (selectedIndex === 7) { // 录音 - 系统声音
+            toolsRoot.requestShowAudio("sys")
+            toolsBackend.startAudio("audio_sys")
+        } else {
+            console.log("该工具的后端尚未实现！")
+        }
+    }
+
+    // 【核心修复】：保留唯一的一个停止录制接口
+    function stopRecording() {
+        toolsBackend.stopRecord()
+    }
+    function stopAudio() {
+        toolsBackend.stopAudio()
+    }
+
     Row {
         anchors.centerIn: parent
         spacing: 8
 
-        // 使用 Repeater 循环生成按钮，安全且优雅
         Repeater {
-            model: [
-                { icon: "colorize",         tip: "取色器" },
-                { icon: "videocam",         tip: "录屏" },
-                { icon: "gif",              tip: "录制 GIF" },
-                { icon: "crop_free",        tip: "普通截屏" },
-                { icon: "height",           tip: "截长屏" },
-                { icon: "document_scanner", tip: "OCR 识别" },
-                { icon: "mic",              tip: "录音" }
-            ]
+            model: toolsRoot.toolsModel
 
             Rectangle {
                 width: 48
                 height: 48
                 radius: 12
                 
-                // 悬浮变色逻辑
-                color: toolsMouse.containsMouse ? Colorscheme.surface_variant : "transparent"
+                color: (toolsMouse.containsMouse || index === toolsRoot.selectedIndex) 
+                    ? Colorscheme.surface_variant : "transparent"
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 Text {
                     anchors.centerIn: parent
                     text: modelData.icon
-                    
-                    // 【核心修复】：使用了你系统中确实存在的字体名称
                     font.family: "Material Symbols Rounded" 
                     font.pixelSize: 22
                     color: Colorscheme.on_surface
@@ -45,8 +117,12 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    
+                    onEntered: toolsRoot.selectedIndex = index
+
                     onClicked: {
-                        console.log("TODO: 触发工具 - " + modelData.tip)
+                        toolsRoot.selectedIndex = index
+                        toolsRoot.triggerSelected()
                     }
                 }
             }

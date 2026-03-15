@@ -5,28 +5,23 @@ import qs.config
 
 FocusScope {
     id: root
-    
-    // 接收 context，并设置默认值为 null
     property var context: null
+    
+    signal requestUnlock()
     
     Layout.fillWidth: true
     Layout.preferredHeight: 50
 
-    // 自动聚焦逻辑
     Component.onCompleted: input.forceActiveFocus()
     onActiveFocusChanged: if (activeFocus) input.forceActiveFocus()
 
-    // 背景胶囊
     Rectangle {
         anchors.fill: parent
         color: Colorscheme.surface_container_highest 
         radius: 25 
-
-        // 焦点指示器 (微弱的边框)
         border.width: 1
         border.color: input.activeFocus ? Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.5) : "transparent"
         
-        // 错误震动动画 (可选)
         SequentialAnimation {
             id: shakeAnim
             NumberAnimation { target: parent; property: "x"; from: 0; to: 10; duration: 50 }
@@ -40,93 +35,131 @@ FocusScope {
             anchors.rightMargin: 10
             spacing: 10
 
-            // 1. 左侧锁图标 (垂直居中)
+            // 1. 左侧锁图标
             Text {
                 text: ""
                 color: Colorscheme.on_surface_variant
                 font.family: Sizes.fontFamilyMono
                 font.pixelSize: 16
-                Layout.alignment: Qt.AlignVCenter // 确保居中
+                Layout.alignment: Qt.AlignVCenter 
             }
 
-            // 2. 输入框
-            TextInput {
-                id: input
+            // 2. 核心输入区
+            Item {
                 Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                
-                color: Colorscheme.on_surface
-                
-                // 【样式修改】增大字号让圆点看起来更大
-                font.family: Sizes.fontFamilyMono
-                font.pixelSize: 24 
-                font.bold: true
-                
-                // 垂直居中修正 (因为字号变大了)
-                verticalAlignment: TextInput.AlignVCenter
-                
-                // 密码模式
-                echoMode: TextInput.Password
-                // 使用更圆润的实心圆点，而不是默认的星号或小点
-                passwordCharacter: "●" 
-                
-                focus: true
-                enabled: true 
-                
-                // 回车解锁
-                onAccepted: {
-                    // 【核心修复】再次尝试获取 context，防止Loader传递延迟
-                    if (root.context) {
-                        root.context.tryUnlock()
-                    } else {
-                        // 尝试从 parent (Loader) 获取
-                        if (parent && parent.context) {
-                            parent.context.tryUnlock()
-                        } else {
-                            console.log("Error: Context is still null!")
-                            shakeAnim.start()
+                Layout.fillHeight: true
+                clip: true 
+
+                // 幽灵输入框
+                TextInput {
+                    id: input
+                    anchors.fill: parent
+                    color: "transparent" 
+                    selectionColor: "transparent"
+                    selectedTextColor: "transparent"
+                    focus: true
+                    echoMode: TextInput.Password
+                    
+                    onAccepted: {
+                        root.requestUnlock()
+                    }
+                    
+                    onTextChanged: {
+                        if(root.context) root.context.currentText = text
+                        
+                        // 【核心修复】：精准同步密码点模型，不牵连旧数据，彻底解决闪烁
+                        var len = text.length
+                        while (dotsModel.count < len) {
+                            dotsModel.append({})
+                        }
+                        while (dotsModel.count > len) {
+                            dotsModel.remove(dotsModel.count - 1)
+                        }
+                    }
+                    
+                    Connections {
+                        target: root.context ? root.context : null
+                        ignoreUnknownSignals: true
+                        function onCurrentTextChanged() {
+                            if (root.context && input.text !== root.context.currentText) {
+                                input.text = root.context.currentText
+                                if (input.text === "") shakeAnim.start()
+                            }
                         }
                     }
                 }
-                
-                // 实时同步
-                onTextChanged: {
-                    if(root.context) root.context.currentText = text
+
+                // 数据模型
+                ListModel {
+                    id: dotsModel
                 }
-                
-                // 监听外部清空信号 (例如密码错误)
-                Connections {
-                    target: root.context ? root.context : null
-                    ignoreUnknownSignals: true
-                    function onCurrentTextChanged() {
-                        if (root.context && input.text !== root.context.currentText) {
-                            input.text = root.context.currentText
-                            // 如果被清空了，触发震动反馈
-                            if (input.text === "") shakeAnim.start()
+
+                // 居中的自定义密码点：改用 ListView 以支持完美退场动画
+                ListView {
+                    id: dotsList
+                    
+                    property int dotSize: 10
+                    property int dotSpacing: 8 // 【样式修改】：调小间距，让密码看起来更紧凑
+                    
+                    // 动态计算总宽度，驱动外层阻尼挤压感
+                    width: count === 0 ? 0 : (count * dotSize) + ((count - 1) * dotSpacing)
+                    height: dotSize
+                    
+                    // 保持绝对居中
+                    x: parent ? (parent.width - width) / 2 : 0
+                    anchors.verticalCenter: parent.verticalCenter
+                    
+                    orientation: ListView.Horizontal
+                    spacing: dotSpacing
+                    interactive: false // 禁止滚动干扰
+
+                    model: dotsModel
+
+                    // 挤压与回弹的物理阻尼
+                    Behavior on x {
+                        NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+                    }
+
+                    delegate: Rectangle {
+                        width: dotsList.dotSize
+                        height: dotsList.dotSize
+                        radius: dotsList.dotSize / 2
+                        color: Colorscheme.on_surface
+                    }
+
+                    // 进场动画：新圆球弹出淡入
+                    add: Transition {
+                        ParallelAnimation {
+                            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 150 }
+                            NumberAnimation { property: "scale"; from: 0.3; to: 1; duration: 250; easing.type: Easing.OutBack }
+                        }
+                    }
+
+                    // 退场动画：旧圆球删除时的平滑缩小淡出
+                    remove: Transition {
+                        ParallelAnimation {
+                            NumberAnimation { property: "opacity"; to: 0; duration: 150 }
+                            NumberAnimation { property: "scale"; to: 0.3; duration: 150; easing.type: Easing.InBack }
                         }
                     }
                 }
             }
             
-            // 3. 提交按钮 (根据是否有输入改变样式)
+            // 3. 提交按钮
             Rectangle {
                 Layout.alignment: Qt.AlignVCenter
                 width: 32; height: 32; radius: 16
                 
-                // 【Feature 实现】有密码时显示主色，无密码时透明/灰色
                 property bool hasText: input.text.length > 0
                 
                 color: hasText ? Colorscheme.primary : "transparent"
                 border.width: hasText ? 0 : 1
                 border.color: hasText ? "transparent" : Colorscheme.outline
-                
-                // 动画过渡
                 Behavior on color { ColorAnimation { duration: 200 } }
                 
                 Text { 
                     anchors.centerIn: parent
                     text: "➜"
-                    // 有密码时文字反色，无密码时灰色
                     color: parent.hasText ? Colorscheme.on_primary : Colorscheme.outline
                     font.pixelSize: 14
                     font.bold: true
@@ -135,18 +168,16 @@ FocusScope {
                 MouseArea { 
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    // 只有有输入时才允许点击
                     enabled: parent.hasText
                     onClicked: {
                         input.forceActiveFocus()
-                        if(root.context) root.context.tryUnlock()
+                        if(parent.hasText) root.requestUnlock()
                     }
                 }
             }
         }
     }
 
-    // 点击空白聚焦
     MouseArea {
         anchors.fill: parent
         propagateComposedEvents: true

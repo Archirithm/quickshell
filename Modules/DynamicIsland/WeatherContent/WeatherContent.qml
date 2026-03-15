@@ -364,24 +364,7 @@ Item {
 
                 var startOfDay = new Date(); startOfDay.setHours(0,0,0,0);
                 
-                ctx.beginPath();
-                ctx.lineWidth = 1.5;
-                ctx.strokeStyle = "rgba(226, 232, 240, 0.4)"; 
-                ctx.setLineDash([5, 5]); 
-                var isFirstMoon = true;
-                for (var mm = 0; mm <= 24 * 60; mm += 15) {
-                    var tMoon = new Date(startOfDay.getTime() + mm * 60000);
-                    var pMoon = AstroJS.getMoonPosition(tMoon, root.latitude, root.longitude);
-                    if (pMoon.alt >= 0) {
-                        var ptM = project(pMoon.az, pMoon.alt);
-                        if (isFirstMoon) { ctx.moveTo(ptM.x, ptM.y); isFirstMoon = false; } 
-                        else { ctx.lineTo(ptM.x, ptM.y); }
-                    } else { 
-                        isFirstMoon = true; 
-                    } 
-                }
-                ctx.stroke();
-                ctx.setLineDash([]);
+                
 
                 ctx.beginPath();
                 ctx.lineWidth = 2.5;

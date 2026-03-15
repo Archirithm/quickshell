@@ -224,19 +224,26 @@ Item {
                         Layout.alignment: Qt.AlignHCenter
                         source: "./Cards/AuthCard.qml"
                         
-                        // 【强制注入】
                         onLoaded: {
                             if (item) {
                                 item.context = root.context
                             }
                         }
                         
-                        // 【双重保险】Binding 绑定
                         Binding { 
                             target: termLoader.item
                             property: "context"
                             value: root.context
                             when: termLoader.item !== null
+                        }
+
+                        // 【新增】捕获内部的 requestUnlock 信号
+                        Connections {
+                            target: termLoader.item
+                            ignoreUnknownSignals: true
+                            function onRequestUnlock() {
+                                root.startExitAnimation()
+                            }
                         }
                     }
                 }
@@ -264,6 +271,55 @@ Item {
             // 只要焦点不在输入框，就抢回来
             if (termLoader.item && !termLoader.item.activeFocus) {
                 termLoader.item.forceActiveFocus()
+            }
+        }
+    }
+
+    
+    // ================= 6. 退场动画与解锁逻辑 =================
+    property bool isExiting: false
+
+    function startExitAnimation() {
+        if (!isExiting) {
+            isExiting = true
+            exitAnim.start()
+        }
+    }
+
+    SequentialAnimation {
+        id: exitAnim
+
+        // 1. 幕布收回，逆转原有的 animProgress
+        ParallelAnimation {
+            NumberAnimation {
+                target: root
+                property: "animProgress"
+                to: 0
+                duration: 600
+                easing.type: Easing.InOutExpo
+            }
+            NumberAnimation {
+                target: lockIconContainer
+                property: "rotation"
+                from: 360
+                to: 0
+                duration: 600
+                easing.type: Easing.InOutBack
+            }
+        }
+
+        // 2. 锁图标整体淡出
+        NumberAnimation {
+            target: morphContainer
+            property: "opacity"
+            to: 0
+            duration: 300
+        }
+
+        // 3. 动画结束后，执行真实的底层解锁逻辑
+        onFinished: {
+            if (root.context) {
+                root.context.tryUnlock()
             }
         }
     }

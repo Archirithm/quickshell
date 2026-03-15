@@ -7,7 +7,7 @@ ShellRoot {
     id: root
     signal unlocked()
 
-    // 1. 鉴权逻辑 (Scope) - 保持不变
+    // 1. 鉴权逻辑 (Scope)
     Scope {
         id: internalContext
         property string currentText: ""
@@ -56,13 +56,36 @@ ShellRoot {
                 id: uiLoader
                 anchors.fill: parent
                 
-                // 【已修改】使用 HOME 环境变量拼接标准的文件 URL
+                // 使用 HOME 环境变量拼接标准的文件 URL
                 source: "file://" + Quickshell.env("HOME") + "/.config/quickshell/Modules/Lock/LockSurface.qml"
                 
                 onLoaded: {
                     if (item) item.context = internalContext
                 }
             }
+
+            // // C. 紧急出口 (右上角)
+            // Rectangle {
+            //     anchors.top: parent.top
+            //     anchors.right: parent.right
+            //     width: 150; height: 50
+            //     color: "red"
+            //     z: 999
+            //     Text { 
+            //         anchors.centerIn: parent
+            //         text: "紧急解锁"
+            //         color: "white" 
+            //         font.pixelSize: 16
+            //         font.bold: true
+            //     }
+            //     MouseArea { 
+            //         anchors.fill: parent
+            //         onClicked: { 
+            //             sessionLock.locked = false
+            //             root.unlocked() 
+            //         } 
+            //     }
+            // }
         }
     }
 }

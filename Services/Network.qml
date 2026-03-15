@@ -5,66 +5,63 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    // --- 属性 ---
-    // 只要有连接类型，就视为已连接
     property bool connected: activeConnectionType != ""
     property string activeConnection: "Disconnected"
     property string activeConnectionType: ""
-    // 【已删除】 activeConnectionIcon 属性
+    // 【新增】信号强度属性
+    property int signalStrength: 100 
 
-    // --- 刷新函数 ---
     function refresh() {
         refreshProcess.running = true;
+        // 每次刷新网络状态时，顺便抓取一次信号强度
+        signalProcess.running = true; 
     }
 
-    // --- 1. 获取状态的进程 ---
     Process {
         id: refreshProcess
         command: ["nmcli", "-t", "-f", "NAME,TYPE", "con", "show", "--active"]
         
         stdout: StdioCollector {
             onStreamFinished: () => {
-                // 如果输出为空，说明断网
                 if (this.text.trim() === "") {
                     root.activeConnectionType = ""
                     root.activeConnection = "Disconnected"
+                    root.signalStrength = 0
                     return
                 }
                 
-                // 解析第一行
                 const interfaces = this.text.split("\n");
                 const activeInterface = interfaces[0];
                 const fields = activeInterface.split(":");
                 
-                if (fields.length < 2) return; 
-
-                // 获取类型
+                if (fields.length < 2) return;
                 const connectionType = refreshProcess.getConnectionType(fields[1]);
                 root.activeConnectionType = connectionType;
-                
-                // 获取名称
                 root.activeConnection = connectionType != "" ? fields[0] : "Disconnected";
-                
-                // 【已删除】 设置 activeConnectionIcon 的代码
             }
         }
 
-        // 辅助函数：只保留判断类型
         function getConnectionType(nmcliOutput) {
-            if (nmcliOutput.includes("ethernet")) {
-                return "ETHERNET";
-            } else if (nmcliOutput.includes("wireless")) {
-                return "WIFI";
-            }
+            if (nmcliOutput.includes("ethernet")) return "ETHERNET";
+            else if (nmcliOutput.includes("wireless")) return "WIFI";
             return "";
         }
-        
-        // 【已删除】 getConnectionIcon 函数
     }
 
-    // --- 2. 监听进程 ---
-    // 这个进程 running: true，一旦网络变化（或启动时），
-    // 它的输出会触发 root.refresh()，所以不需要额外的启动代码
+    // 【新增】利用 shell 管道精确抓取当前带 '*' 号的 WiFi 信号值
+    Process {
+        id: signalProcess
+        command: ["sh", "-c", "nmcli -t -f IN-USE,SIGNAL dev wifi | grep '^\\*' | cut -d':' -f2"]
+        stdout: StdioCollector {
+            onStreamFinished: () => {
+                const val = parseInt(this.text.trim());
+                if (!isNaN(val)) {
+                    root.signalStrength = val;
+                }
+            }
+        }
+    }
+
     Process {
         running: true
         command: ["nmcli", "monitor"]
@@ -72,6 +69,4 @@ Singleton {
             onRead: root.refresh()
         }
     }
-    
-    // 【已删除】 Component.onCompleted (这是导致报错的元凶)
 }

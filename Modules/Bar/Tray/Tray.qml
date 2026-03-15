@@ -1,32 +1,46 @@
 import Quickshell.Services.SystemTray
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects  // 引入 Qt 6 特效库
 import qs.config
 
-Rectangle {
+Item {
     id: root
     
-    // --- 样式：与其他模块完全统一 ---
-    color: Colorscheme.background
-    radius: Sizes.cornerRadius
-    
-    // 高度固定为 40
-    implicitHeight: Sizes.barHeight
-    
+    // 高度与 Workspaces 统一为 36
+    implicitHeight: 36
     // 宽度 = 图标总宽 + 左右各 12px 的留白 (共 24px)
-    // 这样当没有托盘图标时，宽度会自动收缩，有图标时自动撑开
     implicitWidth: content.width + 24
+
+    // 1. 定义原背景（设为不可见，仅作为渲染源）
+    Rectangle {
+        id: bgRect
+        anchors.fill: parent
+        color: Colorscheme.background
+        radius: height / 2 // 完美的药丸圆角
+        visible: false 
+    }
+
+    // 2. 使用 MultiEffect 渲染药丸背景 + 外部阴影
+    MultiEffect {
+        source: bgRect
+        anchors.fill: bgRect
+        shadowEnabled: true
+        shadowColor: Qt.alpha(Colorscheme.shadow, 0.4) 
+        shadowBlur: 0.8
+        shadowVerticalOffset: 3
+        shadowHorizontalOffset: 0
+    }
 
     RowLayout {
         id: content
         anchors.centerIn: parent
-        spacing: 8 // 图标之间的间距
+        spacing: 10 // 稍微加大一点图标间距，让呼吸感更强
 
         Repeater {
             model: SystemTray.items
             
             delegate: TrayItem {
-                // 确保图标在 40px 高度的条里垂直居中
                 Layout.alignment: Qt.AlignVCenter
             }
         }

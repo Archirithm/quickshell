@@ -1,42 +1,72 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import qs.Widget.common
 
-Rectangle {
+Item {
     id: root
     property var node
     property bool isHeadphone: false
     property var theme: Theme {}
 
     Layout.fillWidth: true
-    height: 28
-    color: Qt.rgba(theme.primary.r, theme.primary.g, theme.primary.b, 0.1)
-    radius: 14
+    // 给气泡留出足够的展示空间
+    implicitHeight: 32 
 
-    Rectangle {
-        height: parent.height
-        width: node ? parent.width * node.audio.volume : 0
-        color: theme.primary
-        radius: 14
-    }
+    property bool isMuted: node ? node.audio.muted : false
 
-    MouseArea {
+    Slider {
+        id: control
         anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        function setVol(mouse) {
-            if (!node) return
-            let v = mouse.x / width
-            if (v < 0) v = 0; if (v > 1) v = 1;
-            node.audio.volume = v
-            if (node.audio.muted) node.audio.muted = false
-        }
-        onPressed: (mouse) => setVol(mouse)
-        onPositionChanged: (mouse) => setVol(mouse)
-    }
+        hoverEnabled: true
+        enabled: root.node !== null
 
-    Text {
-        anchors.left: parent.left; anchors.leftMargin: 10; anchors.verticalCenter: parent.verticalCenter
-        text: (node && node.audio.muted) ? "\uf6a9" : (root.isHeadphone ? "\uf025" : "\uf028")
-        font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 12; color: "white"
+        // 绑定节点音量，如果静音则显示为 0
+        Binding {
+            target: control
+            property: "value"
+            value: isMuted ? 0 : (root.node ? root.node.audio.volume : 0)
+            when: !control.pressed
+        }
+
+        // 拖动时同步音量并自动解除静音
+        onMoved: {
+            if (root.node) {
+                if (isMuted) root.node.audio.muted = false 
+                root.node.audio.volume = value
+            }
+        }
+
+        // 轨道背景
+        background: Item {
+            x: control.leftPadding
+            y: control.topPadding + control.availableHeight / 2 - height / 2
+            width: control.availableWidth
+            height: 16
+
+            Rectangle {
+                anchors.fill: parent
+                radius: 8
+                color: Qt.rgba(theme.text.r, theme.text.g, theme.text.b, 0.1)
+            }
+            Rectangle {
+                width: Math.max(0, control.visualPosition * parent.width)
+                height: parent.height
+                color: theme.primary
+                radius: 8
+            }
+        }
+
+        // 拖拽手柄与气泡
+        handle: Rectangle {
+            x: control.leftPadding + control.visualPosition * (control.availableWidth - width)
+            y: control.topPadding + control.availableHeight / 2 - height / 2
+            width: 4
+            height: 32
+            radius: 2
+            color: theme.text
+
+            
+        }
     }
 }

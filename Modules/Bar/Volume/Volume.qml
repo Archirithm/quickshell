@@ -1,75 +1,84 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
+import QtQuick.Shapes // 引入绘图组件
 import Quickshell
 import qs.Services
 import qs.config
-
-// 1. 导入 Widget 目录
 import qs.Widget
 
-Rectangle {
+Item {
     id: root
 
-    // --- 样式配置 ---
-    color: Colorscheme.background
-    radius: Sizes.cornerRadius
-    implicitHeight: Sizes.barHeight
-    implicitWidth: layout.width + 24
+    implicitHeight: 28
+    implicitWidth: 28
 
-    // 2. 实例化混音器小组件
-    AudioWidget {
-        id: audioPanel
-        isOpen: false // 默认关闭
+    AudioWidget { id: audioPanel; isOpen: false }
+
+    // 绘制仪表盘
+    Shape {
+        anchors.fill: parent
+        // 开启抗锯齿，保证圆弧平滑
+        layer.enabled: true
+        layer.samples: 4 
+
+        // 1. 底部轨道 (灰色)
+        ShapePath {
+            fillColor: "transparent"
+            strokeColor: Colorscheme.surface_variant
+            strokeWidth: 3 // 圆环粗细
+            capStyle: ShapePath.RoundCap // 圆角端点
+            
+            PathAngleArc {
+                centerX: 14; centerY: 14
+                radiusX: 12; radiusY: 12
+                // 从左下角 135 度开始，跨越 270 度到右下角
+                startAngle: 135
+                sweepAngle: 270
+            }
+        }
+
+        // 2. 进度条 (高亮色)
+        ShapePath {
+            fillColor: "transparent"
+            // 静音时变红，否则为主题主色
+            strokeColor: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? Colorscheme.error : Colorscheme.primary
+            strokeWidth: 3
+            capStyle: ShapePath.RoundCap
+            
+            PathAngleArc {
+                centerX: 14; centerY: 14
+                radiusX: 12; radiusY: 12
+                startAngle: 135
+                // 根据音量比例动态计算弧度
+                sweepAngle: 270 * Volume.sinkVolume
+            }
+        }
     }
 
-    // --- 交互区域 ---
+    // 中心图标
+    Text {
+        anchors.centerIn: parent
+        font.pixelSize: 10
+        color: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? Colorscheme.error : Colorscheme.on_surface
+        text: {
+            if (Volume.isHeadphone) return ""
+            if (Volume.sinkMuted || Volume.sinkVolume <= 0) return ""
+            if (Volume.sinkVolume < 0.5) return ""
+            return ""
+        }
+    }
+
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
         
-        // 允许滚轮调节音量 (保持不变)
         onWheel: (wheel) => {
             const step = 0.05
             let newVol = Volume.sinkVolume
-            
             if (wheel.angleDelta.y > 0) newVol += step
             else newVol -= step
-
             Volume.setSinkVolume(newVol)
         }
-
-        // 3. 点击切换小组件开关
-        onClicked: {
-            // 原来是: Quickshell.execDetached(["pavucontrol"])
-            // 现在改为:
-            audioPanel.isOpen = !audioPanel.isOpen
-        }
-    }
-
-    // --- 内容布局 (保持不变) ---
-    RowLayout {
-        id: layout
-        anchors.centerIn: parent
-        spacing: 8
-
-        Text {
-            // font.family: "Font Awesome 6 Free Regular" 
-            font.pixelSize: 16
-            color: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? "#ff5555" : Colorscheme.on_tertiary_container
-            text: {
-                if (Volume.isHeadphone) return ""
-                if (Volume.sinkMuted || Volume.sinkVolume <= 0) return ""
-                if (Volume.sinkVolume < 0.5) return ""
-                return ""
-            }
-        }
-
-        Text {
-            font.bold: true
-            font.pixelSize: 14
-            color: Colorscheme.on_primary_container
-            text: Math.round(Volume.sinkVolume * 100) + "%"
-        }
+        onClicked: audioPanel.isOpen = !audioPanel.isOpen
     }
 }

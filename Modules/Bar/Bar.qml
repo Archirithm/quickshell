@@ -13,6 +13,7 @@ import qs.Modules.Bar.PowerButton
 // import qs.Modules.Bar.PowerProfile
 import qs.Modules.Bar.SysMonitor
 import qs.Modules.Bar.NotificationButton
+import qs.Modules.Bar.QuickSettings
 // import qs.Modules.Bar.DayNightSwitch
 // 删除了对 DynamicIsland 的引入
 
@@ -56,16 +57,19 @@ Variants {
             RowLayout {
                 anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
                 spacing: 10
-                
-                SysMonitor { Layout.alignment: Qt.AlignVCenter }
+
                 Tray {}
+                SysMonitor { Layout.alignment: Qt.AlignVCenter }
+                
+
+                QuickSettings { Layout.alignment: Qt.AlignVCenter }
                 
                 // PowerProfile { Layout.alignment: Qt.AlignVCenter } 
-                Network {}
-                Volume {}
-                
-                NotificationButton { Layout.alignment: Qt.AlignVCenter }
-                PowerButton {}
+                // Network {}
+                // Volume {}
+                //
+                // NotificationButton { Layout.alignment: Qt.AlignVCenter }
+                // PowerButton {}
             }
         }
     }

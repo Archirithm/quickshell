@@ -16,7 +16,8 @@ import qs.Modules.DynamicIsland.LauncherContent
 import qs.Modules.DynamicIsland.DashboardContent
 import qs.Modules.DynamicIsland.LyricsContent 
 import qs.Modules.DynamicIsland.Hub
-import qs.Modules.DynamicIsland.Tools // 引入新增的工具模块
+import qs.Modules.DynamicIsland.Tools
+import qs.Modules.DynamicIsland.audio 
 
 Variants {
     model: Quickshell.screens
@@ -40,12 +41,23 @@ Variants {
         exclusiveZone: -1
         WlrLayershell.layer: WlrLayer.Top
 
-        WlrLayershell.keyboardFocus: (root.showLauncher || root.showDashboard || root.showHub || root.showTools)
+        WlrLayershell.keyboardFocus: (root.showLauncher || root.showDashboard || root.showHub || root.showTools || root.showAudio)
             ? WlrKeyboardFocus.Exclusive 
             : WlrKeyboardFocus.None
 
+        // ============================================================
+        // 【点击区域（Mask）】
+        // ============================================================
+        Item {
+            id: hitBoxRegion
+            anchors.top: maskContainer.top
+            anchors.bottom: maskContainer.bottom
+            anchors.right: maskContainer.right
+            anchors.left: detachedRecordContainer.left 
+        }
+
         mask: Region {
-            item: maskContainer
+            item: hitBoxRegion
         }
 
         // ============================================================
@@ -59,7 +71,6 @@ Variants {
             height: maskContainer.height
             visible: false 
 
-            // 替身 1：左侧猫耳
             Canvas {
                 id: shadowLeftEar 
                 anchors.right: rootShadow.left
@@ -77,7 +88,6 @@ Variants {
                 }
             }
 
-            // 替身 2：灵动岛本体
             Rectangle {
                 id: rootShadow
                 anchors.top: parent.top
@@ -97,7 +107,6 @@ Variants {
                 }
             }
 
-            // 替身 3：右侧猫耳
             Canvas {
                 id: shadowRightEar 
                 anchors.left: rootShadow.right
@@ -132,7 +141,7 @@ Variants {
         }
 
         // ============================================================
-        // 【原始灵动岛本体 (原封不动)】
+        // 【原始灵动岛本体】
         // ============================================================
         Item {
             id: maskContainer
@@ -141,7 +150,6 @@ Variants {
             width: root.width + (islandWindow.earRadius * 2)
             height: root.height
 
-            // --- 1. 左侧猫耳朵 ---
             Canvas {
                 id: leftEar
                 anchors.right: root.left
@@ -149,8 +157,7 @@ Variants {
                 width: islandWindow.earRadius
                 height: islandWindow.earRadius
                 onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.reset();
+                    var ctx = getContext("2d"); ctx.reset();
                     ctx.fillStyle = Colorscheme.background;
                     ctx.beginPath();
                     ctx.moveTo(0, 0);                 
@@ -165,7 +172,6 @@ Variants {
                 }
             }
 
-            // --- 2. 灵动岛本体 ---
             Rectangle {
                 id: root
                 anchors.top: parent.top
@@ -178,61 +184,67 @@ Variants {
                 property bool expanded: false
                 property bool showVolume: false
                 property bool showHub: false
-                property bool showTools: false // 新增 Tools 状态
-                property int hubTabIndex: 0 
+                property bool showTools: false 
+                property bool showAudio: false 
+                
+                property string currentAudioMode: "mic" 
+                property int hubTabIndex: 0
+                property bool isRecording: false
 
                 // ================= 互斥模式判定 =================
                 property bool isDashboardMode: showDashboard
                 property bool isLyricsMode: showLyrics && !showDashboard
                 property bool isLauncherMode: showLauncher && !isLyricsMode && !showDashboard
-                property bool isToolsMode: showTools && !isLauncherMode && !isLyricsMode && !showDashboard // 新增 Tools 互斥层级
+                property bool isToolsMode: showTools && !isLauncherMode && !isLyricsMode && !showDashboard 
                 property bool isHubMode: showHub && !isToolsMode && !isLauncherMode && !isLyricsMode && !showDashboard
-                property bool isVolumeMode: showVolume && !expanded && !isHubMode && !isToolsMode && !isLauncherMode && !isLyricsMode && !showDashboard
+                property bool isAudioMode: showAudio && !isHubMode && !isToolsMode && !isLauncherMode && !isLyricsMode && !showDashboard
                 
-                // 【核心修改】：绑定全局的 NotificationManager
-                property bool isNotifMode: NotificationManager.hasNotifs && !expanded && !showVolume && !isHubMode && !isToolsMode && !isLauncherMode && !isLyricsMode && !showDashboard
-                property bool isCollapsedMode: !expanded && !isNotifMode && !isVolumeMode && !isLauncherMode && !isDashboardMode && !isLyricsMode && !isHubMode && !isToolsMode
+                property bool isVolumeMode: showVolume && !expanded && !isAudioMode && !isHubMode && !isToolsMode && !isLauncherMode && !isLyricsMode && !showDashboard
+                property bool isNotifMode: NotificationManager.hasNotifs && !expanded && !showVolume && !isAudioMode && !isHubMode && !isToolsMode && !isLauncherMode && !isLyricsMode && !showDashboard
+                property bool isCollapsedMode: !expanded && !isNotifMode && !isVolumeMode && !isAudioMode && !isLauncherMode && !isDashboardMode && !isLyricsMode && !isHubMode && !isToolsMode
 
                 // ================= 尺寸定义 =================
                 property int dashW: 810; property int dashH: 420
                 property int launchW: 400; property int launchH: 420 
                 property int lyricsW: lyricsWidget.implicitWidth; property int lyricsH: 42 
                 property int expandedW: 540; property int expandedH: 210
-                property int collapsedW: 220; property int collapsedH: 42 
-                property int toolsW: 420; property int toolsH: 72 // 新增 Tools 尺寸
-                
-                // 【核心修改】：绑定全局的 NotificationManager 动态计算高度
+                property int collapsedW: 220; property int collapsedH: 42
+                property int recordExtraW: 0 
+                property int toolsW: 480; property int toolsH: 72
                 property int notifW: 380; property int notifH: (NotificationManager.model.count * 70) + 20
+                property int volW: 320; property int volH: 64
+                property int audioW: 360; property int audioH: 84 
                 
-                property int volW: 220; property int volH: 40
-                
-                // ================= 视觉与基础属性 =================
                 color: Colorscheme.background
                 clip: true
                 z: 100
 
-                // ================= 目标尺寸与防时序错乱重构 =================
+                // ================= 目标尺寸与形状 =================
                 property int targetR: (expanded || isNotifMode || isVolumeMode || isLauncherMode || 
-                        isDashboardMode || isLyricsMode || isHubMode || isToolsMode) 
-                        ? 24 : (isCollapsedMode && islandMouseArea.containsMouse ? 18 : 16) 
+                      isDashboardMode || isLyricsMode || isHubMode || isToolsMode || isAudioMode) 
+                      ? 24 : (isCollapsedMode && islandMouseArea.containsMouse ? 18 : 16)
 
                 property int targetW: isDashboardMode ? dashW : 
-                    isToolsMode     ? toolsW : // 插入 Tools 宽度逻辑
+                    isAudioMode     ? audioW :
+                    isToolsMode     ? toolsW :
                     isHubMode       ? hub.implicitWidth : 
                     isLyricsMode    ? lyricsW : 
                     isLauncherMode  ? launchW : 
                     expanded        ? expandedW : 
                     isVolumeMode    ? volW : 
-                    isNotifMode     ? notifW : (collapsedW + (isCollapsedMode && islandMouseArea.containsMouse ? 16 : 0))
+                    isNotifMode     ? notifW : 
+                    (collapsedW + (root.isRecording ? recordExtraW : 0) + (isCollapsedMode && islandMouseArea.containsMouse ? 16 : 0))
 
                 property int targetH: isDashboardMode ? dashH : 
-                        isToolsMode     ? toolsH : // 插入 Tools 高度逻辑
+                        isAudioMode     ? audioH :
+                        isToolsMode     ? toolsH : 
                         isHubMode       ? hub.implicitHeight : 
                         isLyricsMode    ? lyricsH : 
                         isLauncherMode  ? launchH : 
                         expanded        ? expandedH : 
                         isVolumeMode    ? volH : 
-                        isNotifMode     ? notifH : (collapsedH + (isCollapsedMode && islandMouseArea.containsMouse ? 6 : 0))
+                        isNotifMode     ? notifH : 
+                        (collapsedH + (isCollapsedMode && islandMouseArea.containsMouse ? 6 : 0))
 
                 // ================= 状态与物理锁 =================
                 property real wDamping: 1.0
@@ -254,55 +266,33 @@ Variants {
 
                 // ================= 动态阻尼控制 =================
                 onTargetWChanged: {
-                    let isExpanding = (targetW > width);
-                    wDamping = isExpanding ? 0.7 : 0.8; 
+                    let isExpanding = (targetW > width); wDamping = isExpanding ? 0.7 : 0.8; 
                 }
-                
                 onTargetHChanged: {
-                    let isExpanding = (targetH > height);
-                    hDamping = isExpanding ? 0.7 : 0.8;
+                    let isExpanding = (targetH > height); hDamping = isExpanding ? 0.7 : 0.8;
                 }
-                
                 onTargetRChanged: {
-                    let isExpanding = (targetR > radius);
-                    rDamping = isExpanding ? 0.7 : 0.8;
+                    let isExpanding = (targetR > radius); rDamping = isExpanding ? 0.7 : 0.8;
                 }
 
-                // ================= 官方正统物理引擎 =================
-                Behavior on width { 
-                    SpringAnimation { 
-                        spring: 5.0      
-                        mass: 3.6        
-                        damping: root.wDamping 
-                        epsilon: 0.01    
-                    } 
-                }
-                Behavior on height { 
-                    SpringAnimation { 
-                        spring: 5.0
-                        mass: 3.6
-                        damping: root.hDamping
-                        epsilon: 0.01 
-                    } 
-                }
-                Behavior on radius { 
-                    SpringAnimation { 
-                        spring: 5.0
-                        mass: 3.6
-                        damping: root.rDamping
-                        epsilon: 0.01 
-                    } 
-                }
+                Behavior on width { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.wDamping; epsilon: 0.01 } }
+                Behavior on height { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.hDamping; epsilon: 0.01 } }
+                Behavior on radius { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.rDamping; epsilon: 0.01 } }
 
                 // ================= IPC 通信处理 =================
                 IpcHandler {
                     target: "island"
                     
+                    function cancelRecord() {
+                        root.isRecording = false; return "RECORD_CANCELLED"
+                    }
+
                     function closeAllOthers() {
                         root.showDashboard = false;
                         root.showLauncher = false;
                         root.showLyrics = false;
-                        root.showTools = false; // 清理 Tools 状态
+                        root.showTools = false;
+                        root.showAudio = false; 
                         root.expanded = false;
                     }
 
@@ -317,19 +307,13 @@ Variants {
                     }
 
                     function hub() {
-                        if (root.showHub) { 
-                            root.showHub = false; return "HUB_CLOSED" 
-                        } else { 
-                            closeAllOthers(); root.showHub = true; return "HUB_OPENED" 
-                        }
+                        if (root.showHub) { root.showHub = false; return "HUB_CLOSED" } 
+                        else { closeAllOthers(); root.showHub = true; return "HUB_OPENED" }
                     }
 
                     function tools() {
-                        if (root.showTools) { 
-                            root.showTools = false; return "TOOLS_CLOSED" 
-                        } else { 
-                            closeAllOthers(); root.showHub = false; root.showTools = true; return "TOOLS_OPENED" 
-                        }
+                        if (root.showTools) { root.showTools = false; return "TOOLS_CLOSED" } 
+                        else { closeAllOthers(); root.showHub = false; root.showTools = true; return "TOOLS_OPENED" }
                     }
                 }
 
@@ -337,7 +321,14 @@ Variants {
                 PwObjectTracker { objects: [ Pipewire.defaultAudioSink ] }
                 property var audioNode: Pipewire.defaultAudioSink ? Pipewire.defaultAudioSink.audio : null
 
-                Timer { id: volHideTimer; interval: 2000; onTriggered: root.showVolume = false }
+                Timer { 
+                    id: volHideTimer
+                    interval: 2000
+                    onTriggered: {
+                        if (volumeWidget.isInteractionActive) { restart() } 
+                        else { root.showVolume = false }
+                    }
+                }
                 
                 Connections {
                     target: root.audioNode; ignoreUnknownSignals: true
@@ -346,8 +337,7 @@ Variants {
                 }
             
                 function triggerVolumeOSD() {
-                    // 当任何大型面板打开时，不触发音量OSD
-                    if (root.showDashboard || root.showHub || root.showLauncher || root.showTools || root.expanded || root.showLyrics) return
+                    if (root.showDashboard || root.showHub || root.showLauncher || root.showTools || root.showAudio || root.expanded || root.showLyrics) return
                     root.showVolume = true; volHideTimer.restart()
                 }
                 
@@ -392,7 +382,8 @@ Variants {
                         if (mouse.button === Qt.MiddleButton) {
                             if (root.showDashboard) root.showDashboard = false
                             else if (root.showHub) root.showHub = false 
-                            else if (root.showTools) root.showTools = false // 中键收起 Tools
+                            else if (root.showTools) root.showTools = false 
+                            else if (root.showAudio) root.showAudio = false
                             else if (root.showLauncher) root.showLauncher = false
                             root.showLyrics = !root.showLyrics
                             if (root.showLyrics) root.expanded = false
@@ -401,7 +392,8 @@ Variants {
                             else if (root.showLyrics) root.showLyrics = false 
                             else if (root.showLauncher) root.showLauncher = false
                             else if (root.showHub) root.showHub = false   
-                            else if (root.showTools) root.showTools = false // 左键收起 Tools
+                            else if (root.showTools) root.showTools = false 
+                            else if (root.showAudio) root.showAudio = false
                             else root.expanded = !root.expanded
                         }
                     }
@@ -418,15 +410,17 @@ Variants {
                     ClockContent { 
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
-                        width: root.collapsedW
+                        width: root.collapsedW + (root.isRecording ? root.recordExtraW : 0)
                         height: root.collapsedH
                         
                         player: root.currentPlayer
-                        opacity: (!root.expanded && !root.isNotifMode && !root.isVolumeMode && !root.isLauncherMode && !root.isDashboardMode && !root.isLyricsMode && !root.isHubMode && !root.isToolsMode) ? 1 : 0
+                        
+                        opacity: (!root.expanded && !root.isNotifMode && !root.isVolumeMode && !root.isLauncherMode && !root.isDashboardMode && !root.isLyricsMode && !root.isHubMode && !root.isToolsMode && !root.isAudioMode) ? 1 : 0
                         visible: opacity > 0.01; Behavior on opacity { NumberAnimation { duration: 200 } } 
                     }
                         
-                    VolumeContent { 
+                    VolumeContent {
+                        id: volumeWidget
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: root.volW
@@ -511,8 +505,8 @@ Variants {
                         Behavior on opacity { NumberAnimation { duration: 200 } }
                     }
 
-                    // --- 新增的工具栏组件挂载 ---
                     ToolsContent {
+                        id: toolsWidget 
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: root.toolsW
@@ -521,11 +515,42 @@ Variants {
                         opacity: root.isToolsMode ? 1 : 0
                         visible: opacity > 0.01
                         Behavior on opacity { NumberAnimation { duration: 200 } }
+
+                        // 【核心修复 1】：添加隐藏工具栏的信号接收！
+                        onRequestHideIsland: { root.showTools = false }
+
+                        onRequestSetRecording: (state) => { root.isRecording = state }
+                        
+                        // 【核心修复 2】：不仅要切换模式，还要确保将 showTools 设为 false 以打破互斥锁
+                        onRequestShowAudio: (mode) => { 
+                            root.currentAudioMode = mode
+                            root.showTools = false
+                            root.showAudio = true 
+                        }
+                    }
+
+                    AudioContent {
+                        id: audioWidget
+                        anchors.top: parent.top
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: root.audioW
+                        height: root.audioH
+
+                        active: root.isAudioMode
+                        audioMode: root.currentAudioMode
+                        opacity: root.isAudioMode ? 1 : 0
+                        visible: opacity > 0.01
+                        Behavior on opacity { NumberAnimation { duration: 200 } }
+
+                        onRequestStop: {
+                            root.showAudio = false
+                            toolsWidget.stopAudio() 
+                        }
                     }
                 }
             }
 
-            // --- 3. 右侧猫耳朵 ---
+            // --- 右侧猫耳朵 ---
             Canvas {
                 id: rightEar
                 anchors.left: root.right
@@ -533,19 +558,96 @@ Variants {
                 width: islandWindow.earRadius
                 height: islandWindow.earRadius
                 onPaint: {
-                    var ctx = getContext("2d");
-                    ctx.reset();
+                    var ctx = getContext("2d"); ctx.reset();
                     ctx.fillStyle = Colorscheme.background;
                     ctx.beginPath();
                     ctx.moveTo(width, 0);             
                     ctx.lineTo(0, 0);                 
-                    ctx.lineTo(0, height);            
+                    ctx.lineTo(0, height);
                     ctx.arc(width, height, width, Math.PI, Math.PI*1.5, false);
                     ctx.fill();
                 }
                 Connections {
                     target: Colorscheme
                     function onBackgroundChanged() { rightEar.requestPaint() }
+                }
+            }
+        }
+
+        // ============================================================
+        // 【悬浮录制按钮】
+        // ============================================================
+        Item {
+            id: detachedRecordContainer
+            width: 36
+            height: 36
+            anchors.verticalCenter: maskContainer.verticalCenter
+            anchors.right: maskContainer.left
+            
+            anchors.rightMargin: root.isRecording ? 5 : -width
+            z: maskContainer.z - 1 
+
+            Behavior on anchors.rightMargin {
+                SpringAnimation { spring: 4.0; damping: 0.8; mass: 1.0 }
+            }
+            
+            opacity: root.isRecording ? 1 : 0
+            Behavior on opacity { 
+                SequentialAnimation {
+                    PauseAnimation { duration: root.isRecording ? 0 : 400 }
+                    NumberAnimation { duration: root.isRecording ? 200 : 0 } 
+                }
+            }
+            visible: root.isRecording || opacity > 0
+
+            Rectangle {
+                id: detachedBtnBg
+                anchors.fill: parent
+                radius: width / 2
+                color: Colorscheme.background 
+                visible: false 
+            }
+
+            DropShadow {
+                anchors.fill: detachedBtnBg
+                source: detachedBtnBg
+                horizontalOffset: 0
+                verticalOffset: 6
+                radius: 20
+                samples: 32
+                color: "#80000000"
+                cached: true
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                radius: width / 2
+                color: Colorscheme.background
+                
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: 14
+                    height: 14
+                    radius: 7
+                    color: "#ff3333"
+                    antialiasing: true
+                    
+                    SequentialAnimation on opacity {
+                        loops: Animation.Infinite
+                        running: root.isRecording
+                        NumberAnimation { to: 0.2; duration: 800; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+                    }
+                }
+                
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        console.log("点击了悬浮录制按钮！")
+                        root.isRecording = false 
+                        toolsWidget.stopRecording() 
+                    }
                 }
             }
         }

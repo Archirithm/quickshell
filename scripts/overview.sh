@@ -4,9 +4,10 @@
 if [ -n "$1" ]; then
   WALLPAPER="$1"
 else
-  # 只有没传参数时，才去问 swww (兜底逻辑)
+  # 只有没传参数时，才去问 awww (兜底逻辑)
+  # 【核心修改】：swww query -> awww query
   sleep 0.5
-  WALLPAPER=$(swww query | head -n1 | grep -oP 'image: \K.*')
+  WALLPAPER=$(awww query | head -n1 | grep -oP 'image: \K.*')
 fi
 
 # 检查一下到底有没有拿到路径
@@ -31,9 +32,10 @@ if [ ! -f "$BLURRED_WALLPAPER" ] || [ ! -f "$BLURRED_WALLPAPER_OVERVIEW" ]; then
   magick "$WALLPAPER" -blur 0x30 "$BLURRED_WALLPAPER"
 fi
 
-# 这里的 swww img 其实是多余的，因为 QML 已经切换过了
+# 这里的 awww img 其实是多余的，因为 QML 已经切换过了
 # 但保留它用于做淡入淡出的特效是可以的
-swww img -n overview "$BLURRED_WALLPAPER_OVERVIEW" \
+# 【核心修改】：swww img -> awww img
+awww img -n overview "$BLURRED_WALLPAPER_OVERVIEW" \
   --transition-type fade \
   --transition-duration 0.5
 

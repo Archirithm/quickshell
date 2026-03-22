@@ -37,7 +37,8 @@ PanelWindow {
     // ==========================================
     Process {
         id: syncGlobalWallpaper
-        command: ["bash", "-c", "swww query | awk -F 'image: ' '{print $2}' | head -n 1"]
+        // 【核心修改】：已将 swww 替换为 awww
+        command: ["bash", "-c", "awww query | awk -F 'image: ' '{print $2}' | head -n 1"]
         running: false
         stdout: SplitParser {
             splitMarker: "\n"
@@ -62,10 +63,12 @@ PanelWindow {
             else if (currentMode === 1) windowPage.forceSearchFocus()
             else mainUI.forceActiveFocus()
             
-            // 每次打开都正常播放入场动画
-            mainUI.opacity = 0.0
-            uiTranslate.y = 300
-            openAnim.start() 
+            // // 每次打开都正常播放入场动画
+            // mainUI.opacity = 0.0
+            // uiTranslate.y = 300
+            // openAnim.start()
+            mainUI.opacity = 1.0
+            uiTranslate.y = 0
         }
     }
 
@@ -78,8 +81,10 @@ PanelWindow {
     }
 
     function requestClose() {
-        if (closeAnim.running || !root.visible) return
-        closeAnim.start() 
+        // if (closeAnim.running || !root.visible) return
+        // closeAnim.start()
+        if (!root.visible) return
+        root.visible = false
     }
 
     function toggleWindow() {
@@ -103,50 +108,50 @@ PanelWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         
-        opacity: 0.0 
+        opacity: 1.0 // 原来是0
         
         transform: Translate {
             id: uiTranslate
-            y: 300 
+            y: 0 // 原来是300
         }
         
-        ParallelAnimation {
-            id: openAnim
-            NumberAnimation {
-                target: mainUI
-                property: "opacity"
-                to: 1.0
-                duration: 400
-                easing.type: Easing.OutCubic
-            }
-            NumberAnimation {
-                target: uiTranslate
-                property: "y"
-                to: 0
-                duration: 700
-                easing.type: Easing.OutBack
-                easing.overshoot: 2.5
-            }
-        }
-
-        ParallelAnimation {
-            id: closeAnim
-            NumberAnimation {
-                target: mainUI
-                property: "opacity"
-                to: 0.0
-                duration: 300
-                easing.type: Easing.InCubic
-            }
-            NumberAnimation {
-                target: uiTranslate
-                property: "y"
-                to: 300
-                duration: 300
-                easing.type: Easing.InCubic
-            }
-            onFinished: root.visible = false 
-        }
+        // ParallelAnimation {
+        //     id: openAnim
+        //     NumberAnimation {
+        //         target: mainUI
+        //         property: "opacity"
+        //         to: 1.0
+        //         duration: 400
+        //         easing.type: Easing.OutCubic
+        //     }
+        //     NumberAnimation {
+        //         target: uiTranslate
+        //         property: "y"
+        //         to: 0
+        //         duration: 700
+        //         easing.type: Easing.OutBack
+        //         easing.overshoot: 2.5
+        //     }
+        // }
+        //
+        // ParallelAnimation {
+        //     id: closeAnim
+        //     NumberAnimation {
+        //         target: mainUI
+        //         property: "opacity"
+        //         to: 0.0
+        //         duration: 300
+        //         easing.type: Easing.InCubic
+        //     }
+        //     NumberAnimation {
+        //         target: uiTranslate
+        //         property: "y"
+        //         to: 300
+        //         duration: 300
+        //         easing.type: Easing.InCubic
+        //     }
+        //     onFinished: root.visible = false 
+        // }
         
         color: "transparent" 
         radius: 20 

@@ -39,7 +39,6 @@ Item {
         onExited: {
             root.isLoading = false
             
-            // 【核心优化】：彻底抛弃底层的 swww query 进程！
             // 直接白嫖 LauncherWindow 刚打开时就已经查好的全局变量
             let currentPath = Colorscheme.currentWallpaperPreview.replace("file://", "");
             
@@ -162,12 +161,14 @@ Item {
         let currentPath = wallpaperModel.get(wallpaperList.currentIndex).path
         
         Colorscheme.currentWallpaperPreview = "file://" + currentPath;
-        
         let home = Quickshell.env("HOME")
         
-        let scriptContent = "swww img '" + currentPath + "' --transition-type any --transition-duration 3 --transition-fps 60 --transition-bezier .43,1.19,1,.4;\n" +
-                            "matugen image '" + currentPath + "';\n" +
-                           "bash '" + home + "/.config/quickshell/scripts/overview.sh' '" + currentPath + "'"
+        // 【核心修改】：
+        // 1. 将 swww img 改为 awww img
+        // 2. 为 matugen 加上 --source-color-index 0
+        let scriptContent = "awww img '" + currentPath + "' --transition-type any --transition-duration 3 --transition-fps 60 --transition-bezier .43,1.19,1,.4;\n" +
+                            "matugen image '" + currentPath + "' --source-color-index 0;\n" +
+                            "bash '" + home + "/.config/quickshell/scripts/overview.sh' '" + currentPath + "'"
                            
         runScript.command = ["bash", "-c", scriptContent]
         runScript.running = true

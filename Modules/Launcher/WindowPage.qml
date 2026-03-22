@@ -232,7 +232,7 @@ Item {
         id: focusProcess
         onExited: {
             running = false 
-            root.requestCloseLauncher()
+            // root.requestCloseLauncher()
         }
     }
 }

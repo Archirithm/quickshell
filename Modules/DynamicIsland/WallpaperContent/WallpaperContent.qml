@@ -266,24 +266,30 @@ Item {
         }
     }
     
+    // ============================================================
+    // 【核心修改】 应用壁纸并执行额外脚本
+    // ============================================================
     function applyWallpaper() {
         if (wallpaperModel.count === 0) return;
-        var currentPath = wallpaperModel.get(view.currentIndex).path;
-
-        // 【核心修复】：将最新的壁纸路径立即同步给 Quickshell 全局变量！
-        Colorscheme.currentWallpaperPreview = "file://" + currentPath;
-
-        var home = Quickshell.env("HOME");
+        let currentPath = wallpaperModel.get(view.currentIndex).path;
+        let home = Quickshell.env("HOME");
         
-        var swwwCmd = "swww img \"" + currentPath + "\" " +
+        // 1. awww 命令
+        let awwwCmd = "awww img \"" + currentPath + "\" " +
                   "--transition-type \"any\" " +
                   "--transition-duration 3 " +
                   "--transition-fps 60 " +
                   "--transition-bezier .43,1.19,1,.4";
-                  
-        var matugenCmd = "matugen image \"" + currentPath + "\"";
-        var overviewCmd = "bash " + home + "/.config/quickshell/scripts/overview.sh \"" + currentPath + "\"";
-        var combinedCmd = swwwCmd + " ; " + matugenCmd + " ; " + overviewCmd + " &";
+
+        // 2. matugen 命令 (保留我们上次加的参数)
+        let matugenCmd = "matugen image \"" + currentPath + "\" --source-color-index 0";
+
+        // 3. overview 脚本命令
+        let overviewCmd = "bash " + home + "/.config/quickshell/scripts/overview.sh \"" + currentPath + "\"";
+
+        // 注意这里把 swwwCmd 换成了 awwwCmd
+        let combinedCmd = awwwCmd + " ; " + matugenCmd + " ; " + overviewCmd + " &";
+
         runScript.command = ["bash", "-c", combinedCmd];
         runScript.running = true;
         

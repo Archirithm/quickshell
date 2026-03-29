@@ -3,12 +3,14 @@ import qs.config
 
 QtObject {
     property color background: Colorscheme.background
-    property color surface: Colorscheme.surface
+    property color surface: Colorscheme.surface_container
     property color primary: Colorscheme.primary
     property color error: Colorscheme.error
-    property color text: Colorscheme.inverse_primary
-    property color subtext: Colorscheme.secondary
+    property color text: Colorscheme.on_surface
+    property color subtext: Colorscheme.on_surface_variant
     property color outline: Colorscheme.outline
-    property int radius: 12
-    property int padding: 16
+    
+    // 【修改】：精致的圆角和内边距，适应 420 宽度
+    property int radius: 24 
+    property int padding: 20 
 }

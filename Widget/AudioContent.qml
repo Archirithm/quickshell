@@ -1,0 +1,141 @@
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Services.Pipewire
+import qs.Widget.common
+import qs.config
+import qs.Widget.audio
+import QtQuick.Controls
+
+WidgetPanel {
+    id: root
+    title: "混音器"
+    icon: "\uf1de"
+    closeAction: () => WidgetState.qsOpen = false
+    Theme { id: theme }
+    property bool isActive: WidgetState.qsOpen && WidgetState.qsView === "audio"
+
+    headerTools: Text {
+        text: "\uf013"
+        font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20
+        color: theme.subtext
+        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["pavucontrol"]) }
+    }
+
+    property var defaultSink: Pipewire.defaultAudioSink
+    PwObjectTracker { objects: [ root.defaultSink ] }
+    PwNodeLinkTracker { id: appTracker; node: root.defaultSink }
+    
+    function isHeadphone(node) {
+        if (!node) return false;
+        const icon = node.properties["device.icon-name"] || ""; 
+        const desc = node.description || "";
+        return icon.includes("headphone") || desc.toLowerCase().includes("headphone") || desc.toLowerCase().includes("耳机");
+    }
+
+    Rectangle {
+        Layout.fillWidth: true
+        height: 104 
+        color: theme.surface; radius: theme.radius
+
+        ColumnLayout {
+            anchors.fill: parent; anchors.margins: 16; spacing: 12
+
+            RowLayout {
+                Layout.fillWidth: true
+                Text { 
+                    text: isHeadphone(root.defaultSink) ? "\uf025" : "\uf028"
+                    font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20; color: theme.primary 
+                }
+                Text { 
+                    text: root.defaultSink ? (root.defaultSink.description || root.defaultSink.name) : "未找到设备"
+                    font.bold: true; font.pixelSize: 15; color: theme.text; elide: Text.ElideRight; Layout.fillWidth: true 
+                }
+                Text { 
+                    text: root.defaultSink ? Math.round(root.defaultSink.audio.volume * 100) + "%" : "0%"
+                    font.bold: true; font.pixelSize: 15; color: theme.primary 
+                }
+            }
+
+            VolumeSlider { node: root.defaultSink; isHeadphone: root.isHeadphone(root.defaultSink) }
+        }
+    }
+
+    Text { text: "应用程序"; font.pixelSize: 14; color: theme.subtext; font.bold: true; Layout.topMargin: 12 }
+
+    ListView {
+        Layout.fillWidth: true; Layout.fillHeight: true
+        clip: true; spacing: 12; model: appTracker.linkGroups // 加大了列表间距
+
+        delegate: Rectangle {
+            Theme { id: itemTheme }
+            required property PwLinkGroup modelData
+            property var appNode: modelData.source
+
+            width: ListView.view.width; height: 68 // 加高了列表项
+            radius: 12; color: "transparent"
+            border.width: 1; border.color: "transparent" 
+            PwObjectTracker { objects: [ appNode ] }
+
+            RowLayout {
+                anchors.fill: parent; anchors.margins: 14; spacing: 14
+
+                Image {
+                    Layout.preferredWidth: 32; Layout.preferredHeight: 32
+                    visible: source != ""
+                    source: {
+                        const iconProperty = appNode.properties["application.icon-name"] || "";
+                        const binaryName = appNode.properties["application.process.binary"] || "";
+                        if (iconProperty.includes("chromium") || binaryName.includes("chromium")) return "image://icon/google-chrome";
+                        let finalIcon = iconProperty || binaryName || "audio-card";
+                        return `image://icon/${finalIcon}`;
+                    }
+                    onStatusChanged: { if (status === Image.Error) source = "image://icon/audio-card"; }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true; spacing: 6
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text { text: appNode.properties["application.name"] || appNode.name; font.bold: true; font.pixelSize: 14; color: itemTheme.text; elide: Text.ElideRight; Layout.fillWidth: true }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true; height: 16
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width; height: 6; radius: 3
+                            color: Qt.rgba(itemTheme.text.r, itemTheme.text.g, itemTheme.text.b, 0.1)
+                            Rectangle { height: parent.height; width: parent.width * appNode.audio.volume; radius: 3; color: itemTheme.primary }
+                        }
+
+                        Rectangle {
+                            width: 6; height: 16; radius: 3; color: itemTheme.text 
+                            x: Math.max(0, Math.min(parent.width * appNode.audio.volume - width / 2, parent.width - width))
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Item {
+                                width: 32; height: 32
+                                anchors.bottom: parent.top; anchors.bottomMargin: 4; anchors.horizontalCenter: parent.horizontalCenter
+                                visible: sliderMouseArea.containsMouse || sliderMouseArea.pressed
+                                
+                                Rectangle {
+                                    anchors.fill: parent; radius: 16; color: itemTheme.primary; rotation: 45 
+                                    Rectangle { width: 16; height: 16; x: 16; y: 16; color: parent.color }
+                                }
+                                Text { anchors.centerIn: parent; text: Math.round(appNode.audio.volume * 100); color: itemTheme.surface; font.pixelSize: 11; font.bold: true }
+                            }
+                        }
+
+                        MouseArea {
+                            id: sliderMouseArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            function updateVolume(mouse) { let v = mouse.x / width; if (v < 0) v = 0; if (v > 1) v = 1; appNode.audio.volume = v }
+                            onPressed: (mouse) => updateVolume(mouse)
+                            onPositionChanged: (mouse) => { if (pressed) updateVolume(mouse) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects 
+import QtQuick.Effects  // 引入现代 Qt 6 特效库
 import Quickshell
 import qs.config 
 
@@ -47,7 +47,6 @@ PopupWindow {
         id: hydrator
         anchor.window: root
         anchor.item: mainLayout
-        // 【核心修复】不要设为负数！
         // 设为当前窗口中心，防止 Wayland 强制推到屏幕左上角
         anchor.rect.x: root.width / 2
         anchor.rect.y: root.height / 2
@@ -68,11 +67,17 @@ PopupWindow {
             if (typeof menuHandle.updateLayout === "function") menuHandle.updateLayout()
             
             // 2. 暴力激活 (瞬时开关)
-            // 这里的逻辑是：open() 触发 DBus 信号，close() 销毁渲染请求
-            // 如果两个动作在同一帧内完成，用户就看不到窗口，但 NetworkManager 会收到信号
             hydrator.menu = menuHandle
             hydrator.open()
-            hydrator.close() // 【关键】移除 Qt.callLater，立即关闭！
+            
+            // 【Bug 修复核心】：引入 Qt.callLater 延迟关闭
+            // 确保 DBus 有足够的时间将子菜单数据发送过来，防止 NetworkManager 等组件卡在 Loading...
+            Qt.callLater(() => {
+                // 安全检查：确保关闭的是同一个菜单的 Hydrator
+                if (hydrator.menu === menuHandle) {
+                    hydrator.close()
+                }
+            })
             
         } catch (e) {
             console.warn("Hydrator error:", e)
@@ -112,7 +117,6 @@ PopupWindow {
                     text: (menuStack.count === 0) ? (root.trayName || "Menu") : menuStack.get(menuStack.count - 1).title
                     anchors.centerIn: parent
                     font.bold: true
-                    // [颜色] Primary 主色
                     color: Colorscheme.primary
                     font.pixelSize: 15
                     width: parent.width - 60
@@ -134,7 +138,6 @@ PopupWindow {
                     Text {
                         text: "⬅" 
                         anchors.centerIn: parent
-                        // [颜色] 返回箭头
                         color: Colorscheme.on_secondary_container
                         font.bold: true
                     }
@@ -153,7 +156,6 @@ PopupWindow {
                     anchors.bottom: parent.bottom
                     width: parent.width
                     height: 1
-                    // [颜色] 分割线
                     color: Colorscheme.primary
                     opacity: 0.2
                 }
@@ -165,7 +167,7 @@ PopupWindow {
                 Layout.margins: 6 
                 spacing: 4        
                 
-                property var currentModel: (menuStack.count === 0) ? 
+                property var currentModel: (menuStack.count === 0) ?
                                          (rootOpener.children ? rootOpener.children.values : []) : 
                                          (subOpener.children ? subOpener.children.values : [])
 
@@ -193,7 +195,6 @@ PopupWindow {
                         
                         // [交互] 悬停背景
                         color: (itemMa.containsMouse && !isSeparator) ? Colorscheme.secondary_container : "transparent"
-                        
                         Behavior on color { ColorAnimation { duration: 100 } }
 
                         // 分割线
@@ -228,13 +229,14 @@ PopupWindow {
                                     fillMode: Image.PreserveAspectFit
                                 }
                                 
-                                ColorOverlay {
-                                    anchors.fill: iconRaw
+                                // [优化] 使用 MultiEffect 替换老旧的 ColorOverlay
+                                MultiEffect {
                                     source: iconRaw
-                                    // [颜色] 图标变色
-                                    color: itemMa.containsMouse ? Colorscheme.on_secondary_container : Colorscheme.secondary
+                                    anchors.fill: iconRaw
                                     visible: iconRaw.status === Image.Ready
-                                    cached: true
+                                    colorization: 1.0 
+                                    colorizationColor: itemMa.containsMouse ?
+                                        Colorscheme.on_secondary_container : Colorscheme.secondary
                                 }
                             }
 
@@ -251,8 +253,6 @@ PopupWindow {
                                 text: modelData.text || ""
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
-                                
-                                // [颜色] 文字颜色逻辑
                                 color: {
                                     if (modelData.enabled === false) return Colorscheme.outline;
                                     if (itemMa.containsMouse) return Colorscheme.on_secondary_container;

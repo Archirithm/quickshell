@@ -1,7 +1,7 @@
 import QtQuick
 import qs.config
-import "file:///home/archirithm/.config/quickshell/JS/weather.js" as WeatherJS
-import "file:///home/archirithm/.config/quickshell/JS/astro.js" as AstroJS
+import "weather.js" as WeatherJS
+import "astro.js" as AstroJS
 
 Item {
     id: root
@@ -385,14 +385,6 @@ Item {
                 ctx.stroke();
                 ctx.setLineDash([]);
 
-                var posMoonNow = AstroJS.getMoonPosition(new Date(), root.latitude, root.longitude);
-                if (posMoonNow.alt >= 0) {
-                    var ptMNow = project(posMoonNow.az, posMoonNow.alt);
-                    ctx.beginPath();
-                    ctx.arc(ptMNow.x, ptMNow.y, 4, 0, Math.PI*2);
-                    ctx.fillStyle = "#f8fafc"; 
-                    ctx.fill();
-                }
 
                 if (root.sunAltitude >= 0) {
                     var currentPt = project(root.sunAzimuth, root.sunAltitude);

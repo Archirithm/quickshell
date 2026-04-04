@@ -7,34 +7,34 @@ Item {
     id: root
 
     Item {
-        id: sliderTrack
-        width: root.width * 2
-        height: root.height
+        anchors.fill: parent
         
-        x: WidgetState.qsView === "audio" ? -root.width : 0
-        
-        // 【核心修复】：加上 enabled 判断！
-        // 只有当面板处于打开状态时，才允许播放平滑的切换动画。
-        // 面板关闭时，动画失效，轨道会在 0 毫秒内瞬间完成位置切换。
-        Behavior on x { 
-            enabled: WidgetState.qsOpen
-            NumberAnimation { duration: 360; easing.type: Easing.OutQuint } 
+        NetworkContent { 
+            anchors.fill: parent 
+            
+            // ============================================================
+            // 【核心修复】：将动画控制权收回到 QuickSettings 层
+            // ============================================================
+            opacity: WidgetState.qsView === "network" ? 1.0 : 0.0
+            scale: WidgetState.qsView === "network" ? 1.0 : 0.95
+            visible: opacity > 0
+            
+            Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutQuint } }
+            Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 0.5 } }
         }
 
-        Row {
-            anchors.fill: parent
+        AudioContent { 
+            anchors.fill: parent 
             
-            Item {
-                width: root.width
-                height: root.height
-                NetworkContent { anchors.fill: parent }
-            }
-
-            Item {
-                width: root.width
-                height: root.height
-                AudioContent { anchors.fill: parent }
-            }
+            // ============================================================
+            // 【核心修复】：在这里独立控制混音器面板的显隐动画
+            // ============================================================
+            opacity: WidgetState.qsView === "audio" ? 1.0 : 0.0
+            scale: WidgetState.qsView === "audio" ? 1.0 : 0.95
+            visible: opacity > 0
+            
+            Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutQuint } }
+            Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 0.5 } }
         }
     }
 }

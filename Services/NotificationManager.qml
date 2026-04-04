@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
 import qs.Modules.DynamicIsland.OverviewContent 
+import qs.config 
 
 Item {
     id: root
@@ -30,7 +31,7 @@ Item {
                 "telegram", "org.telegram.desktop", "telegram-desktop",
                 "discord", "slack", "element"
             ];
-            
+
             let appNameLower = (n.desktopEntry || n.appName || "").toLowerCase();
             const isIMApp = imApps.includes(appNameLower) || 
                             appNameLower.includes("qq") || 
@@ -49,8 +50,7 @@ Item {
                 finalImage = "file://" + homePath + "/.config/quickshell/assets/apps/discord.svg";
             } else if (appNameLower.includes("telegram")) {
                 finalImage = "file://" + homePath + "/.config/quickshell/assets/apps/telegram.svg";
-            } 
-            else if (!isIMApp && n.image && (n.image.startsWith("/") || n.image.startsWith("file://"))) {
+            } else if (!isIMApp && n.image && (n.image.startsWith("/") || n.image.startsWith("file://"))) {
                 finalImage = n.image.startsWith("/") ? "file://" + n.image : n.image;
             } else {
                 let iconName = n.appIcon || n.desktopEntry || n.icon || "";
@@ -63,13 +63,30 @@ Item {
                 }
             }
 
-            // 【核心修复 1】：将 id 改名为 notifId，防止在 QML UI 引擎中引起 id 关键字冲突
+            let currentTime = new Date().toLocaleTimeString(Qt.locale(), "HH:mm");
+
+            NotificationStore.addRecord(n.id, n.appName, n.summary, n.body, finalImage, n.desktopEntry);
+
+            let mappedAppId = "system";
+            if (appNameLower.includes("qq") || appNameLower.includes("tencent")) mappedAppId = "qq";
+            else if (appNameLower.includes("wechat")) mappedAppId = "wechat";
+            else if (appNameLower.includes("discord")) mappedAppId = "discord";
+            else if (appNameLower.includes("telegram")) mappedAppId = "telegram";
+
+            let uiDetailData = {
+                "id": n.id, 
+                "title": n.summary,
+                "body": n.body,
+                "timestamp": Date.now() 
+            };
+            WidgetState.addRealNotification(mappedAppId, uiDetailData);
+
             let notifData = {
                 "notifId": n.id,
                 "summary": n.summary,
                 "body": n.body,
                 "imagePath": finalImage,
-                "time": Qt.formatTime(new Date(), "hh:mm")
+                "time": currentTime
             };
 
             if (isIMApp) {
@@ -83,12 +100,10 @@ Item {
             if (!ControlBackend.dndEnabled) {
                 popupList.insert(0, notifData);
                 if (popupList.count > 3) popupList.remove(3);
-                // 【核心修复 2】：去掉了这里的 dismissTimer.restart()，把生命周期管理权交给前端卡片
             }
         }
     }
 
-    // 【核心修复 3】：新增唯一的 ID 追踪销毁机制，无论队列怎么上下排挤，都能精准删掉倒计时结束的那条
     function removeByNotifId(targetId) {
         for (let i = 0; i < popupList.count; i++) {
             if (popupList.get(i).notifId === targetId) {

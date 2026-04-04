@@ -13,9 +13,8 @@ PanelWindow {
 
     property int sidebarWidth: 420
     property int gap: 24 
-    property int gooeyRadius: 26  
+    property int gooeyRadius: 36  
 
-    // 设置为 Top，全屏看视频就不会被挡住了！
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "qs-unified-sidebar"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -33,7 +32,6 @@ PanelWindow {
 
     Item {
         id: hitBoxRegion
-        // 【核心】：只保留快捷面板的拦截区域
         x: qsShadow.x
         y: 66 
         width: sidebarWidth
@@ -53,7 +51,6 @@ PanelWindow {
             anchors.fill: parent
             visible: false
 
-            // 1. 你的原始快捷面板
             Rectangle {
                 id: qsShadow
                 width: root.sidebarWidth
@@ -65,14 +62,12 @@ PanelWindow {
                 Behavior on x { NumberAnimation { duration: 600; easing.type: Easing.OutBack; easing.overshoot: 0.3 } }
             }
 
-            // 2. 你的原始隐形墙！这才是果冻拉丝的灵魂！
             Rectangle {
                 id: offscreenWall
                 width: 100; height: parent.height; x: root.offScreenX; color: "black"
             }
         }
 
-        // 3. 你的原始果冻滤镜！
         GaussianBlur {
             id: blurredShapes
             anchors.fill: parent; source: rawShapes

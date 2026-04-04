@@ -9,12 +9,14 @@ import qs.Widget.common
 WidgetPanel {
     id: root
     title: "网络配置"
-    icon: "\uf1eb"
+    icon: "wifi" 
     closeAction: () => WidgetState.qsOpen = false
 
     property bool isActive: WidgetState.qsOpen && WidgetState.qsView === "network"
     property bool wifiEnabled: true
     property string currentTab: "wifi"
+    
+    property string mdFont: "Material Symbols Outlined"
 
     onIsActiveChanged: {
         if (isActive) { scanWifi.running = true; networkMonitor.running = true } 
@@ -24,22 +26,53 @@ WidgetPanel {
     headerTools: RowLayout {
         Theme { id: headerTheme }
         spacing: 12
+        
         Text {
-            text: "\uf021"
-            font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 18
+            text: "sync"
+            font.family: root.mdFont; font.pixelSize: 20
             color: headerTheme.subtext; opacity: scanWifi.running ? 0.5 : 1
-            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { wifiModel.clear(); scanWifi.running = true } }
-            RotationAnimation on rotation { running: scanWifi.running; from: 0; to: 360; loops: Animation.Infinite; duration: 1000 }
+            MouseArea { 
+                anchors.fill: parent; cursorShape: Qt.PointingHandCursor; 
+                onClicked: { wifiModel.clear(); scanWifi.running = true } 
+            }
+            RotationAnimation on rotation { 
+                running: scanWifi.running; from: 0; to: 360; loops: Animation.Infinite; duration: 1000 
+            }
         }
         
+        // 【优化】：缩小后的头部 Switch
         Rectangle {
-            width: 50; height: 26; radius: 13 
-            color: root.wifiEnabled ? headerTheme.primary : headerTheme.outline
+            id: mainSwitch
+            width: 44; height: 24; radius: 12 
+            color: root.wifiEnabled ? headerTheme.primary : "transparent"
+            border.width: root.wifiEnabled ? 0 : 2
+            border.color: headerTheme.outline
+            Behavior on color { ColorAnimation { duration: 250 } }
             
             Rectangle { 
-                x: root.wifiEnabled ? 26 : 2; y: 2
-                width: 22; height: 22; radius: 11; color: "white"
-                Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutBack } } 
+                // 开启时16px，关闭时12px
+                width: root.wifiEnabled ? 16 : 12
+                height: root.wifiEnabled ? 16 : 12
+                radius: width / 2
+                x: root.wifiEnabled ? parent.width - width - 4 : 6
+                anchors.verticalCenter: parent.verticalCenter
+                color: root.wifiEnabled ? Colorscheme.on_primary : headerTheme.outline
+                
+                Behavior on x { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } } 
+                Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                Behavior on height { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 250 } }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "check"
+                    font.family: root.mdFont
+                    font.pixelSize: 12 // 图标等比例缩小
+                    font.bold: true
+                    color: headerTheme.primary
+                    opacity: root.wifiEnabled ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                }
             }
             
             MouseArea { 
@@ -57,29 +90,51 @@ WidgetPanel {
     Rectangle {
         Theme { id: tabTheme }
         Layout.fillWidth: true; height: 42
-        color: tabTheme.surface; radius: 10
+        color: "transparent"
+        
         RowLayout {
-            anchors.fill: parent; anchors.margins: 4; spacing: 0
-            Rectangle {
-                Layout.fillWidth: true; Layout.fillHeight: true; color: root.currentTab === "wifi" ? tabTheme.primary : "transparent"; radius: 6
-                Behavior on color { ColorAnimation { duration: 150 } }
+            anchors.fill: parent; spacing: 0
+            
+            Item {
+                Layout.fillWidth: true; Layout.fillHeight: true
                 Text { 
-                    anchors.centerIn: parent; text: "Wi-Fi"; font.bold: true; font.pixelSize: 14; 
-                    // 【核心修复】：选中时使用深色的 on_primary，未选中时使用普通的 text
-                    color: root.currentTab === "wifi" ? Colorscheme.on_primary : tabTheme.text 
+                    anchors.centerIn: parent
+                    text: "Wi-Fi"; font.bold: true; font.pixelSize: 14; 
+                    color: root.currentTab === "wifi" ? tabTheme.primary : tabTheme.text 
+                    Behavior on color { ColorAnimation { duration: 200 } }
+                }
+                Rectangle {
+                    width: 48; height: 3; radius: 1.5
+                    color: tabTheme.primary
+                    anchors.bottom: parent.bottom; anchors.horizontalCenter: parent.horizontalCenter
+                    opacity: root.currentTab === "wifi" ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                 }
                 MouseArea { anchors.fill: parent; onClicked: root.currentTab = "wifi" }
             }
-            Rectangle {
-                Layout.fillWidth: true; Layout.fillHeight: true; color: root.currentTab === "ethernet" ? tabTheme.primary : "transparent"; radius: 6
-                Behavior on color { ColorAnimation { duration: 150 } }
+            
+            Item {
+                Layout.fillWidth: true; Layout.fillHeight: true
                 Text { 
-                    anchors.centerIn: parent; text: "以太网"; font.bold: true; font.pixelSize: 14; 
-                    // 【核心修复】：同上
-                    color: root.currentTab === "ethernet" ? Colorscheme.on_primary : tabTheme.text 
+                    anchors.centerIn: parent
+                    text: "以太网"; font.bold: true; font.pixelSize: 14; 
+                    color: root.currentTab === "ethernet" ? tabTheme.primary : tabTheme.text 
+                    Behavior on color { ColorAnimation { duration: 200 } }
+                }
+                Rectangle {
+                    width: 48; height: 3; radius: 1.5
+                    color: tabTheme.primary
+                    anchors.bottom: parent.bottom; anchors.horizontalCenter: parent.horizontalCenter
+                    opacity: root.currentTab === "ethernet" ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                 }
                 MouseArea { anchors.fill: parent; onClicked: root.currentTab = "ethernet" }
             }
+        }
+        
+        Rectangle {
+            width: parent.width; height: 1; color: tabTheme.outline
+            anchors.bottom: parent.bottom; opacity: 0.3
         }
     }
 
@@ -94,11 +149,11 @@ WidgetPanel {
 
             ListView {
                 Layout.fillWidth: true; Layout.fillHeight: true
-                clip: true; spacing: 10; model: wifiModel // 加大间距
+                clip: true; spacing: 10; model: wifiModel 
                 
                 delegate: Rectangle {
                     Theme { id: itemTheme }
-                    height: 68; width: ListView.view.width; radius: 12; color: "transparent" // 加高项
+                    height: 68; width: ListView.view.width; radius: 12; color: "transparent" 
                     border.width: 1; border.color: ma.containsMouse ? itemTheme.primary : "transparent"
                     Behavior on border.color { ColorAnimation { duration: 150 } }
 
@@ -106,40 +161,88 @@ WidgetPanel {
 
                     RowLayout {
                         anchors.fill: parent; anchors.margins: 14; spacing: 14
+                        
                         Text {
-                            text: "\uf1eb"; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20 
+                            text: "wifi"
+                            font.family: root.mdFont; font.pixelSize: 24 
                             color: model.connected ? itemTheme.primary : itemTheme.subtext
                             opacity: model.connected ? 1 : (model.signal / 100)
                         }
+                        
                         ColumnLayout {
                             spacing: 2; Layout.alignment: Qt.AlignVCenter
                             Text { text: model.ssid; font.bold: true; font.pixelSize: 14; color: model.connected ? itemTheme.primary : itemTheme.text }
                             RowLayout {
-                                spacing: 6
-                                Text { text: model.connected ? "\uf00c" : "\uf023"; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 11; color: model.connected ? itemTheme.primary : itemTheme.subtext }
-                                Text { text: model.connected ? "已连接" : (model.security === "" ? "Open" : model.security); font.pixelSize: 12; color: model.connected ? itemTheme.primary : itemTheme.subtext }
+                                spacing: 4
+                                Text { 
+                                    text: model.connected ? "check" : "lock"
+                                    font.family: root.mdFont; font.pixelSize: 14;
+                                    color: model.connected ? itemTheme.primary : itemTheme.subtext 
+                                }
+                                Text { 
+                                    text: model.connected ? "已连接" : (model.security === "" ? "Open" : model.security); 
+                                    font.pixelSize: 12; color: model.connected ? itemTheme.primary : itemTheme.subtext 
+                                }
                             }
                         }
+                        
                         Item { Layout.fillWidth: true }
                         
+                        // 【优化】：缩小后的列表项 Switch
                         Rectangle {
                             visible: ma.containsMouse || model.connected
-                            width: model.connected ? 64 : 56; height: 32; radius: 8
-                            color: model.connected ? Qt.rgba(itemTheme.error.r, itemTheme.error.g, itemTheme.error.b, 0.15) : Qt.rgba(itemTheme.primary.r, itemTheme.primary.g, itemTheme.primary.b, 0.15)
+                            width: 44; height: 24; radius: 12 
+                            color: model.connected ? itemTheme.primary : "transparent"
+                            border.width: model.connected ? 0 : 2
+                            border.color: itemTheme.outline
+                            Behavior on color { ColorAnimation { duration: 250 } }
+                            
+                            Rectangle { 
+                                width: model.connected ? 16 : 12
+                                height: model.connected ? 16 : 12
+                                radius: width / 2
+                                x: model.connected ? parent.width - width - 4 : 6
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: model.connected ? Colorscheme.on_primary : itemTheme.outline
+                                
+                                Behavior on x { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } } 
+                                Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                                Behavior on height { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
+                                Behavior on color { ColorAnimation { duration: 250 } }
 
-                            Text { 
-                                anchors.centerIn: parent; text: model.connected ? "断开" : "连接"
-                                color: model.connected ? itemTheme.error : itemTheme.primary
-                                font.pixelSize: 12; font.bold: true 
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "check"
+                                    font.family: root.mdFont
+                                    font.pixelSize: 12
+                                    font.bold: true
+                                    color: itemTheme.primary
+                                    opacity: model.connected ? 1 : 0
+                                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                                }
                             }
+
                             MouseArea {
                                 anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     if (model.connected) {
-                                        disconnectProc.targetSsid = model.ssid; disconnectProc.running = true
+                                        // 1. 断开：先立刻更新UI状态
                                         wifiModel.setProperty(index, "connected", false)
+                                        // 2. 执行命令
+                                        disconnectProc.targetSsid = model.ssid;
+                                        disconnectProc.running = true
                                     } else {
-                                        connectProc.targetSsid = model.ssid; connectProc.running = true
+                                        // 【核心修复】：乐观更新！立刻清除其他所有网络的连接状态，点亮当前网络
+                                        for(let i = 0; i < wifiModel.count; i++) {
+                                            if (wifiModel.get(i).connected) {
+                                                wifiModel.setProperty(i, "connected", false)
+                                            }
+                                        }
+                                        wifiModel.setProperty(index, "connected", true)
+                                        
+                                        // 执行连接命令
+                                        connectProc.targetSsid = model.ssid;
+                                        connectProc.running = true
                                     }
                                 }
                             }
@@ -153,7 +256,7 @@ WidgetPanel {
             Theme { id: ethTheme }
             ColumnLayout {
                 anchors.centerIn: parent; spacing: 12
-                Text { text: "\uf796"; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 48; color: ethTheme.outline; Layout.alignment: Qt.AlignHCenter }
+                Text { text: "settings_ethernet"; font.family: root.mdFont; font.pixelSize: 56; color: ethTheme.outline; Layout.alignment: Qt.AlignHCenter }
                 Text { text: "以太网设置暂不可用"; font.pixelSize: 14; color: ethTheme.subtext }
             }
         }
@@ -171,8 +274,16 @@ WidgetPanel {
         stdout: SplitParser { splitMarker: "\n"; onRead: (data) => parseWifiData(data) }
     }
     Process { id: toggleWifiProc; command: ["nmcli", "radio", "wifi", root.wifiEnabled ? "on" : "off"]; onExited: (code) => { if (root.wifiEnabled) scanWifi.running = true } }
-    Process { id: connectProc; property string targetSsid: ""; command: ["nmcli", "device", "wifi", "connect", targetSsid] }
-    Process { id: disconnectProc; property string targetSsid: ""; command: ["nmcli", "connection", "down", targetSsid] }
+    
+    // 【核心修复】：添加 onExited 回调，无论 nmcli 执行成功还是失败，完成后都重新扫描一遍确保状态准确
+    Process { 
+        id: connectProc; property string targetSsid: ""; command: ["nmcli", "device", "wifi", "connect", targetSsid]; 
+        onExited: scanWifi.running = true 
+    }
+    Process { 
+        id: disconnectProc; property string targetSsid: ""; command: ["nmcli", "connection", "down", targetSsid]; 
+        onExited: scanWifi.running = true 
+    }
 
     function parseWifiData(line) {
         if (!root.wifiEnabled || line.trim() === "") return;
@@ -192,7 +303,8 @@ WidgetPanel {
         let existingIndex = -1;
         for(let i = 0; i < wifiModel.count; i++) { if (wifiModel.get(i).ssid === ssid) { existingIndex = i; break; } }
         if (existingIndex !== -1) {
-            wifiModel.setProperty(existingIndex, "signal", signal); wifiModel.setProperty(existingIndex, "connected", isConnected);
+            wifiModel.setProperty(existingIndex, "signal", signal);
+            wifiModel.setProperty(existingIndex, "connected", isConnected);
             if (isConnected) wifiModel.move(existingIndex, 0, 1);
         } else {
             let item = { ssid: ssid, signal: signal, security: security === "" ? "Open" : security, connected: isConnected };

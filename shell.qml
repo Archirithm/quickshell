@@ -21,8 +21,8 @@ ShellRoot {
     IpcHandler {
         target: "hotcorner"
         
-        // 信号：启用或禁用所有热角
-        function setEnabled(code) {
+        // 【核心修复】：为 IPC 参数加上严格的类型注解 ': bool'
+        function setEnabled(code: bool) {
             WidgetState.hotCornerEnabled = code
             return `HotCorner set to: ${code}`
         }

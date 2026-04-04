@@ -4,13 +4,20 @@ import qs.config
 
 Rectangle {
     id: root
+    property bool isHovered: mouseArea.containsMouse
+
     color: Colorscheme.secondary_container 
     radius: height / 2
-    implicitHeight: 28
-    implicitWidth: 28
+    implicitHeight: isHovered ? 34 : 28
+    implicitWidth: isHovered ? 34 : 28
+
+    Behavior on implicitHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+    Behavior on implicitWidth { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
     MouseArea {
+        id: mouseArea
         anchors.fill: parent
+        hoverEnabled: true 
         cursorShape: Qt.PointingHandCursor
         onClicked: WidgetState.notifOpen = !WidgetState.notifOpen
     }
@@ -18,9 +25,10 @@ Rectangle {
     Text {
         id: icon
         anchors.centerIn: parent
-        text: "\uf0f3" 
+        text: "\uf0f3"
         font.family: "Font Awesome 6 Free Solid"
-        font.pixelSize: 12
+        font.pixelSize: root.isHovered ? 14 : 12
         color: Colorscheme.on_secondary_container 
+        Behavior on font.pixelSize { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
     }
 }

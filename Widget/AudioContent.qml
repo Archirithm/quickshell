@@ -64,15 +64,44 @@ WidgetPanel {
     Text { text: "应用程序"; font.pixelSize: 14; color: theme.subtext; font.bold: true; Layout.topMargin: 12 }
 
     ListView {
+        id: appList // 给 ListView 起个 id 方便滚轮调用
         Layout.fillWidth: true; Layout.fillHeight: true
-        clip: true; spacing: 12; model: appTracker.linkGroups // 加大了列表间距
+        clip: true; spacing: 12;
+        model: appTracker.linkGroups
+
+        // ============================================================
+        // 【核心改造 1】：彻底禁用原生 ListView 的左键拖拽滑动功能
+        // ============================================================
+        interactive: false 
+
+        // ============================================================
+        // 【核心改造 2】：纯滚轮接管引擎
+        // ============================================================
+        MouseArea {
+            anchors.fill: parent
+            
+            // 极其关键：告诉它“不要拦截任何鼠标按键”！
+            // 这样所有的点击和拖拽操作都会完美穿透给底下的音量滑块！
+            acceptedButtons: Qt.NoButton 
+            
+            // 手动接管滚轮事件，并限制上下边界防止滚出屏幕
+            onWheel: (wheel) => {
+                let newY = appList.contentY - wheel.angleDelta.y;
+                let maxY = Math.max(0, appList.contentHeight - appList.height);
+                
+                if (newY < 0) newY = 0;
+                if (newY > maxY) newY = maxY;
+                
+                appList.contentY = newY;
+            }
+        }
 
         delegate: Rectangle {
             Theme { id: itemTheme }
             required property PwLinkGroup modelData
             property var appNode: modelData.source
 
-            width: ListView.view.width; height: 68 // 加高了列表项
+            width: ListView.view.width; height: 68
             radius: 12; color: "transparent"
             border.width: 1; border.color: "transparent" 
             PwObjectTracker { objects: [ appNode ] }
@@ -84,10 +113,22 @@ WidgetPanel {
                     Layout.preferredWidth: 32; Layout.preferredHeight: 32
                     visible: source != ""
                     source: {
-                        const iconProperty = appNode.properties["application.icon-name"] || "";
-                        const binaryName = appNode.properties["application.process.binary"] || "";
-                        if (iconProperty.includes("chromium") || binaryName.includes("chromium")) return "image://icon/google-chrome";
-                        let finalIcon = iconProperty || binaryName || "audio-card";
+                        const iconProperty = (appNode.properties["application.icon-name"] || "").toLowerCase();
+                        const binaryName = (appNode.properties["application.process.binary"] || "").toLowerCase();
+
+                        const iconMap = {
+                            "zen": "zen-browser",
+                            "zen-bin": "zen-browser",
+                            "zen-alpha": "zen-browser",
+                            "splayer": "file:///usr/share/icons/hicolor/512x512/apps/SPlayer.png"
+                        };
+
+                        let finalIcon = iconMap[binaryName] || iconMap[iconProperty] || iconProperty || binaryName || "audio-card";
+                        
+                        if (finalIcon.startsWith("file://") || finalIcon.startsWith("/")) {
+                            return finalIcon.startsWith("/") ? "file://" + finalIcon : finalIcon;
+                        }
+                        
                         return `image://icon/${finalIcon}`;
                     }
                     onStatusChanged: { if (status === Image.Error) source = "image://icon/audio-card"; }
@@ -128,8 +169,16 @@ WidgetPanel {
                         }
 
                         MouseArea {
-                            id: sliderMouseArea; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                            function updateVolume(mouse) { let v = mouse.x / width; if (v < 0) v = 0; if (v > 1) v = 1; appNode.audio.volume = v }
+                            id: sliderMouseArea; anchors.fill: parent;
+                            hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                            
+                            // 【代码精简】：这里不再需要 preventStealing: true 了，因为外层的列表已经彻底失去了抢夺焦点的能力！
+                            
+                            function updateVolume(mouse) { 
+                                let v = mouse.x / width;
+                                if (v < 0) v = 0; if (v > 1) v = 1;
+                                appNode.audio.volume = v 
+                            }
                             onPressed: (mouse) => updateVolume(mouse)
                             onPositionChanged: (mouse) => { if (pressed) updateVolume(mouse) }
                         }

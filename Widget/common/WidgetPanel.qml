@@ -12,7 +12,7 @@ Rectangle {
 
     Theme { id: theme }
     
-    // 【核心修复】：剥离背景色与边框，让底部固定的液态遮罩透出来！
+    // 剥离背景色与边框，让底部固定的液态遮罩透出来！
     color: "transparent"
     border.color: "transparent"
 

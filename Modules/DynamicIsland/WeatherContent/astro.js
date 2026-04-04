@@ -32,28 +32,3 @@ function getSunPosition(date, lat, lon) {
     
     return { az: azimuth, alt: altitude };
 }
-
-function getMoonPosition(date, lat, lon) {
-    var d = getJulianDay(date) - 2451545.0;
-    
-    var L = rev(218.316 + 13.176396 * d);
-    var M = rev(134.963 + 13.064993 * d);
-    var F = rev(93.272 + 13.229350 * d);
-    
-    var l = L + 6.289 * Math.sin(M * RAD);
-    var b = 5.128 * Math.sin(F * RAD);
-    var obliq = 23.439 - 0.00000036 * d;
-    
-    var ra = Math.atan2(Math.sin(l * RAD) * Math.cos(obliq * RAD) - Math.tan(b * RAD) * Math.sin(obliq * RAD), Math.cos(l * RAD));
-    var dec = Math.asin(Math.sin(b * RAD) * Math.cos(obliq * RAD) + Math.cos(b * RAD) * Math.sin(obliq * RAD) * Math.sin(l * RAD));
-    
-    var GMST = 18.697374558 + 24.06570982441908 * d;
-    var LMST = rev((GMST * 15) + lon) * RAD;
-    var H = LMST - ra;
-    var phi = lat * RAD;
-    
-    var altitude = Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H));
-    var azimuth = Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(phi) - Math.tan(dec) * Math.cos(phi)) + Math.PI;
-    
-    return { az: azimuth, alt: altitude };
-}

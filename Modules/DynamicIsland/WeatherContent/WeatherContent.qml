@@ -1,7 +1,7 @@
 import QtQuick
 import qs.config
-import "weather.js" as WeatherJS
-import "astro.js" as AstroJS
+import "../../../JS/weather.js" as WeatherJS
+import "../../../JS/astro.js" as AstroJS
 
 Item {
     id: root

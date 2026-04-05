@@ -15,29 +15,30 @@ Item {
     property var player: null
     property int currentIndex: 0
     
-    // =======================================
-    // 【核心修复】：动态宽度引擎
-    // 只有在 Overview (带课表) 时展开为 880 宽屏，其他保持 760
-    // =======================================
+    Shortcut {
+        sequence: "Tab"
+        onActivated: root.currentIndex = (root.currentIndex + 1) % 4
+    }
+
+    Shortcut {
+        sequence: "Shift+Tab"
+        onActivated: root.currentIndex = (root.currentIndex + 3) % 4
+    }
+    
+    // 【恢复 860 总宽】
     implicitWidth: currentIndex === 0 ? 860 : 
-                   currentIndex === 2 ? 960 : // 为壁纸界面分配 960 的超宽尺寸
+                   currentIndex === 2 ? 960 : 
                    760
     Behavior on implicitWidth { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
     
-    // =======================================
-    // 动态高度引擎
-    // =======================================
     implicitHeight: 80 + 20 + (
-        currentIndex === 0 ? 520 : // Overview
-        currentIndex === 1 ? 480 : // Media
-        currentIndex === 2 ? 300 : // Wallpaper: 增加到 300 以容纳放大后的图片
-        540                        // Weather (默认)
+        currentIndex === 0 ? 520 : 
+        currentIndex === 1 ? 480 : 
+        currentIndex === 2 ? 300 : 
+        540             
     )
     Behavior on implicitHeight { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
 
-    // =======================================
-    // 顶部 Tab Bar (强制吸顶)
-    // =======================================
     RowLayout {
         id: tabBar
         anchors.top: parent.top
@@ -77,7 +78,6 @@ Item {
                 }
             }
             
-            // 底部的高亮指示条
             Rectangle {
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -97,16 +97,12 @@ Item {
             }
         }
 
-        // 模块定义
         TabBtn { icon: ""; title: "Overview"; index: 0 }
         TabBtn { icon: ""; title: "Media"; index: 1 }
         TabBtn { icon: ""; title: "Wallpapers"; index: 2 }
         TabBtn { icon: ""; title: "Weather"; index: 3 }
     }
 
-    // =======================================
-    // 内容渲染区
-    // =======================================
     Item {
         anchors.top: tabBar.bottom
         anchors.left: parent.left
@@ -135,7 +131,7 @@ Item {
         WallpaperContent {
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width * 0.95 // 让它随父组件动态变宽
+            width: parent.width * 0.95 
             height: 300
             visible: root.currentIndex === 2
             opacity: visible ? 1 : 0

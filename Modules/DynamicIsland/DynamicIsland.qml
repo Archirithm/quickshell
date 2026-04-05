@@ -39,19 +39,17 @@ Variants {
         exclusiveZone: -1
         WlrLayershell.layer: WlrLayer.Top
 
-        
         WlrLayershell.keyboardFocus: (root.showHub || root.showTools || root.showAudio)
             ? WlrKeyboardFocus.Exclusive 
             : WlrKeyboardFocus.None
 
         // ============================================================
-        // 【点击区域（Mask）】
+        // 【物理挖孔层 (Mask Region)】 
         // ============================================================
         Item {
             id: hitBoxRegion
             anchors.top: maskContainer.top
             anchors.bottom: maskContainer.bottom
-           
             anchors.right: maskContainer.right
             anchors.left: detachedRecordContainer.left 
         }
@@ -61,11 +59,10 @@ Variants {
         }
 
         // ============================================================
-        // 【阴影源 (Shadow Source)】
+        // 【阴影源 (Shadow Source)】 
         // ============================================================
         Item {
-       
-             id: shadowSource
+            id: shadowSource
             anchors.top: maskContainer.top
             anchors.horizontalCenter: maskContainer.horizontalCenter
             width: maskContainer.width
@@ -73,15 +70,14 @@ Variants {
             visible: false 
 
             Canvas {
-               
                 id: shadowLeftEar 
                 anchors.right: rootShadow.left
                 anchors.top: rootShadow.top
                 width: islandWindow.earRadius
                 height: islandWindow.earRadius
                 onPaint: {
-            
-                    var ctx = getContext("2d"); ctx.reset(); ctx.fillStyle = "black";
+                    var ctx = getContext("2d");
+                    ctx.reset(); ctx.fillStyle = "black";
                     ctx.beginPath(); ctx.moveTo(0, 0);
                     ctx.lineTo(width, 0); ctx.lineTo(width, height);
                     ctx.arc(0, height, width, 0, -Math.PI/2, true); ctx.fill();
@@ -92,32 +88,57 @@ Variants {
                 }
             }
 
-            Rectangle {
+            Item {
                 id: rootShadow
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
-    
                 width: root.width
                 height: root.height
-                radius: root.radius
-                color: "black"
                 
                 Rectangle {
-   
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    height: parent.radius
-                   
+                    id: solidShadowBg
+                    anchors.fill: parent
+                    radius: root.radius
                     color: "black"
-                    z: -1
+                    visible: false
+                    
+                    Rectangle {
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        height: parent.radius
+                        color: "black"
+                    }
+                }
+
+                Item {
+                    id: shadowHoleWrapper
+                    anchors.fill: parent
+                    visible: false
+                    Rectangle {
+                        // 【宽度 340，左移至 18 完美对齐右侧卡片】
+                        width: 340
+                        height: 456
+                        anchors.left: parent.horizontalCenter
+                        anchors.leftMargin: 48
+                        anchors.top: parent.top
+                        anchors.topMargin: 132
+                        radius: 24
+                        color: root.showOverviewHole ? "black" : "transparent"
+                    }
+                }
+
+                OpacityMask {
+                    anchors.fill: parent
+                    source: solidShadowBg
+                    maskSource: shadowHoleWrapper
+                    invert: true
                 }
             }
 
             Canvas {
                 id: shadowRightEar 
                 anchors.left: rootShadow.right
- 
                 anchors.top: rootShadow.top
                 width: islandWindow.earRadius
                 height: islandWindow.earRadius
@@ -135,12 +156,8 @@ Variants {
             }
         }
 
-        // ============================================================
-        // 【阴影渲染 (DropShadow)】
-        // ============================================================
         DropShadow {
             anchors.fill: shadowSource
-         
             source: shadowSource
             horizontalOffset: 0
             verticalOffset: 6
@@ -151,7 +168,7 @@ Variants {
         }
 
         // ============================================================
-        // 【原始灵动岛本体】
+        // 【视觉灵动岛本体】 
         // ============================================================
         Item {
             id: maskContainer
@@ -160,14 +177,12 @@ Variants {
             width: root.width + (islandWindow.earRadius * 2)
             height: root.height
 
-    
             Canvas {
                 id: leftEar
                 anchors.right: root.left
                 anchors.top: root.top
                 width: islandWindow.earRadius
                 height: islandWindow.earRadius
-      
                 onPaint: {
                     var ctx = getContext("2d");
                     ctx.reset();
@@ -175,7 +190,7 @@ Variants {
                     ctx.beginPath();
                     ctx.moveTo(0, 0);                 
                     ctx.lineTo(width, 0);             
-                    ctx.lineTo(width, height);        
+                    ctx.lineTo(width, height);
                     ctx.arc(0, height, width, 0, -Math.PI/2, true);
                     ctx.fill();
                 }
@@ -185,18 +200,15 @@ Variants {
                 }
             }
 
-          
-            Rectangle {
+            Item {
                 id: root
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
 
-                // ================= 状态定义 =================
                 property bool showLyrics: false 
                 property bool expanded: false
                 property bool showVolume: false
                 property bool showHub: false
-            
                 property bool showTools: false 
                 property bool showAudio: false 
                 
@@ -204,114 +216,122 @@ Variants {
                 property int hubTabIndex: 0
                 property bool isRecording: false
 
-                // ================= 互斥模式判定 =================
                 property bool isLyricsMode: showLyrics
                 property bool isToolsMode: showTools && !isLyricsMode
                 property bool isHubMode: showHub && !isToolsMode && !isLyricsMode
                 property bool isAudioMode: showAudio && !isHubMode && !isToolsMode && !isLyricsMode
-                
                 property bool isVolumeMode: showVolume && !expanded && !isAudioMode && !isHubMode && !isToolsMode && !isLyricsMode
                 property bool isNotifMode: NotificationManager.hasNotifs && !expanded && !showVolume && !isAudioMode && !isHubMode && !isToolsMode && !isLyricsMode
                 property bool isCollapsedMode: !expanded && !isNotifMode && !isVolumeMode && !isAudioMode && !isLyricsMode && !isHubMode && !isToolsMode
-
-               
-                // ================= 尺寸定义 =================
-                property int lyricsW: lyricsWidget.implicitWidth;
-                property int lyricsH: 42 
-                property int expandedW: 540;
-                property int expandedH: 210
-                property int collapsedW: 220;
-                property int collapsedH: 42
-                property int recordExtraW: 0 
-                property int toolsW: 480;
-                property int toolsH: 72
-                property int notifW: 380;
-                property int notifH: (NotificationManager.model.count * 70) + 20
-                property int volW: 320;
-                property int volH: 64
-                property int audioW: 360;
-                property int audioH: 84 
                 
-                color: Colorscheme.background
+                property bool showOverviewHole: isHubMode && hubTabIndex === 0
+
+                property int lyricsW: lyricsWidget.implicitWidth; property int lyricsH: 42 
+                property int expandedW: 540; property int expandedH: 210
+                property int collapsedW: 220; property int collapsedH: 42
+                property int recordExtraW: 0 
+                property int toolsW: 480; property int toolsH: 72
+                property int notifW: 380; property int notifH: (NotificationManager.model.count * 70) + 20
+                property int volW: 320; property int volH: 64
+                property int audioW: 360; property int audioH: 84 
+                
+                property color color: Colorscheme.background 
                 clip: true
                 z: 100
 
-                // ================= 目标尺寸与形状 =================
-          
                 property int targetR: (expanded || isNotifMode || isVolumeMode || 
                       isLyricsMode || isHubMode || isToolsMode || isAudioMode) 
                       ? 24 : (isCollapsedMode && islandMouseArea.containsMouse ? 18 : 16)
 
-                property int targetW: isAudioMode     ? audioW :
-                    isToolsMode     ? toolsW :
-                    isHubMode       ? hub.implicitWidth : 
-                    isLyricsMode    ? lyricsW : 
-                    expanded        ? expandedW : 
-                    isVolumeMode    ? volW : 
-                    isNotifMode     ? notifW : 
+                property int targetW: isAudioMode ? audioW :
+                    isToolsMode ? toolsW :
+                    isHubMode ? hub.implicitWidth : 
+                    isLyricsMode ? lyricsW : 
+                    expanded ? expandedW : 
+                    isVolumeMode ? volW : 
+                    isNotifMode ? notifW : 
                     (collapsedW + (root.isRecording ? recordExtraW : 0) + (isCollapsedMode && islandMouseArea.containsMouse ? 16 : 0))
 
-                property int targetH: isAudioMode     ? audioH :
-                        isToolsMode     ? toolsH : 
-                        isHubMode       ? hub.implicitHeight : 
-                        isLyricsMode    ? lyricsH : 
-                        expanded        ? expandedH : 
-                        isVolumeMode    ? volH : 
-                        isNotifMode     ? notifH : 
+                property int targetH: isAudioMode ? audioH :
+                        isToolsMode ? toolsH : 
+                        isHubMode ? hub.implicitHeight : 
+                        isLyricsMode ? lyricsH : 
+                        expanded ? expandedH : 
+                        isVolumeMode ? volH : 
+                        isNotifMode ? notifH : 
                         (collapsedH + (isCollapsedMode && islandMouseArea.containsMouse ? 6 : 0))
 
-                // ================= 状态与物理锁 =================
                 property real wDamping: 1.0
                 property real hDamping: 1.0
-         
                 property real rDamping: 1.0
 
                 width: targetW
                 height: targetH
-                radius: targetR
+                property real radius: targetR
 
                 Rectangle {
-                    anchors.top: parent.top
- 
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    height: parent.radius
-                    color: parent.color
-                 
-                    z: -1
+                    id: solidRootBg
+                    anchors.fill: parent
+                    radius: parent.radius
+                    color: Colorscheme.background
+                    visible: false 
+                    
+                    Rectangle {
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        height: parent.radius
+                        color: parent.color
+                    }
                 }
 
-                // ================= 动态阻尼控制 =================
+                Item {
+                    id: rootHoleWrapper
+                    anchors.fill: parent
+                    visible: false
+                    Rectangle {
+                        // 【同步对齐】
+                        width: 340
+                        height: 456
+                        anchors.left: parent.horizontalCenter
+                        anchors.leftMargin: 48
+                        anchors.top: parent.top
+                        anchors.topMargin: 132
+                        radius: 24
+                        color: root.showOverviewHole ? "black" : "transparent"
+                    }
+                }
+
+                OpacityMask {
+                    anchors.fill: parent
+                    source: solidRootBg
+                    maskSource: rootHoleWrapper
+                    invert: true 
+                }
+
                 onTargetWChanged: {
-                    let isExpanding = (targetW > width);
-                    wDamping = isExpanding ? 0.7 : 0.8; 
+                    let isExpanding = (targetW > width); wDamping = isExpanding ? 0.7 : 0.8;
                 }
                 onTargetHChanged: {
-                    let isExpanding = (targetH > height);
-                    hDamping = isExpanding ? 0.7 : 0.8;
+                    let isExpanding = (targetH > height); hDamping = isExpanding ? 0.7 : 0.8;
                 }
                 onTargetRChanged: {
-                    let isExpanding = (targetR > radius);
-                    rDamping = isExpanding ? 0.7 : 0.8;
+                    let isExpanding = (targetR > radius); rDamping = isExpanding ? 0.7 : 0.8;
                 }
 
                 Behavior on width { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.wDamping; epsilon: 0.01 } }
                 Behavior on height { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.hDamping; epsilon: 0.01 } }
                 Behavior on radius { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.rDamping; epsilon: 0.01 } }
 
-                // ================= IPC 通信处理 =================
                 IpcHandler {
                     target: "island"
                     
-               
                     function cancelRecord() {
-                        root.isRecording = false;
-                        return "RECORD_CANCELLED"
+                        root.isRecording = false; return "RECORD_CANCELLED"
                     }
 
                     function closeAllOthers() {
-                        root.showLyrics = false;
-                        root.showTools = false;
+                        root.showLyrics = false; root.showTools = false;
                         root.showAudio = false; 
                         root.expanded = false;
                     }
@@ -327,7 +347,6 @@ Variants {
                     }
                 }
 
-                // ================= 音频与通知 =================
                 PwObjectTracker { objects: [ Pipewire.defaultAudioSink ] }
                
                 property var audioNode: Pipewire.defaultAudioSink ? Pipewire.defaultAudioSink.audio : null
@@ -336,35 +355,27 @@ Variants {
                     id: volHideTimer
                     interval: 2000
                     onTriggered: {
-           
                         if (volumeWidget.isInteractionActive) { restart() } 
                         else { root.showVolume = false }
                     }
                 }
-                
- 
+            
                 Connections {
-                    target: root.audioNode;
-                    ignoreUnknownSignals: true
+                    target: root.audioNode; ignoreUnknownSignals: true
                     function onVolumeChanged() { root.triggerVolumeOSD() } 
                     function onMutedChanged() { root.triggerVolumeOSD() }  
                 }
             
                 function triggerVolumeOSD() {
-  
                     if (root.showHub || root.showTools || root.showAudio || root.expanded || root.showLyrics) return
-                    root.showVolume = true;
-                    volHideTimer.restart()
+                    root.showVolume = true; volHideTimer.restart()
                 }
                 
-                // ================= 媒体播放器逻辑 =================
                 property var currentPlayer: null
 
                 Timer {
-             
                     id: stickyTimer
-                    interval: 500;
-                    repeat: true; triggeredOnStart: true
+                    interval: 500; repeat: true; triggeredOnStart: true
                     running: Mpris.players.values.length > 0
                     onRunningChanged: { if (!running) root.currentPlayer = null }
                     onTriggered: {
@@ -376,27 +387,21 @@ Variants {
                         }
                         if (playingPlayer) { 
                             if (root.currentPlayer !== playingPlayer) root.currentPlayer = playingPlayer 
-            
                         } else {
                             var currentIsValid = false
                             if (root.currentPlayer) { 
-                        
                                 for (let i = 0; i < players.length; i++) { 
                                     if (players[i] === root.currentPlayer) { currentIsValid = true; break } 
                                 } 
                             }
                             if (!currentIsValid) root.currentPlayer = players[0]
-     
                         }
                     }
                 }
 
-                // ================= 全局鼠标交互 =================
                 MouseArea {
-         
                     id: islandMouseArea  
-                    anchors.fill: parent;
-                    cursorShape: Qt.PointingHandCursor
+                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                     hoverEnabled: true   
                     enabled: !root.isNotifMode && !root.isVolumeMode 
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton
@@ -409,7 +414,6 @@ Variants {
                             
                             root.showLyrics = !root.showLyrics
                             if (root.showLyrics) root.expanded = false
- 
                         } else {
                             if (root.showLyrics) root.showLyrics = false 
                             else if (root.showHub) root.showHub = false   
@@ -417,21 +421,17 @@ Variants {
                             else if (root.showAudio) root.showAudio = false
                             else root.expanded = !root.expanded
                         }
-                  
                     }
                 }
 
-                // ================= 内部组件挂载区 =================
                 Item {
                     id: staticCanvas
                     anchors.top: parent.top
-    
                     anchors.horizontalCenter: parent.horizontalCenter
                     width: 1600 
                     height: 1200
 
                     ClockContent { 
-                  
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: root.collapsedW + (root.isRecording ? root.recordExtraW : 0)
@@ -440,8 +440,7 @@ Variants {
                         player: root.currentPlayer
                         
                         opacity: (!root.expanded && !root.isNotifMode && !root.isVolumeMode && !root.isLyricsMode && !root.isHubMode && !root.isToolsMode && !root.isAudioMode) ? 1 : 0
-                        visible: opacity > 0.01;
-                        Behavior on opacity { NumberAnimation { duration: 200 } } 
+                        visible: opacity > 0.01; Behavior on opacity { NumberAnimation { duration: 200 } } 
                     }
                         
                     VolumeContent {
@@ -453,52 +452,43 @@ Variants {
 
                         audioNode: root.audioNode
                         opacity: root.isVolumeMode ? 1 : 0
-                        visible: opacity > 0.01;
-                        Behavior on opacity { NumberAnimation { duration: 200 } } 
+                        visible: opacity > 0.01; Behavior on opacity { NumberAnimation { duration: 200 } } 
                     }
                         
                     NotificationContent { 
-                        
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.topMargin: 10
                         width: root.notifW - 20
-                      
                         height: root.notifH - 20
 
                         manager: NotificationManager
+                        
                         opacity: root.isNotifMode ? 1 : 0
-                        visible: opacity > 0.01;
-                        Behavior on opacity { NumberAnimation { duration: 200 } } 
+                        visible: opacity > 0.01; Behavior on opacity { NumberAnimation { duration: 200 } } 
                     }
                         
                     LyricsContent { 
-                        
                         id: lyricsWidget 
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: root.lyricsW
-                       
                         height: root.lyricsH
 
-                        player: root.currentPlayer;
-                        active: root.isLyricsMode
+                        player: root.currentPlayer; active: root.isLyricsMode
                         opacity: root.isLyricsMode ? 1 : 0
-                        visible: opacity > 0.01;
-                        Behavior on opacity { NumberAnimation { duration: 200 } } 
+                        visible: opacity > 0.01; Behavior on opacity { NumberAnimation { duration: 200 } } 
                     }
                     
                     MediaContent { 
                         anchors.top: parent.top
-   
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.topMargin: 20
                         width: root.expandedW - 40
                         height: root.expandedH - 40
 
                         opacity: (root.expanded && !root.isLyricsMode && !root.isHubMode) ? 1 : 0
-                        visible: opacity > 0.01;
-                        Behavior on opacity { NumberAnimation { duration: 200 } } 
+                        visible: opacity > 0.01; Behavior on opacity { NumberAnimation { duration: 200 } } 
                     }
                         
                     HubContent {
@@ -518,12 +508,10 @@ Variants {
                         Behavior on opacity { NumberAnimation { duration: 200 } }
                     }
 
-                  
                     ToolsContent {
                         id: toolsWidget 
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
-                     
                         width: root.toolsW
                         height: root.toolsH
 
@@ -531,28 +519,20 @@ Variants {
                         visible: opacity > 0.01
                         Behavior on opacity { NumberAnimation { duration: 200 } }
 
-                        // 【核心修复 1】：添加隐藏工具栏的信号接收！
-            
                         onRequestHideIsland: { root.showTools = false }
-
                         onRequestSetRecording: (state) => { root.isRecording = state }
-                        
-                        // 【核心修复 2】：不仅要切换模式，还要确保将 showTools 设为 false 以打破互斥锁
                         onRequestShowAudio: (mode) => { 
                             root.currentAudioMode = mode
                             root.showTools = false
-          
                             root.showAudio = true 
                         }
                     }
 
                     AudioContent {
-              
                         id: audioWidget
                         anchors.top: parent.top
                         anchors.horizontalCenter: parent.horizontalCenter
                         width: root.audioW
-              
                         height: root.audioH
 
                         active: root.isAudioMode
@@ -562,21 +542,17 @@ Variants {
                         Behavior on opacity { NumberAnimation { duration: 200 } }
 
                         onRequestStop: {
-             
                             root.showAudio = false
                             toolsWidget.stopAudio() 
                         }
                     }
-          
                 }
             }
 
-            // --- 右侧猫耳朵 ---
             Canvas {
                 id: rightEar
                 anchors.left: root.right
                 anchors.top: root.top
-   
                 width: islandWindow.earRadius
                 height: islandWindow.earRadius
                 onPaint: {
@@ -597,18 +573,12 @@ Variants {
             }
         }
 
-  
-        // ============================================================
-        // 【悬浮录制按钮】
-        // ============================================================
         Item {
             id: detachedRecordContainer
             width: 36
             height: 36
             anchors.verticalCenter: maskContainer.verticalCenter
             anchors.right: maskContainer.left
- 
-             
             anchors.rightMargin: root.isRecording ? 5 : -width
             z: maskContainer.z - 1 
 
@@ -630,7 +600,6 @@ Variants {
                 anchors.fill: parent
                 radius: width / 2
                 color: Colorscheme.background 
-              
                 visible: false 
             }
 
@@ -639,7 +608,6 @@ Variants {
                 source: detachedBtnBg
                 horizontalOffset: 0
                 verticalOffset: 6
-   
                 radius: 20
                 samples: 32
                 color: "#80000000"
@@ -647,25 +615,21 @@ Variants {
             }
 
             Rectangle {
-          
                 anchors.fill: parent
                 radius: width / 2
                 color: Colorscheme.background
                 
                 Rectangle {
                     anchors.centerIn: parent
-   
                     width: 14
                     height: 14
                     radius: 7
                     color: "#ff3333"
-                   
                     antialiasing: true
                     
                     SequentialAnimation on opacity {
                         loops: Animation.Infinite
                         running: root.isRecording
-     
                         NumberAnimation { to: 0.2; duration: 800; easing.type: Easing.InOutSine }
                         NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
                     }
@@ -673,12 +637,9 @@ Variants {
                 
                 MouseArea {
                     anchors.fill: parent
-      
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        console.log("点击了悬浮录制按钮！")
                         root.isRecording = false 
-             
                         toolsWidget.stopRecording() 
                     }
                 }

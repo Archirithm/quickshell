@@ -27,14 +27,13 @@ Item {
     Component.onCompleted: _isReady = true
 
     // ==========================================
-    // 歌词抓取与解析引擎 (路径已更新)
+    // 歌词抓取与解析引擎
     // ==========================================
     ListModel { id: lyricsModel }
     
     Process {
         id: lyricsProc
         running: false
-        // 【已修改】：指向 scripts 目录
         command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/scripts/lyrics_fetcher.py", root.title, root.artist]
         
         stdout: SplitParser {
@@ -88,25 +87,16 @@ Item {
             var r = imgData[0] / 255.0;
             var g = imgData[1] / 255.0;
             var b = imgData[2] / 255.0;
-            
-            // 1. 将平均 RGB 转换为 HSL (色相、饱和度、亮度)
             var baseColor = Qt.rgba(r, g, b, 1.0);
             var h = baseColor.hslHue;
             var s = baseColor.hslSaturation;
             var l = baseColor.hslLightness;
             
-            // 2. 钳制与放大 (去除泥巴色的核心魔法)
-            // 放大 1.5 倍饱和度，让颜色变得更纯粹、更鲜艳
-            s = Math.min(1.0, s * 1.5); 
-            
+            s = Math.min(1.0, s * 1.5);
             if (s < 0.1) {
-                // 如果封面几乎是纯黑白灰 (饱和度极低)，强行提亮会变成难看的灰色
-                // 这种情况我们直接回退到你系统的主题色，保证界面的绝对美观
-                extractedColor = Colorscheme.primary; 
+                extractedColor = Colorscheme.primary;
             } else {
-                // 锁定最低亮度为 0.65 (65%)，最高 0.85 (85%)
-                // 这样不管原图的平均色有多黑，最后算出来的颜色都自带“霓虹发光”感，绝对看得清！
-                l = Math.max(0.65, Math.min(0.85, l)); 
+                l = Math.max(0.65, Math.min(0.85, l));
                 extractedColor = Qt.hsla(h, s, l, 1.0);
             }
         }
@@ -134,7 +124,6 @@ Item {
         onTriggered: {
             if (root.player && !seekMa.pressed) {
                 root.currentPos = root.player.position;
-                
                 if (root.showLyrics && lyricsModel.count > 0) {
                     let pos = root.currentPos;
                     let newIdx = 0;
@@ -167,18 +156,14 @@ Item {
         id: mainBg
         anchors.fill: parent
         
-        // 【修改 1】：增加外边距，特别是底部留白，不让它紧贴 hub 底边
         anchors.topMargin: 5
         anchors.leftMargin: 5
         anchors.rightMargin: 5
         anchors.bottomMargin: 25 
-        
-        // 【修改 2】：增大圆角让它看起来更现代
+ 
         radius: 24 
         color: Colorscheme.surface_container_low
 
-        // 【核心修复】：废弃 clip: true，改用图层遮罩！
-        // 只有使用 OpacityMask，内部的封面图和模糊层才会被完美限制在圆角内
         layer.enabled: true
         layer.effect: OpacityMask {
             maskSource: Rectangle {
@@ -193,7 +178,7 @@ Item {
             anchors.fill: parent; fillMode: Image.PreserveAspectCrop; visible: false 
         }
         FastBlur { anchors.fill: parent; source: bgSource; radius: 64; visible: root.artUrl !== "" }
-        Rectangle { anchors.fill: parent; color: "#B3000000" }
+        Rectangle { anchors.fill: parent; color: Qt.rgba(0, 0, 0, 0.5) }
 
         Rectangle {
             id: lyricsToggleBtn
@@ -215,7 +200,6 @@ Item {
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.showLyrics = !root.showLyrics }
         }
 
-        // --- 主体布局分离 (状态机驱动) ---
         Item {
             id: stage
             anchors.top: parent.top
@@ -250,7 +234,6 @@ Item {
                 }
             ]
 
-            // 1. Cava 环形频谱 + 专辑封面
             Item {
                 id: coverContainer
                 width: 220; height: 220
@@ -266,11 +249,11 @@ Item {
                     onTriggered: {
                         let s = parent.smoothValues;
                         let r = CavaService.values;
-                        parent.dynamicRotation += 0.3; 
+                        parent.dynamicRotation += 0.3;
                         for (let i = 0; i < 30; i++) {
                             let diff = r[i] - s[i];
                             if (diff > 0) s[i] += 0.75 * diff; 
-                            else if (diff < 0) s[i] += 0.12 * diff; 
+                            else if (diff < 0) s[i] += 0.12 * diff;
                         }
                         parent.smoothValues = s;
                         spectrumCanvas.rotation = parent.dynamicRotation;
@@ -285,11 +268,11 @@ Item {
                         var ctx = getContext("2d");
                         ctx.clearRect(0, 0, width, height);
                         let cx = width / 2; let cy = height / 2;
-                        let baseRadius = 72; let maxAmp = 25; 
+                        let baseRadius = 72;
+                        let maxAmp = 25; 
                         let s = parent.smoothValues;
                         let totalBars = 60;   
                         let angleStep = (Math.PI * 2) / totalBars;
-
                         ctx.beginPath();
                         ctx.lineCap = "round";       
                         ctx.strokeStyle = String(root.dynamicThemeColor); 
@@ -299,14 +282,14 @@ Item {
                             let val = Math.min(1.2, s[dataIndex] / 100.0); 
                             let amp = Math.max(0.01, val) * maxAmp;
                             let angle = i * angleStep;
-                            let rInner = baseRadius - (amp * 0.05); 
+                            let rInner = baseRadius - (amp * 0.05);
                             let rOuter = baseRadius + (amp * 0.95); 
 
                             ctx.lineWidth = 2 + (val * 3);
                             ctx.moveTo(cx + Math.cos(angle) * rInner, cy + Math.sin(angle) * rInner);
                             ctx.lineTo(cx + Math.cos(angle) * rOuter, cy + Math.sin(angle) * rOuter);
                         }
-                        ctx.stroke(); 
+                        ctx.stroke();
                     }
                 }
 
@@ -321,7 +304,6 @@ Item {
                 }
             }
 
-            // 2. 文本信息组
             ColumnLayout {
                 id: infoContainer
                 width: parent.width
@@ -334,7 +316,6 @@ Item {
                 Text { text: root.album; color: "#888888"; font.pixelSize: 12; Layout.alignment: Qt.AlignHCenter; elide: Text.ElideRight; Layout.maximumWidth: root.width - 80 }
             }
 
-            // 3. 3D 悬浮歌词面板 (GPU 硬件加速版)
             Item {
                 id: lyricsContainer
                 width: stage.width - 280
@@ -353,15 +334,11 @@ Item {
                     anchors.fill: parent
                     model: lyricsModel
                     clip: true
-                    
-                    // 【核心优化 1】：加大间距，给 GPU 的缩放腾出物理空间，防止重叠
                     spacing: 24 
-                    
                     preferredHighlightBegin: height / 2 - 30
                     preferredHighlightEnd: height / 2 + 30
                     highlightRangeMode: ListView.StrictlyEnforceRange
                     interactive: false 
-                    
                     highlightMoveDuration: 600
                     highlightMoveVelocity: -1
 
@@ -369,20 +346,14 @@ Item {
                         width: ListView.view.width
                         text: model.text
                         color: ListView.isCurrentItem ? "white" : "#99ffffff"
-                        
-                        // 【核心优化 2】：锁死基础字号，彻底禁止排版引擎重绘！
                         font.pixelSize: 18
                         font.bold: true 
                         opacity: ListView.isCurrentItem ? 1.0 : 0.5
-                        
-                        // 【核心优化 3】：开启 GPU 原生硬件缩放
                         transformOrigin: Item.Left
                         scale: ListView.isCurrentItem ? 1.25 : 1.0
-                        
                         horizontalAlignment: Text.AlignLeft
                         wrapMode: Text.WordWrap
                         
-                        // 使用极具高级感的四次方缓动曲线，顺滑到起飞
                         Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.OutQuart } }
                         Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.OutQuart } }
                         Behavior on color { ColorAnimation { duration: 500; easing.type: Easing.OutQuart } }
@@ -423,46 +394,91 @@ Item {
                     anchors.fill: parent
                     spacing: 4
 
+                    // ==========================================
+                    // 极致还原 MD3 规范的纯净波浪进度条
+                    // ==========================================
                     Item {
                         id: waveContainer
                         Layout.fillWidth: true; Layout.preferredHeight: 26
 
-                        Rectangle {
-                            anchors.left: parent.left; anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
-                            height: 2; color: root.dynamicThemeColor; opacity: 0.2 
+                        property real targetPlayhead: seekMa.pressed ? Math.max(0, Math.min(seekMa.mouseX, width)) : (root.realProgress * width)
+                        property real playheadX: targetPlayhead
+                        
+                        Behavior on playheadX {
+                            enabled: root.visible && !seekMa.pressed
+                            SmoothedAnimation { velocity: 200; duration: 1500; reversingMode: SmoothedAnimation.Sync }
                         }
 
-                        Item {
-                            id: progressClip
-                            height: parent.height
-                            width: seekMa.pressed ? Math.max(0, Math.min(seekMa.mouseX, waveContainer.width)) : (root.realProgress * waveContainer.width)
-                            clip: true
-                            Behavior on width { enabled: root.visible && !seekMa.pressed; SmoothedAnimation { velocity: 200; duration: 1500; reversingMode: SmoothedAnimation.Sync } }
+                        property real wavePhase: 0
+                        NumberAnimation on wavePhase {
+                            from: 0
+                            to: Math.PI * 2
+                            duration: 1200 
+                            loops: Animation.Infinite
+                            running: root.player ? root.player.isPlaying : false
+                        }
+                        onWavePhaseChanged: fgWave.requestPaint()
+                        onPlayheadXChanged: fgWave.requestPaint()
 
-                            Canvas {
-                                id: fgWave
-                                width: waveContainer.width; height: waveContainer.height
-                                onPaint: {
-                                    var ctx = getContext("2d"); ctx.clearRect(0, 0, width, height); ctx.beginPath(); ctx.lineWidth = 2.5;
-                                    ctx.strokeStyle = String(root.dynamicThemeColor); 
-                                    let freq = 0.15, amp = 4;
-                                    for (let x = 0; x < width; x++) { let y = height / 2 + Math.sin(x * freq) * amp; if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-                                    ctx.stroke();
+                        // 1. 未播放部分 (加粗直线，带圆角和间隙)
+                        Rectangle {
+                            height: 6; radius: 3  // 【加粗】：线宽统一为 6
+                            color: root.dynamicThemeColor; opacity: 0.3 
+                            // 【完美间隙】：从 playheadX 向右偏移 4 像素作为起点，留下呼吸间距
+                            x: Math.min(parent.width, waveContainer.playheadX + 4)
+                            width: Math.max(0, parent.width - x)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        // 2. 已播放部分 (无衰减的圆角粗波浪)
+                        Canvas {
+                            id: fgWave
+                            anchors.fill: parent
+                            onPaint: {
+                                var ctx = getContext("2d");
+                                ctx.clearRect(0, 0, width, height); 
+                                
+                                // 【完美间隙】：因为线宽是 6，端点会向右溢出 3px
+                                // 因此实际画线的终点必须提前减去 7 (4+3)，这样视觉右边缘刚好落在 playheadX - 4 处，形成对称的 8px 间隙
+                                let endX = waveContainer.playheadX - 7;
+                                
+                                // 【起点保护】：给起点的圆角留出 3px 的物理空间，防止被 Canvas 边缘一刀切
+                                let padding = 3; 
+
+                                if (endX <= padding) return; 
+
+                                ctx.beginPath(); 
+                                ctx.lineWidth = 6.0;    // 【加粗线条】
+                                ctx.lineCap = "round";  // 【完美的端点圆润化】
+                                ctx.lineJoin = "round";
+                                ctx.strokeStyle = String(root.dynamicThemeColor); 
+                                
+                                let freq = 0.12, amp = 2.5; // 【调小振幅】
+                                
+                                // 【无振幅衰减】：x 从 padding 开始，保证起始点不被切断
+                                for (let x = padding; x <= endX; x += 2) { 
+                                    let y = height / 2 + Math.sin((x - padding) * freq + waveContainer.wavePhase) * amp;
+                                    if (x === padding) ctx.moveTo(x, y); 
+                                    else ctx.lineTo(x, y); 
                                 }
-                                Connections { target: waveContainer; function onWidthChanged() { fgWave.requestPaint() } }
-                                Connections { target: root; function onDynamicThemeColorChanged() { fgWave.requestPaint() } }
+                                ctx.stroke();
                             }
+                            Connections { target: waveContainer; function onWidthChanged() { fgWave.requestPaint() } }
+                            Connections { target: root; function onDynamicThemeColorChanged() { fgWave.requestPaint() } }
                         }
 
-                        Rectangle {
-                            width: 4; height: 18; radius: 2; color: root.dynamicThemeColor 
-                            x: progressClip.width - 2; anchors.verticalCenter: parent.verticalCenter
-                        }
+                        // 【已删除】：彻底移除中间的圆角药丸滑块（竖线）
 
                         MouseArea {
                             id: seekMa
-                            anchors.fill: parent; anchors.margins: -12; cursorShape: Qt.PointingHandCursor
-                            onReleased: (mouse) => { if (root.player && root.player.length > 0) { root.player.position = (Math.max(0, Math.min(mouse.x, waveContainer.width)) / waveContainer.width) * root.player.length; root.currentPos = root.player.position; } }
+                            anchors.fill: parent; anchors.margins: -12;
+                            cursorShape: Qt.PointingHandCursor
+                            onReleased: (mouse) => { 
+                                if (root.player && root.player.length > 0) { 
+                                    root.player.position = (Math.max(0, Math.min(mouse.x, waveContainer.width)) / waveContainer.width) * root.player.length;
+                                    root.currentPos = root.player.position; 
+                                } 
+                            }
                         }
                     }
 
@@ -509,7 +525,7 @@ Item {
                         if(!root.player || !root.player.loopSupported) return;
                         if (root.player.loopState === MprisLoopState.None) root.player.loopState = MprisLoopState.Playlist; 
                         else if (root.player.loopState === MprisLoopState.Playlist) root.player.loopState = MprisLoopState.Track; 
-                        else root.player.loopState = MprisLoopState.None; 
+                        else root.player.loopState = MprisLoopState.None;
                     }
                 } 
             }

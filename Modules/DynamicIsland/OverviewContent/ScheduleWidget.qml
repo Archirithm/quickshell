@@ -8,9 +8,6 @@ import qs.config
 Item {
     id: root
 
-    // ============================================================
-    // 【纯净数据引擎】：只保留 JSON 解析与 UI 网格渲染
-    // ============================================================
     property var scheduleItems: []
     property var timeHeaders: []
     property var headers: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -27,7 +24,7 @@ Item {
             Colorscheme.tertiary_container, Colorscheme.surface_variant, 
             Qt.darker(Colorscheme.primary, 3.5), Qt.darker(Colorscheme.secondary, 3.5), 
             Qt.darker(Colorscheme.tertiary, 3.5), Qt.darker(Colorscheme.error, 3.5)
-        ]; return colors[id % colors.length]; 
+         ]; return colors[id % colors.length]; 
     }
 
     function getTextColorById(id) {
@@ -61,14 +58,10 @@ Item {
     Component.onCompleted: scheduleLoader.running = true
     onVisibleChanged: { 
         if (visible) { 
-            scheduleLoader.running = false; 
-            scheduleLoader.running = true; 
+            scheduleLoader.running = false; scheduleLoader.running = true; 
         } 
     }
 
-    // ============================================================
-    // 【UI 渲染层】
-    // ============================================================
     Rectangle {
         x: 0; y: 0; width: root.timeW; height: root.headerH; color: "transparent"
         Text { anchors.centerIn: parent; text: "Time"; color: Colorscheme.on_surface_variant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily }
@@ -112,7 +105,9 @@ Item {
                     Layout.preferredWidth: root.cellW; Layout.preferredHeight: root.cellH
                     Layout.fillWidth: true; Layout.fillHeight: true; radius: 8
                     color: modelData.isEmpty ? "transparent" : root.getColorById(modelData.colorId)
-                    border.width: modelData.isEmpty ? 1 : 0; border.color: Colorscheme.outline_variant
+                    border.width: 0 
+                    border.color: "transparent"
+
                     Text {
                         anchors.fill: parent; anchors.margins: 4; text: modelData.text.replace(" (", "\n(").replace("（", "\n（")
                         color: root.getTextColorById(modelData.colorId)
@@ -126,6 +121,7 @@ Item {
     MouseArea {
         x: root.timeW + root.gridSpacing; y: root.headerH + root.gridSpacing
         width: parent.width - x; height: parent.height - y
+        // 【核心恢复】：重现仅接受右键交互，无缝绕开左键全局冲突
         acceptedButtons: Qt.RightButton; cursorShape: pressed ? Qt.ClosedHandCursor : Qt.ArrowCursor
         property real startX: 0; property real startY: 0; property real startContentX: 0; property real startContentY: 0
         onPressed: (mouse) => { startX = mouse.x; startY = mouse.y; startContentX = scheduleScroll.contentItem.contentX; startContentY = scheduleScroll.contentItem.contentY }

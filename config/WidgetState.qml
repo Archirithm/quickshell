@@ -7,7 +7,11 @@ QtObject {
     id: root 
 
     property bool qsOpen: false
-    property string qsView: "network" 
+    property string qsView: "network"
+
+    // 左侧边栏状态
+    property bool leftSidebarOpen: false
+    property string leftSidebarView: "info" // 可选值: "info", "sys", "weather"
 
     property bool notifOpen: false
     property bool notifIsHovered: false 

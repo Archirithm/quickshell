@@ -1,0 +1,8 @@
+## 资源路径
+1. 项目中的图标资源包括icon和其他SVG矢量图放在了`~/.config/quickshell/assets/`路径下的`apps`和`icons`两个文件下。
+2. 我的头像放在了`/home/archirithm/Pictures/avatar/shelby,jpg`
+3. 项目使用的字体包括`LXGW WenKai GB Screen`、`JetBrainsMono Nerd Font`、`Maple Mono NF CN`。
+4. 项目安装了`ttf-material-symbols-variable`图标包，你可以使用`Material Symbols Outlined`图标。
+5. 项目使用了`matugen`根据当前壁纸提取颜色主题，生成的颜色配置存放在了`~/.config/quickshell/config/Colorscheme.qml`下
+6. 项目中的脚本文件放在了`/home/archirithm/.config/quickshell/scripts`文件夹下。
+7. 项目的天气数据可以从`/home/archirithm/.config/quickshell/JS`目录下的weather.js文件中获取。

@@ -1,0 +1,119 @@
+import QtQuick
+import QtQuick.Layouts
+import qs.config
+import qs.Widget.common
+
+Item {
+    id: root
+    Theme { id: theme }
+
+    ColumnLayout {
+        anchors.fill: parent
+        anchors.margins: theme.padding
+        spacing: theme.padding
+
+        // ============================================================
+        // 1. Material Design 风格 Hub 导航栏
+        // ============================================================
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 70 // 高度给足，容纳图标、文字和底部指示线
+            spacing: 15
+
+            Repeater {
+                model: [
+                    { id: "info", icon: "info", label: "信息" },
+                    { id: "sys", icon: "memory", label: "资源" },
+                    { id: "weather", icon: "cloud", label: "天气" }
+                ]
+                
+                delegate: Item {
+                    id: tabBtn
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    
+                    property bool isActive: WidgetState.leftSidebarView === modelData.id
+                    property bool isHovered: hoverArea.containsMouse
+                    
+                    // 状态机驱动的颜色系统，遵循 QML 的响应式绑定
+                    property color contentColor: isActive ? theme.primary : (isHovered ? theme.text : theme.subtext)
+
+                    // 图标和文字上下排列
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        
+                        Text {
+                            text: modelData.icon
+                            font.family: "Material Symbols Outlined" 
+                            font.pixelSize: 22
+                            color: tabBtn.contentColor
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            Behavior on color { ColorAnimation { duration: 200 } }
+                        }
+                        
+                        Text {
+                            text: modelData.label
+                            font.family: "LXGW WenKai GB Screen"
+                            font.bold: tabBtn.isActive
+                            font.pixelSize: 13
+                            color: tabBtn.contentColor
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            Behavior on color { ColorAnimation { duration: 200 } }
+                        }
+                    }
+
+                    // 底部动态指示横线
+                    Rectangle {
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: tabBtn.isActive ? 40 : 0
+                        height: 3
+                        radius: 1.5
+                        color: theme.primary 
+                        opacity: tabBtn.isActive ? 1.0 : 0.0
+                        
+                        Behavior on width { 
+                            NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 0.5 } 
+                        }
+                        Behavior on opacity { 
+                            NumberAnimation { duration: 200 } 
+                        }
+                    }
+
+                    MouseArea {
+                        id: hoverArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: WidgetState.leftSidebarView = modelData.id
+                    }
+                }
+            }
+        }
+
+        // ============================================================
+        // 2. 占位符内容区
+        // ============================================================
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            color: theme.surface
+            radius: theme.radius
+
+            Text {
+                anchors.centerIn: parent
+                text: {
+                    if (WidgetState.leftSidebarView === "info") return "【信息面板 占位符】\n\n之后可以在这里放置用户头像、\n日历、或者系统运行时间。"
+                    if (WidgetState.leftSidebarView === "sys") return "【资源监控 占位符】\n\n之后可以在这里放置 CPU、\n内存、磁盘的环形进度条。"
+                    return "【天气预报 占位符】\n\n之后可以在这里获取温度、\n风向以及多日天气趋势。"
+                }
+                horizontalAlignment: Text.AlignHCenter
+                font.family: "LXGW WenKai GB Screen"
+                font.pixelSize: 15
+                color: theme.subtext
+                lineHeight: 1.4
+            }
+        }
+    }
+}

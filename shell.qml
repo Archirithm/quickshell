@@ -10,6 +10,7 @@ import qs.Modules.DynamicIsland
 // 【新增】：引入你重构后的 Widget 文件夹
 import qs.Widget
 // 【新增】：引入热角触发器路径
+import "./Widget/left_sidebar"
 import "./Modules/HotCorner"
 
 ShellRoot {
@@ -34,11 +35,7 @@ ShellRoot {
         }
     }
 
-    // 【删除】：之前的独立 Widget（AudioWidget, NetworkWidget, NotificationWidget）
-    // AudioWidget {}
-    // NetworkWidget {}
-    // NotificationWidget {}
-
+    LeftSidebarWindow {}
     // 【新增】：挂载快捷设置侧边栏 (上半部，无消息面板)
     // 只要放在 ShellRoot 里，它自己配置的 Wayland Overlay 属性就会让它完美悬浮在右上侧
     RightSidebar {}

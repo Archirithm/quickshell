@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
 import qs.Modules.Bar.Workspaces
+import qs.Modules.Bar.ActiveWindow
 import qs.Modules.Bar.Tray
 import qs.Modules.Bar.PowerButton
 import qs.Modules.Bar.SysMonitor
@@ -40,7 +41,9 @@ Variants {
             RowLayout {
                 anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
                 spacing: 10
+
                 Workspaces {}
+                ActiveWindow {}
                 
             }
 

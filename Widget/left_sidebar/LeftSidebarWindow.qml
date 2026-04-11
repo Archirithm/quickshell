@@ -1,0 +1,145 @@
+import QtQuick
+import QtQuick.Layouts
+import Qt5Compat.GraphicalEffects
+import Quickshell
+import Quickshell.Wayland
+import qs.config
+import qs.Widget.common
+
+PanelWindow {
+    id: root
+    
+    Theme { id: theme }
+
+    property int sidebarWidth: 540
+    property int gap: 24 
+    property int gooeyRadius: 36  
+
+    WlrLayershell.layer: WlrLayer.Top
+    WlrLayershell.namespace: "qs-unified-left-sidebar"
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    WlrLayershell.exclusionMode: ExclusionMode.Ignore
+    exclusiveZone: 0
+
+    anchors { left: true; top: true; bottom: true }
+    
+    implicitWidth: sidebarWidth + 100
+    color: "transparent"
+
+    property int qsTargetHeight: root.height - 100
+    
+    Item {
+        id: animController
+        property int slideOffset: -sidebarWidth - 80 
+
+        state: WidgetState.leftSidebarOpen ? "open" : "closed"
+        
+        states: [
+            State { name: "open"; PropertyChanges { target: animController; slideOffset: 0 } },
+            State { name: "closed"; PropertyChanges { target: animController; slideOffset: -sidebarWidth - 100 } }
+        ]
+        
+        transitions: [
+            Transition {
+                from: "closed"; to: "open"
+                NumberAnimation { target: animController; property: "slideOffset"; duration: 600; easing.type: Easing.OutBack; easing.overshoot: 0.3 }
+            },
+            Transition {
+                from: "open"; to: "closed"
+                NumberAnimation { target: animController; property: "slideOffset"; duration: 350; easing.type: Easing.InBack; easing.overshoot: 0.1 }
+            }
+        ]
+    }
+
+    Item {
+        id: hitBoxRegion
+        // 【修正】：鼠标事件判定区必须使用绝对屏幕坐标
+        x: animController.slideOffset + root.gap 
+        y: 66 
+        width: sidebarWidth
+        height: root.qsTargetHeight 
+    }
+
+    mask: Region { item: hitBoxRegion }
+
+    Item {
+        id: renderCanvas
+        
+        // ============================================================
+        // 【核心绝杀】：将整个画布强行向左扯出屏幕 100 像素！
+        // 让系统无法再丢弃死水墙，完美保留拉丝的基础！
+        // ============================================================
+        x: -100
+        y: 0
+        width: parent.width + 100 
+        height: parent.height
+
+        Item {
+            id: rawShapes
+            anchors.fill: parent
+            visible: false
+
+            Rectangle {
+                id: qsShadow
+                width: root.sidebarWidth
+                height: root.qsTargetHeight
+                
+                // 【补偿】：由于画布向左偏移了 100，内部的 X 必须加上 100 才能回到原位
+                x: (animController.slideOffset + root.gap) + 100
+                y: 66 
+                radius: theme.radius
+                color: "black" 
+            }
+
+            Rectangle {
+                id: offscreenWall
+                width: 100
+                height: parent.height 
+                // 【核心复活】：在这个偏移后的画布里，0 其实就是屏幕绝对坐标的 -100
+                // 高斯模糊终于能抓到它了！
+                x: 0 
+                color: "black"
+            }
+        }
+
+        GaussianBlur {
+            id: blurredShapes
+            anchors.fill: parent
+            source: rawShapes
+            radius: root.gooeyRadius
+            samples: 1 + root.gooeyRadius * 2
+            visible: false 
+        }
+
+        Rectangle { 
+            id: solidBg
+            anchors.fill: parent 
+            color: theme.background 
+            visible: false 
+        }
+
+        ThresholdMask {
+            id: gooeyLayer
+            anchors.fill: parent
+            source: solidBg
+            maskSource: blurredShapes
+            threshold: 0.51
+            spread: 0.02
+        }
+    }
+
+    Item {
+        anchors.fill: parent
+
+        Item {
+            width: root.sidebarWidth
+            height: root.qsTargetHeight
+            // 【修正】：内容挂载区也必须使用绝对屏幕坐标
+            x: animController.slideOffset + root.gap 
+            y: 66
+            clip: true 
+            
+            LeftSidebarContent { anchors.fill: parent }
+        }
+    }
+}

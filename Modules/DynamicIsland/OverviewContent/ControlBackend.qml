@@ -28,7 +28,7 @@ Singleton {
                                 echo "BT:off"
                         fi
                         
-                        IDLE=$(systemctl --user is-active hypridle 2>/dev/null)
+                        if pidof hypridle >/dev/null; then IDLE="active"; else IDLE="inactive"; fi
                         echo "IDLE:$IDLE"
                         
                         BRI=$(brightnessctl -m 2>/dev/null | awk -F, '{print substr($4, 1, length($4)-1)}')
@@ -63,23 +63,29 @@ Singleton {
                 onTriggered: statusPoller.running = true
         }
 
+        Timer {
+                id: debounceTimer
+                interval: 200; running: false; repeat: false
+                onTriggered: statusPoller.running = true
+        }
+
         function toggleWifi() {
                 Quickshell.execDetached(["bash", "-c", root.wifiEnabled ? "nmcli radio wifi off" : "nmcli radio wifi on"]);
                 root.wifiEnabled = !root.wifiEnabled; 
-                statusPoller.running = true;          
+                debounceTimer.start();
         }
 
         function toggleBluetooth() {
                 Quickshell.execDetached(["bash", "-c", root.bluetoothEnabled ? "bluetoothctl power off" : "bluetoothctl power on"]);
                 root.bluetoothEnabled = !root.bluetoothEnabled; 
                 root.bluetoothConnected = false; 
-                statusPoller.running = true;
+                debounceTimer.start();
         }
 
         function toggleCaffeine() {
-                Quickshell.execDetached(["bash", "-c", root.caffeineEnabled ? "systemctl --user start hypridle" : "systemctl --user stop hypridle"]);
+                Quickshell.execDetached(["bash", "-c", root.caffeineEnabled ? "hypridle" : "killall hypridle"]);
                 root.caffeineEnabled = !root.caffeineEnabled;
-                statusPoller.running = true;
+                debounceTimer.start();
         }
 
         function toggleDnd() {

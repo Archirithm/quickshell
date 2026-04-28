@@ -5,6 +5,9 @@ import Quickshell
 import Quickshell.Io
 import qs.config 
 
+// 新增引入我们的 C++ 高性能监控库
+import Clavis.Sysmon 1.0
+
 Item {
     id: root
 
@@ -12,7 +15,6 @@ Item {
     
     implicitHeight: 36
     
-    // 【修复点 1】使用标准的 JavaScript 函数块来处理宽度，彻底避免三元运算符解析崩溃
     implicitWidth: {
         if (isHovered) {
             return contentLayout.implicitWidth + 24;
@@ -41,44 +43,7 @@ Item {
         shadowVerticalOffset: 3
     }
 
-    // ================= 数据源 =================
-    property string ramText: "..."
-    property string cpuText: "0%"
-    property string tempText: "0°C"
-    property string diskText: "0%" 
-
-    // 【修复点 2】将字符串拼接提前提取为变量，禁止在 command 数组中直接做加法
-    property string scriptPath: Quickshell.env("HOME") + "/.config/quickshell/scripts/sys_monitor.py"
-
-    Process {
-        id: proc
-        // 干净的数组引用，不会再出现缺少逗号的报错
-        command: ["python3", root.scriptPath]
-        
-        stdout: SplitParser {
-            // 【修复点 3】使用标准 function 语法，避免箭头函数 => 造成的兼容性误判
-            onRead: function(data) {
-                try {
-                    let json = JSON.parse(data.trim());
-                    root.ramText = json.ram.text;
-                    root.cpuText = json.cpu.text;
-                    root.tempText = json.temp.text;
-                    root.diskText = json.disk.text;
-                } catch(e) {
-                    console.log("SysMonitor JSON Error: " + e)
-                }
-            }
-        }
-    }
-
-    // 【修复点 4】规范化属性换行
-    Timer { 
-        interval: 2000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: proc.running = true
-    }
+    // （这里原本庞大的 Process 启动子线程和 SplitParser JSON 提取，以及循环调度的 Timer 已被彻底抹去）
 
     // ================= 布局内容 =================
     RowLayout {
@@ -100,7 +65,8 @@ Item {
                 font.pixelSize: 16
             }
             Text { 
-                text: root.ramText
+                // 同时保全了原始流的传递。并在这里调取新的 ramUsedGB。toFixed(1) 可保留如 14.2G 格式：
+                text: SysmonPlugin.ramUsedGB.toFixed(1) + "G"
                 color: Colorscheme.on_surface
                 font.family: "LXGW WenKai GB Screen"
                 font.bold: true
@@ -123,7 +89,7 @@ Item {
                 font.pixelSize: 16
             }
             Text { 
-                text: root.diskText
+                text: Math.round(SysmonPlugin.diskUsage) + "%"
                 color: Colorscheme.on_surface
                 font.family: "LXGW WenKai GB Screen"
                 font.bold: true
@@ -146,7 +112,7 @@ Item {
                 font.pixelSize: 16
             }
             Text { 
-                text: root.tempText
+                text: Math.round(SysmonPlugin.coreTemp) + "°C"
                 color: Colorscheme.on_surface
                 font.family: "LXGW WenKai GB Screen"
                 font.bold: true
@@ -169,7 +135,7 @@ Item {
                 font.pixelSize: 16
             }
             Text { 
-                text: root.cpuText
+                text: Math.round(SysmonPlugin.cpuUsage) + "%"
                 color: Colorscheme.on_surface
                 font.family: "LXGW WenKai GB Screen"
                 font.bold: true
@@ -186,14 +152,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         
         onClicked: {
-            proc.running = true; 
-        }
-        
-        // QML 隐式自带 mouse 变量，直接使用即可
-        onPressed: {
-            if (mouse.button === Qt.RightButton) {
-                Quickshell.execDetached(["gnome-system-monitor"]);
-            }
+            Quickshell.execDetached(["gnome-system-monitor"]);
         }
     }
 }

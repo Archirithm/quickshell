@@ -10,7 +10,7 @@ import QtQuick.Controls
 WidgetPanel {
     id: root
     title: "混音器"
-    icon: "\uf1de"
+    icon: "tune"
     closeAction: () => WidgetState.qsOpen = false
     Theme { id: theme }
     property bool isActive: WidgetState.qsOpen && WidgetState.qsView === "audio"

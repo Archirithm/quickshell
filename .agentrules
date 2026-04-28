@@ -6,3 +6,7 @@
 5. 项目使用了`matugen`根据当前壁纸提取颜色主题，生成的颜色配置存放在了`~/.config/quickshell/config/Colorscheme.qml`下
 6. 项目中的脚本文件放在了`/home/archirithm/.config/quickshell/scripts`文件夹下。
 7. 项目的天气数据可以从`/home/archirithm/.config/quickshell/JS`目录下的weather.js文件中获取。
+
+## CLI 命名与项目代号
+8. Quickshell 配置项目/生态命名为 `clavis` (或 `clavis-shell`)。
+9. 相关的终端用户入口指令围绕 `key` 来设计并被路由（例如未来在终端使用 `key to weather` 看天气，或使用 `key to sysmon` 来唤起终端系统监控面板）。

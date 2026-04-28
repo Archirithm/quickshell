@@ -9,7 +9,7 @@ import qs.Widget.common
 WidgetPanel {
     id: root
     title: "网络配置"
-    icon: "wifi" 
+    icon: "wifi"
     closeAction: () => WidgetState.qsOpen = false
 
     property bool isActive: WidgetState.qsOpen && WidgetState.qsView === "network"

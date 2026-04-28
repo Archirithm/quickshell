@@ -37,7 +37,7 @@ Item {
                     property bool isActive: WidgetState.leftSidebarView === modelData.id
                     property bool isHovered: hoverArea.containsMouse
                     
-                    property color contentColor: isActive ? "white" : (isHovered ? "white" : "#888888")
+                    property color contentColor: isActive ? Colorscheme.on_background : (isHovered ? Colorscheme.on_background : Qt.rgba(Colorscheme.on_background.r, Colorscheme.on_background.g, Colorscheme.on_background.b, 0.45))
 
                     Column {
                         anchors.centerIn: parent
@@ -70,7 +70,7 @@ Item {
                         width: tabBtn.isActive ? 40 : 0
                         height: 3
                         radius: 1.5
-                        color: "white" 
+                        color: Colorscheme.on_background
                         opacity: tabBtn.isActive ? 1.0 : 0.0
                         
                         Behavior on width { 
@@ -98,7 +98,7 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true 
-            color: theme.surface
+            color: "transparent"
             radius: theme.radius
 
             InfoView {

@@ -23,7 +23,7 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
-            Text { text: root.icon; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20; color: theme.primary }
+            Text { text: root.icon; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: theme.primary }
             Text { text: root.title; font.bold: true; font.pixelSize: 18; color: theme.text; Layout.fillWidth: true; Layout.leftMargin: 10 }
             
             RowLayout { id: headerToolsLayout; spacing: 12 }
@@ -31,8 +31,8 @@ Rectangle {
             Item { width: 12 }
             
             Text {
-                text: "\uf00d"
-                font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 18; color: theme.subtext
+                text: "close"
+                font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: theme.subtext
                 MouseArea { 
                     anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.closeAction()
                 }

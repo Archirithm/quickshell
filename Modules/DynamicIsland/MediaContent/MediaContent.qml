@@ -372,30 +372,84 @@ Item {
                     onTriggered: if(MediaManager.active) MediaManager.active.previous() 
                 } 
                 
-                Rectangle { 
-                    width: 54
-                    height: 54
-                    radius: 27
-                    color: Colorscheme.primary
-                    scale: playMa.pressed ? 0.9 : (playMa.containsMouse ? 1.05 : 1.0)
+                // 使用一层 Item 作为占位箱，这样内部 Rect 变形时可以严格从中心点向两侧扩张
+                Item {
+                    Layout.preferredWidth: 72 
+                    Layout.preferredHeight: 54
                     
-                    Behavior on scale { NumberAnimation { duration: 150 } } 
-                    
-                    Text { 
+                    Rectangle { 
+                        id: playBtn
+                        // 始终锁定在容器正中心，保证形变重心不变
                         anchors.centerIn: parent
-                        text: (MediaManager.active && MediaManager.active.isPlaying) ? "pause" : "play_arrow"
-                        color: Colorscheme.on_primary
-                        font.family: "Material Symbols Outlined"
-                        font.pixelSize: 34 
-                    } 
-                    
-                    MouseArea { 
-                        id: playMa
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: if(MediaManager.active) MediaManager.active.togglePlaying() 
-                    } 
+                        
+                        width: 54 + (playMa.pressed ? 18 : ((MediaManager.active && MediaManager.active.isPlaying) ? 10 : 0))
+                        height: 54
+                        // 当按下时变成小圆角矩形(Squircle)，播放时变成中等尺寸圆角矩形，暂停时恢复完美正圆形
+                        radius: playMa.pressed ? 12 : ((MediaManager.active && MediaManager.active.isPlaying) ? 16 : 27)
+                        
+                        // 暂停时为浅色/低对比度，播放时为深色/高对比度 (Primary)
+                        color: (MediaManager.active && MediaManager.active.isPlaying) 
+                            ? Colorscheme.primary 
+                            : Colorscheme.surface_container_high
+                        
+                        // expressiveFastSpatial: 350ms, bezier(0.42, 1.67, 0.21, 0.9, 1, 1)
+                        Behavior on width { 
+                            NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.42, 1.67, 0.21, 0.9, 1, 1] } 
+                        }
+                        Behavior on radius { 
+                            NumberAnimation { duration: 350; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.42, 1.67, 0.21, 0.9, 1, 1] } 
+                        }
+                        // standard: 400ms, bezier(0.2, 0, 0, 1)
+                        Behavior on color { 
+                            ColorAnimation { duration: 400; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0, 0, 1, 1, 1] } 
+                        }
+                        
+                        // StateLayer 涟漪层
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: parent.radius
+                            color: (MediaManager.active && MediaManager.active.isPlaying) ? Colorscheme.on_primary : Colorscheme.on_surface
+                            opacity: playMa.pressed ? 0.2 : (playMa.containsMouse ? 0.12 : 0.0)
+                            visible: opacity > 0
+                            Behavior on opacity { NumberAnimation { duration: 200 } }
+                        }
+                        
+                        Text { 
+                            id: playIcon
+                            anchors.centerIn: parent
+                            text: (MediaManager.active && MediaManager.active.isPlaying) ? "pause" : "play_arrow"
+                            
+                            // 暂停时图标为深色，播放时为浅白
+                            color: (MediaManager.active && MediaManager.active.isPlaying) 
+                                ? Colorscheme.on_primary 
+                                : Colorscheme.on_surface
+                            
+                            font.family: "Material Symbols Outlined"
+                            font.pixelSize: 34 
+                            
+                            // standard: 400ms
+                            Behavior on color { ColorAnimation { duration: 400; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.2, 0, 0, 1, 1, 1] } }
+                            
+                            // Caelestia StyledText: animateDuration=400ms (每半200ms)
+                            // standardAccel: bezier(0.3, 0, 1, 1) -> 收缩阶段
+                            // standardDecel: bezier(0, 0, 0, 1) -> 展开阶段
+                            Behavior on text {
+                                SequentialAnimation {
+                                    NumberAnimation { target: playIcon; property: "scale"; to: 0.0; duration: 200; easing.type: Easing.BezierSpline; easing.bezierCurve: [0.3, 0, 1, 1, 1, 1] }
+                                    PropertyAction { target: playIcon; property: "text" }
+                                    NumberAnimation { target: playIcon; property: "scale"; to: 1.0; duration: 200; easing.type: Easing.BezierSpline; easing.bezierCurve: [0, 0, 0, 1, 1, 1] }
+                                }
+                            }
+                        } 
+                        
+                        MouseArea { 
+                            id: playMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: if(MediaManager.active) MediaManager.active.togglePlaying() 
+                        } 
+                    }
                 }
                 
                 CtrlBtn { 

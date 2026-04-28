@@ -1,0 +1,133 @@
+#include "sysmon_plugin.h"
+#include "sysmon_backend.h"
+
+SysmonPlugin::SysmonPlugin(QObject *parent) 
+    : QObject(parent),
+      m_cpuUsage(0), m_ramUsage(0), m_ramUsedGB(0), m_ramTotalGB(0),
+      m_netDownBps(0), m_netUpBps(0),
+      m_coreTemp(0), m_gpuTemp(0), m_gpuUsage(0),
+      m_load1(0), m_load5(0), m_load15(0), m_cpuFreqGHz(0),
+      m_taskRunning(0), m_taskTotal(0),
+      m_fanRpm(0), m_batteryPercent(0), m_batteryHealth(100), m_batteryPowerW(0),
+      m_diskUsage(0), m_diskUsedGB(0), m_diskTotalGB(0),
+      m_processModel(new ProcessModel(this))
+{
+    // 四级定时器
+    connect(&m_fastTimer, &QTimer::timeout, this, &SysmonPlugin::onFastTick);
+    m_fastTimer.setInterval(1000);
+    m_fastTimer.start();
+    
+    connect(&m_mediumTimer, &QTimer::timeout, this, &SysmonPlugin::onMediumTick);
+    m_mediumTimer.setInterval(2000);
+    m_mediumTimer.start();
+    
+    connect(&m_slowTimer, &QTimer::timeout, this, &SysmonPlugin::onSlowTick);
+    m_slowTimer.setInterval(5000);
+    m_slowTimer.start();
+    
+    connect(&m_glacialTimer, &QTimer::timeout, this, &SysmonPlugin::onGlacialTick);
+    m_glacialTimer.setInterval(30000);
+    m_glacialTimer.start();
+    
+    // 首次全量采集
+    onFastTick();
+    onMediumTick();
+    onSlowTick();
+    onGlacialTick();
+}
+
+// === Getters ===
+
+// Fast
+double SysmonPlugin::cpuUsage() const { return m_cpuUsage; }
+double SysmonPlugin::ramUsage() const { return m_ramUsage; }
+double SysmonPlugin::ramUsedGB() const { return m_ramUsedGB; }
+double SysmonPlugin::ramTotalGB() const { return m_ramTotalGB; }
+double SysmonPlugin::netDownBps() const { return m_netDownBps; }
+double SysmonPlugin::netUpBps() const { return m_netUpBps; }
+ProcessModel* SysmonPlugin::processes() const { return m_processModel; }
+
+// Medium
+double SysmonPlugin::coreTemp() const { return m_coreTemp; }
+double SysmonPlugin::gpuTemp() const { return m_gpuTemp; }
+double SysmonPlugin::gpuUsage() const { return m_gpuUsage; }
+double SysmonPlugin::load1() const { return m_load1; }
+double SysmonPlugin::load5() const { return m_load5; }
+double SysmonPlugin::load15() const { return m_load15; }
+double SysmonPlugin::cpuFreqGHz() const { return m_cpuFreqGHz; }
+
+// Slow
+int SysmonPlugin::fanRpm() const { return m_fanRpm; }
+double SysmonPlugin::batteryPercent() const { return m_batteryPercent; }
+QString SysmonPlugin::batteryStatus() const { return m_batteryStatus; }
+int SysmonPlugin::batteryHealth() const { return m_batteryHealth; }
+double SysmonPlugin::batteryPowerW() const { return m_batteryPowerW; }
+bool SysmonPlugin::hasBattery() const { return SysmonBackend::instance().hasBattery(); }
+
+// Glacial
+double SysmonPlugin::diskUsage() const { return m_diskUsage; }
+double SysmonPlugin::diskUsedGB() const { return m_diskUsedGB; }
+double SysmonPlugin::diskTotalGB() const { return m_diskTotalGB; }
+QString SysmonPlugin::uptime() const { return m_uptime; }
+int SysmonPlugin::taskRunning() const { return m_taskRunning; }
+int SysmonPlugin::taskTotal() const { return m_taskTotal; }
+
+// === 分级更新槽 ===
+
+void SysmonPlugin::onFastTick() {
+    auto &be = SysmonBackend::instance();
+    be.updateFast();
+    
+    m_cpuUsage   = be.getGlobalCpuUsage();
+    m_ramUsage   = be.getRamUsagePercent();
+    m_ramUsedGB  = be.getRamUsedGB();
+    m_ramTotalGB = be.getRamTotalGB();
+    m_netDownBps = be.getNetDownBps();
+    m_netUpBps   = be.getNetUpBps();
+    
+    m_processModel->setProcesses(be.getTopProcesses(50));
+    
+    emit fastDataChanged();
+}
+
+void SysmonPlugin::onMediumTick() {
+    auto &be = SysmonBackend::instance();
+    be.updateMedium();
+    
+    m_coreTemp    = be.getCoreTempCelsius();
+    m_gpuTemp     = be.getGpuTempCelsius();
+    m_gpuUsage    = be.getGpuUsagePercent();
+    m_load1       = be.getLoad1();
+    m_load5       = be.getLoad5();
+    m_load15      = be.getLoad15();
+    m_cpuFreqGHz  = be.getCpuFreqGHz();
+    m_taskRunning = be.getRunningTasks();
+    m_taskTotal   = be.getTotalTasks();
+    
+    emit mediumDataChanged();
+}
+
+void SysmonPlugin::onSlowTick() {
+    auto &be = SysmonBackend::instance();
+    be.updateSlow();
+    
+    m_fanRpm         = be.getFanRpm();
+    m_batteryPercent = be.getBatteryPercent();
+    m_batteryStatus  = be.getBatteryStatus();
+    m_batteryHealth  = be.getBatteryHealth();
+    m_batteryPowerW  = be.getBatteryPowerW();
+    
+    emit slowDataChanged();
+}
+
+void SysmonPlugin::onGlacialTick() {
+    auto &be = SysmonBackend::instance();
+    be.updateGlacial();
+    
+    m_diskUsage   = be.getDiskUsagePercent();
+    m_diskUsedGB  = be.getDiskUsedGB();
+    m_diskTotalGB = be.getDiskTotalGB();
+    m_uptime      = be.getUptime();
+    
+    emit glacialDataChanged();
+}

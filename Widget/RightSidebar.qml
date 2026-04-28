@@ -14,6 +14,7 @@ PanelWindow {
     property int sidebarWidth: 420
     property int gap: 24 
     property int gooeyRadius: 36  
+    readonly property bool contentActive: WidgetState.qsOpen || qsShadow.x < root.offScreenX
 
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "qs-unified-sidebar"
@@ -95,7 +96,20 @@ PanelWindow {
         Item {
             width: qsShadow.width; height: qsShadow.height
             x: qsShadow.x; y: qsShadow.y; clip: true 
-            QuickSettings { anchors.fill: parent }
+
+            Loader {
+                anchors.fill: parent
+                active: root.contentActive
+                sourceComponent: quickSettingsComponent
+            }
+        }
+    }
+
+    Component {
+        id: quickSettingsComponent
+
+        QuickSettings {
+            anchors.fill: parent
         }
     }
 }

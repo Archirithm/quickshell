@@ -14,10 +14,12 @@ PanelWindow {
     property int sidebarWidth: 540
     property int gap: 24 
     property int gooeyRadius: 36  
+    readonly property int closedSlideOffset: -sidebarWidth - 100
+    readonly property bool contentActive: WidgetState.leftSidebarOpen || animController.slideOffset > closedSlideOffset
 
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "qs-unified-left-sidebar"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: WidgetState.leftSidebarOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
 
@@ -36,19 +38,16 @@ PanelWindow {
         
         states: [
             State { name: "open"; PropertyChanges { target: animController; slideOffset: 0 } },
-            State { name: "closed"; PropertyChanges { target: animController; slideOffset: -sidebarWidth - 100 } }
+            State { name: "closed"; PropertyChanges { target: animController; slideOffset: root.closedSlideOffset } }
         ]
-        
-        transitions: [
-            Transition {
-                from: "closed"; to: "open"
-                NumberAnimation { target: animController; property: "slideOffset"; duration: 600; easing.type: Easing.OutBack; easing.overshoot: 0.3 }
-            },
-            Transition {
-                from: "open"; to: "closed"
-                NumberAnimation { target: animController; property: "slideOffset"; duration: 350; easing.type: Easing.InBack; easing.overshoot: 0.1 }
+
+        Behavior on slideOffset {
+            NumberAnimation {
+                duration: 600
+                easing.type: Easing.OutBack
+                easing.overshoot: 0.3
             }
-        ]
+        }
     }
 
     Item {
@@ -138,8 +137,20 @@ PanelWindow {
             x: animController.slideOffset + root.gap 
             y: 66
             clip: true 
-            
-            LeftSidebarContent { anchors.fill: parent }
+
+            Loader {
+                anchors.fill: parent
+                active: root.contentActive
+                sourceComponent: leftSidebarContentComponent
+            }
+        }
+    }
+
+    Component {
+        id: leftSidebarContentComponent
+
+        LeftSidebarContent {
+            anchors.fill: parent
         }
     }
 }

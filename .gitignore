@@ -25,6 +25,10 @@ core/**/*_autogen/
 core/**/meta_types/
 
 # Runtime/cache noise
+.agentrules
+.codex
+.codex/
+.vscode/
 *.log
 *.tmp
 *.bak

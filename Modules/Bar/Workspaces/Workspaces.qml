@@ -9,26 +9,17 @@ Item {
     id: root
 
     property string screenName: ""
-    property var displayWorkspaces: []
+    readonly property bool hasMultipleOutputs: Niri.outputs.count > 1
 
     implicitHeight: 36
     implicitWidth: layout.width + 24
 
-    function refreshWorkspaces() {
-        const filtered = Niri.workspacesForOutput(root.screenName)
-        root.displayWorkspaces = (filtered.length > 0 || root.screenName !== "" || Niri.outputs.count > 1)
-                ? filtered
-                : Niri.workspacesForOutput("")
-    }
-
-    Component.onCompleted: refreshWorkspaces()
-    onScreenNameChanged: refreshWorkspaces()
-
-    Connections {
-        target: Niri
-        function onWorkspacesChanged() { root.refreshWorkspaces() }
-        function onWindowsChanged() { root.refreshWorkspaces() }
-        function onOutputsChanged() { root.refreshWorkspaces() }
+    function acceptsOutput(outputName) {
+        if (root.screenName === "")
+            return true
+        if (!root.hasMultipleOutputs && outputName === "")
+            return true
+        return outputName === root.screenName
     }
 
     Rectangle {
@@ -55,17 +46,19 @@ Item {
         spacing: 8
 
         Repeater {
-            model: root.displayWorkspaces
+            model: Niri.workspaces
 
             delegate: Item {
                 id: delegateRoot
 
-                property bool active: modelData.isActive
-                property bool hasWindows: modelData.windowCount > 0
+                property bool belongsToScreen: root.acceptsOutput(model.output)
+                property bool active: model.isActive
+                property bool hasWindows: model.windowCount > 0
                 property bool isHovered: mouseArea.containsMouse
 
-                implicitWidth: (active || isHovered) ? 32 : 12
-                implicitHeight: 12
+                visible: belongsToScreen
+                implicitWidth: !belongsToScreen ? 0 : ((active || isHovered) ? 32 : 12)
+                implicitHeight: belongsToScreen ? 12 : 0
 
                 Behavior on implicitWidth {
                     NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
@@ -90,7 +83,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: Niri.focusWorkspaceById(modelData.id)
+                    onClicked: Niri.focusWorkspaceById(model.id)
                 }
             }
         }

@@ -1,0 +1,37 @@
+# Markdown notes
+*.md
+!README.md
+
+# Local tool/editor state
+.agentrules
+.codex
+.codex/
+.vscode/
+
+# Vendored/generated icon packs
+assets/meteocons/
+
+# C++/Qt build outputs
+core/build*/
+core/**/*.o
+core/**/*.obj
+core/**/*.a
+core/**/*.so
+core/**/*.so.*
+core/**/*.dll
+core/**/*.dylib
+core/**/*.bin
+core/**/CMakeCache.txt
+core/**/CMakeFiles/
+core/**/Makefile
+core/**/cmake_install.cmake
+core/**/.qt/
+core/**/.rcc/
+core/**/*_autogen/
+core/**/meta_types/
+
+# Runtime/cache noise
+*.log
+*.tmp
+*.bak
+*~

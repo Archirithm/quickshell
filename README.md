@@ -1,3 +1,7 @@
+## 项目说明
+
+这是我的 Quickshell 桌面 shell 配置目录，放置在标准的 `~/.config/quickshell` 路径下。仓库包含主入口 `shell.qml`、各类 QML 桌面组件、共享资源，以及 `core/` 下用于向 QML 暴露系统监控和天气数据的 Qt/C++ 自制插件源码。
+
 ### 预览
 灵动岛媒体
 <p align="center">

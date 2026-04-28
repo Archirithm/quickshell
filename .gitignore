@@ -2,6 +2,12 @@
 *.md
 !README.md
 
+# Local tool/editor state
+.agentrules
+.codex
+.codex/
+.vscode/
+
 # Vendored/generated icon packs
 assets/meteocons/
 
@@ -25,10 +31,6 @@ core/**/*_autogen/
 core/**/meta_types/
 
 # Runtime/cache noise
-.agentrules
-.codex
-.codex/
-.vscode/
 *.log
 *.tmp
 *.bak

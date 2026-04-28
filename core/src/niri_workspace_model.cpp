@@ -62,8 +62,38 @@ QHash<int, QByteArray> NiriWorkspaceModel::roleNames() const
 
 void NiriWorkspaceModel::setWorkspaces(const QList<NiriWorkspace> &workspaces)
 {
-    beginResetModel();
+    bool sameRows = m_workspaces.count() == workspaces.count();
+    if (sameRows) {
+        for (int i = 0; i < m_workspaces.count(); ++i) {
+            if (m_workspaces.at(i).id != workspaces.at(i).id) {
+                sameRows = false;
+                break;
+            }
+        }
+    }
+
+    if (sameRows) {
+        for (int i = 0; i < workspaces.count(); ++i) {
+            m_workspaces[i] = workspaces.at(i);
+            const QModelIndex modelIndex = index(i);
+            emit dataChanged(modelIndex, modelIndex, {
+                IdRole,
+                IndexRole,
+                NameRole,
+                OutputRole,
+                IsActiveRole,
+                IsFocusedRole,
+                IsUrgentRole,
+                ActiveWindowIdRole,
+                WindowCountRole,
+                IconsRole,
+            });
+        }
+        return;
+    }
+
     const int oldCount = m_workspaces.count();
+    beginResetModel();
     m_workspaces = workspaces;
     endResetModel();
     if (oldCount != m_workspaces.count())

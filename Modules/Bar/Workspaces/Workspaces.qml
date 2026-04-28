@@ -46,7 +46,7 @@ Item {
         spacing: 8
 
         Repeater {
-            model: root.displayWorkspaces
+            model: Niri.workspaces
 
             delegate: Item {
                 id: delegateRoot

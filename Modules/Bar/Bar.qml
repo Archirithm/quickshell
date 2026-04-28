@@ -42,8 +42,9 @@ Variants {
                 anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
                 spacing: 10
 
-                Workspaces {}
+                Workspaces { screenName: barWindow.screen.name }
                 ActiveWindow {}
+                SidebarButton {}
                 
             }
 

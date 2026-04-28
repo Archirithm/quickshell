@@ -51,3 +51,26 @@ target_link_libraries(ClavisWeatherCore PRIVATE
     Qt6::Network
 )
 target_include_directories(ClavisWeatherCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+qt_add_library(ClavisNiriCore STATIC)
+target_sources(ClavisNiriCore PRIVATE
+    niri_types.h
+    niri_icon_lookup.h
+    niri_icon_lookup.cpp
+    niri_ipc_client.h
+    niri_ipc_client.cpp
+    niri_workspace_model.h
+    niri_workspace_model.cpp
+    niri_window_model.h
+    niri_window_model.cpp
+    niri_output_model.h
+    niri_output_model.cpp
+)
+
+set_target_properties(ClavisNiriCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+target_link_libraries(ClavisNiriCore PRIVATE
+    Qt6::Core
+    Qt6::Network
+)
+target_include_directories(ClavisNiriCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

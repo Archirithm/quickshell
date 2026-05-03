@@ -213,4 +213,9 @@ QtObject {
         });
         return all;
     }
+
+    function closeAllPopups() {
+        qsOpen = false;
+        leftSidebarOpen = false;
+    }
 }

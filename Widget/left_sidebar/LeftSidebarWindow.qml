@@ -19,7 +19,7 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "qs-unified-left-sidebar"
-    WlrLayershell.keyboardFocus: WidgetState.leftSidebarOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: WidgetState.leftSidebarOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
 
@@ -29,6 +29,15 @@ PanelWindow {
     color: "transparent"
 
     property int qsTargetHeight: root.height - 100
+
+    Connections {
+        target: WidgetState
+
+        function onLeftSidebarOpenChanged() {
+            if (WidgetState.leftSidebarOpen)
+                keyGateway.forceActiveFocus();
+        }
+    }
     
     Item {
         id: animController
@@ -128,7 +137,14 @@ PanelWindow {
     }
 
     Item {
+        id: keyGateway
         anchors.fill: parent
+        focus: WidgetState.leftSidebarOpen
+
+        Keys.onEscapePressed: (event) => {
+            WidgetState.closeAllPopups();
+            event.accepted = true;
+        }
 
         Item {
             width: root.sidebarWidth

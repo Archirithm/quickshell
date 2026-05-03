@@ -39,7 +39,7 @@ Variants {
         exclusiveZone: -1
         WlrLayershell.layer: WlrLayer.Top
 
-        WlrLayershell.keyboardFocus: (root.showHub || root.showTools || root.showAudio)
+        WlrLayershell.keyboardFocus: root.hasClosablePopup
             ? WlrKeyboardFocus.Exclusive 
             : WlrKeyboardFocus.None
 
@@ -223,6 +223,7 @@ Variants {
                 property bool isVolumeMode: showVolume && !expanded && !isAudioMode && !isHubMode && !isToolsMode && !isLyricsMode
                 property bool isNotifMode: NotificationManager.hasNotifs && !expanded && !showVolume && !isAudioMode && !isHubMode && !isToolsMode && !isLyricsMode
                 property bool isCollapsedMode: !expanded && !isNotifMode && !isVolumeMode && !isAudioMode && !isLyricsMode && !isHubMode && !isToolsMode
+                property bool hasClosablePopup: expanded || showLyrics || showHub || showTools || showAudio
                 
                 property bool showOverviewHole: isHubMode && hubTabIndex === 0
 
@@ -323,6 +324,27 @@ Variants {
                 Behavior on height { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.hDamping; epsilon: 0.01 } }
                 Behavior on radius { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.rDamping; epsilon: 0.01 } }
 
+                focus: root.hasClosablePopup
+
+                onHasClosablePopupChanged: {
+                    if (root.hasClosablePopup)
+                        root.forceActiveFocus();
+                }
+
+                Keys.onEscapePressed: (event) => {
+                    root.closeIslandPopups();
+                    event.accepted = true;
+                }
+
+                function closeIslandPopups() {
+                    root.expanded = false;
+                    root.showLyrics = false;
+                    root.showVolume = false;
+                    root.showHub = false;
+                    root.showTools = false;
+                    root.showAudio = false;
+                }
+
                 IpcHandler {
                     target: "island"
                     
@@ -415,11 +437,10 @@ Variants {
                             root.showLyrics = !root.showLyrics
                             if (root.showLyrics) root.expanded = false
                         } else {
-                            if (root.showLyrics) root.showLyrics = false 
-                            else if (root.showHub) root.showHub = false   
-                            else if (root.showTools) root.showTools = false 
-                            else if (root.showAudio) root.showAudio = false
-                            else root.expanded = !root.expanded
+                            if (root.isLyricsMode || root.isHubMode || root.isToolsMode || root.isAudioMode)
+                                return;
+
+                            root.expanded = !root.expanded;
                         }
                     }
                 }

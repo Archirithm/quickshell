@@ -18,7 +18,7 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "qs-unified-sidebar"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: WidgetState.qsOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     WlrLayershell.exclusionMode: ExclusionMode.Ignore
     exclusiveZone: 0
 
@@ -30,6 +30,15 @@ PanelWindow {
     property int qsTargetHeight: 640
     property int targetX: 600 - sidebarWidth - gap
     property int offScreenX: 600
+
+    Connections {
+        target: WidgetState
+
+        function onQsOpenChanged() {
+            if (WidgetState.qsOpen)
+                keyGateway.forceActiveFocus();
+        }
+    }
 
     Item {
         id: hitBoxRegion
@@ -91,7 +100,14 @@ PanelWindow {
     }
 
     Item {
+        id: keyGateway
         anchors.fill: parent
+        focus: WidgetState.qsOpen
+
+        Keys.onEscapePressed: (event) => {
+            WidgetState.closeAllPopups();
+            event.accepted = true;
+        }
 
         Item {
             width: qsShadow.width; height: qsShadow.height

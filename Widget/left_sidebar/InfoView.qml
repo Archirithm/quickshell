@@ -1,78 +1,78 @@
 import QtQuick
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
 import qs.config
+import qs.Services
 import qs.Widget.common
-import "../../JS/weather.js" as WeatherService
+import "./notifications"
 
 Item {
     id: root
-    Theme { id: theme }
 
-    // ==========================================
-    // 全局绑定与状态 (当面板可见时智能运行)
-    // ==========================================
-    property bool isForeground: WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === "info"
+
+    readonly property bool isForeground: WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === "info"
+    readonly property int cardRadius: 24
+    readonly property int cardPadding: 16
+    readonly property string materialFont: "Material Symbols Outlined"
+    readonly property color fetchColorChassis: Appearance.colors.colPrimary
+    readonly property color fetchColorUptime: Appearance.colors.colSecondary
+    readonly property color fetchColorOsAge: Appearance.colors.colTertiary
+    readonly property color fetchColorKernel: Appearance.colors.colSecondary
+    readonly property color fetchColorWm: Appearance.colors.colPrimary
+    readonly property color fetchColorShell: Appearance.colors.colTertiary
 
     property string valChassis: "Loading..."
-    property string valWeatherIcon: "cloud"
-    property string valWeatherDesc: "fetching..."
-    property string valTemp: "--°C"
-    property string valRam: "Measuring..."
+    property string valUser: Quickshell.env("USER") || "archirithm"
+    property string valHost: "arch"
+    property string valWm: "niri"
+    property string valKernel: "Unknown"
+    property string valShell: "Unknown"
+    property string valDistroId: "linux"
     property string valOsAge: "Calculating..."
     property string valUptime: "Waiting..."
-    property double lastWeatherFetchTime: 0
+
+    function refreshDetails() {
+        if (!detailsProc.running)
+            detailsProc.running = true;
+    }
+
+    function distroLogo() {
+        const id = valDistroId.toLowerCase();
+        const logos = {
+            "arch": "󰣇",
+            "archlinux": "󰣇",
+            "endeavouros": "",
+            "manjaro": "",
+            "fedora": "",
+            "ubuntu": "",
+            "debian": "",
+            "opensuse": "",
+            "nixos": "",
+            "gentoo": "",
+            "void": ""
+        };
+        return logos[id] || "";
+    }
 
     onIsForegroundChanged: {
         if (isForeground) {
-            // 每当展开侧边栏时，直接唤醒快速收集进程以防止用户等待
-            if (!ramProc.running) ramProc.running = true;
-            if (!detailsProc.running) detailsProc.running = true;
-
-            // 天气具有缓存保护：如果距上一次拉取超过 1 小时 (3600000ms)，才触发新一轮接口。
-            let curr = new Date().getTime();
-            if (curr - root.lastWeatherFetchTime > 3600000) {
-                root.lastWeatherFetchTime = curr;
-                WeatherService.fetchLocationAndWeather(function(data) {
-                    if (data && data.current) {
-                        root.valTemp = data.current.temperature_2m + "°C";
-                        root.valWeatherDesc = WeatherService.getWeatherDesc(data.current.weather_code).toLowerCase();
-                        root.valWeatherIcon = WeatherService.getMaterialIcon(data.current.weather_code);
-                    }
-                });
-            }
+            refreshDetails();
+            NotificationManager.timeoutAll();
+            NotificationManager.markAllRead();
         }
+    }
+
+    Component.onCompleted: {
+        if (isForeground)
+            refreshDetails();
     }
 
     Timer {
-        id: ramTimer
-        interval: 5000 // 5 秒监测一次系统资源
-        running: root.isForeground 
+        interval: 600000
+        running: root.isForeground
         repeat: true
-        onTriggered: {
-            if (!ramProc.running) {
-                ramProc.running = true;
-            }
-        }
-    }
-
-    Process {
-        id: ramProc
-        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/scripts/sys_monitor.py"]
-        running: false
-        stdout: SplitParser {
-            onRead: data => {
-                try {
-                    let d = JSON.parse(data.trim());
-                    if (d.ram && d.ram.text) {
-                        // sys_monitor 默认会输出 X.XG 的样式的字符串
-                        root.valRam = d.ram.text + " / 16 GiB";
-                    }
-                } catch(e) {}
-            }
-        }
+        onTriggered: root.refreshDetails()
     }
 
     Process {
@@ -82,243 +82,270 @@ Item {
         stdout: SplitParser {
             onRead: data => {
                 try {
-                    let d = JSON.parse(data.trim());
-                    if (d.chassis) root.valChassis = d.chassis;
-                    if (d.os_age) root.valOsAge = d.os_age;
-                    if (d.uptime) root.valUptime = d.uptime;
-                } catch(e) {}
+                    const parsed = JSON.parse(data.trim());
+                    if (parsed.chassis) root.valChassis = parsed.chassis;
+                    if (parsed.user) root.valUser = parsed.user;
+                    if (parsed.host) root.valHost = parsed.host;
+                    if (parsed.wm) root.valWm = parsed.wm;
+                    if (parsed.kernel) root.valKernel = parsed.kernel;
+                    if (parsed.shell) root.valShell = parsed.shell;
+                    if (parsed.distro_id) root.valDistroId = parsed.distro_id;
+                    if (parsed.os_age) root.valOsAge = parsed.os_age;
+                    if (parsed.uptime) root.valUptime = parsed.uptime;
+                } catch (error) {
+                    console.log("InfoView failed to parse sys_details.py output:", error);
+                }
             }
         }
     }
 
-    // ==========================================
-    // UI Layout
-    // ==========================================
-    ColumnLayout {
-        anchors.centerIn: parent
-        width: parent.width - 40
-        spacing: 12
+    Flickable {
+        id: flick
+        anchors.fill: parent
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        interactive: false
+        contentWidth: width
+        contentHeight: contentColumn.implicitHeight + 2
 
-        // 1. 周几 (Day of the week)
-        Text {
-            Layout.alignment: Qt.AlignHCenter
-            // 简单的 JS 取名方式，不再设置定时器，利用 isForeground 更改使得每次拉开面板也会动态刷新
-            text: Qt.formatDateTime(new Date(), "dddd") 
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 45
-            font.bold: true
-            color: theme.error
+        function wheelPage(angleDeltaY) {
+            if (angleDeltaY === 0)
+                return;
+            const direction = angleDeltaY > 0 ? -1 : 1;
+            const target = flick.contentY + direction * Math.max(120, flick.height * 0.85);
+            flick.contentY = Math.max(0, Math.min(target, Math.max(0, flick.contentHeight - flick.height)));
         }
 
-        // 2. 日期 (Date)
-        Text {
-            Layout.alignment: Qt.AlignHCenter
-            text: Qt.formatDateTime(new Date(), "dd MMMM yyyy") 
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 22
-            font.bold: true
-            color: theme.subtext
-            Layout.topMargin: -8 
-        }
-
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 15
-        }
-
-        // 3. 用户头像
-        Item {
-            Layout.alignment: Qt.AlignHCenter
-            width: 180
-            height: 180
-
-            Image {
-                id: avatarImg
-                anchors.fill: parent
-                source: "file:///home/archirithm/Pictures/avatar/shelby.jpg"
-                sourceSize: Qt.size(360, 360) 
-                fillMode: Image.PreserveAspectCrop
-                mipmap: true
-                cache: false
-                visible: false 
-            }
-            
-            Rectangle {
-                id: mask
-                anchors.fill: parent
-                radius: 90
-                visible: false
-                color: "black"
-            }
-            
-            OpacityMask {
-                anchors.fill: parent
-                source: avatarImg
-                maskSource: mask
+        Behavior on contentY {
+            NumberAnimation {
+                duration: 180
+                easing.type: Easing.OutCubic
             }
         }
 
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 5
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: event => {
+                flick.wheelPage(event.angleDelta.y);
+                event.accepted = true;
+            }
         }
 
-        // 4. 用户名
-        Text {
-            Layout.alignment: Qt.AlignHCenter
-            text: "archirithm"
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 36
-            font.bold: true
-            color: theme.error
-        }
-
-        // 5. 账号名
-        Text {
-            Layout.alignment: Qt.AlignHCenter
-            text: "@archlinux"
-            font.family: "JetBrainsMono Nerd Font"
-            font.pixelSize: 20
-            color: theme.subtext
-            Layout.topMargin: -6
-        }
-
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 40 
-        }
-
-        // 6 ~ 10. 详细数据列阵
         ColumnLayout {
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: 320 
-            spacing: 24
+            id: contentColumn
+            width: flick.width
+            spacing: 12
 
-            // (1) 电脑型号 Chassis
-            RowLayout {
+            InfoCard {
                 Layout.fillWidth: true
-                spacing: 25
-                Text {
-                    text: "laptop_mac"
-                    font.family: "Material Symbols Outlined"
-                    font.pixelSize: 32
-                    color: theme.primary
-                    Layout.alignment: Qt.AlignVCenter
-                }
-                Text {
-                    text: root.valChassis
-                    font.family: "LXGW WenKai GB Screen"
-                    font.pixelSize: 26 
-                    color: theme.text
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
+                Layout.preferredHeight: 236
+
+                RowLayout {
+                    anchors.centerIn: parent
+                    width: parent.width
+                    spacing: 24
+
+                    Item {
+                        Layout.preferredWidth: 154
+                        Layout.preferredHeight: 154
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: root.distroLogo()
+                            color: Appearance.colors.colPrimary
+                            font.family: "JetBrainsMono Nerd Font"
+                            font.pixelSize: 138
+                            font.bold: true
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.leftMargin: 8
+                        spacing: 5
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: root.valUser + "@" + root.valHost
+                            color: Appearance.colors.colPrimary
+                            font.family: Sizes.fontFamilyMono
+                            font.pixelSize: 18
+                            font.bold: true
+                            Layout.bottomMargin: 4
+                            elide: Text.ElideRight
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 2
+                            Layout.bottomMargin: 4
+                            radius: 1
+                            color: Appearance.colors.colOnSurfaceVariant
+                            opacity: 0.45
+                        }
+
+                        FetchLine {
+                            icon: "laptop_mac"
+                            label: "Chassis"
+                            value: root.valChassis
+                            accent: root.fetchColorChassis
+                        }
+
+                        FetchLine {
+                            icon: "schedule"
+                            label: "Uptime"
+                            value: root.valUptime
+                            accent: root.fetchColorUptime
+                        }
+
+                        FetchLine {
+                            icon: "cake"
+                            label: "OS Age"
+                            value: root.valOsAge
+                            accent: root.fetchColorOsAge
+                        }
+
+                        FetchLine {
+                            icon: "memory"
+                            label: "Kernel"
+                            value: root.valKernel
+                            accent: root.fetchColorKernel
+                        }
+
+                        FetchLine {
+                            icon: "window"
+                            label: "WM"
+                            value: root.valWm
+                            accent: root.fetchColorWm
+                        }
+
+                        FetchLine {
+                            icon: "terminal"
+                            label: "Shell"
+                            value: root.valShell
+                            accent: root.fetchColorShell
+                        }
+
+                        FetchSwatches {
+                            Layout.topMargin: 4
+                            Layout.alignment: Qt.AlignLeft
+                        }
+                    }
                 }
             }
 
-            // (2) 天气 Weather
-            RowLayout {
+            NotificationCenterCard {
                 Layout.fillWidth: true
-                spacing: 25
-                Text {
-                    text: root.valWeatherIcon
-                    font.family: "Material Symbols Outlined"
-                    font.pixelSize: 32
-                    color: "#8ab4f8"
-                    Layout.alignment: Qt.AlignVCenter
-                }
-                Text {
-                    text: root.valWeatherDesc
-                    font.family: "LXGW WenKai GB Screen"
-                    font.pixelSize: 26 
-                    color: theme.text
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                }
-            }
-
-            // (3) 气温 Temperature
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 25
-                Text {
-                    text: "device_thermostat"
-                    font.family: "Material Symbols Outlined"
-                    font.pixelSize: 32
-                    color: theme.error
-                    Layout.alignment: Qt.AlignVCenter
-                }
-                Text {
-                    text: root.valTemp
-                    font.family: "LXGW WenKai GB Screen"
-                    font.pixelSize: 26 
-                    color: theme.text
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                }
-            }
-
-            // (4) 内存占用 RAM
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 25
-                Text {
-                    text: "memory"
-                    font.family: "Material Symbols Outlined"
-                    font.pixelSize: 32
-                    color: "#cba6f7"
-                    Layout.alignment: Qt.AlignVCenter
-                }
-                Text {
-                    text: root.valRam
-                    font.family: "LXGW WenKai GB Screen"
-                    font.pixelSize: 26 
-                    color: theme.text
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                }
-            }
-
-            // (5) OS 系统年龄 Age
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 25
-                Text {
-                    text: "cake"
-                    font.family: "Material Symbols Outlined"
-                    font.pixelSize: 32
-                    color: "#81c995"
-                    Layout.alignment: Qt.AlignVCenter
-                }
-                Text {
-                    text: root.valOsAge
-                    font.family: "LXGW WenKai GB Screen"
-                    font.pixelSize: 26 
-                    color: theme.text
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                }
-            }
-
-            // (6) 运行时间 Uptime
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 25
-                Text {
-                    text: "timer"
-                    font.family: "Material Symbols Outlined"
-                    font.pixelSize: 32
-                    color: "#fcad70"
-                    Layout.alignment: Qt.AlignVCenter
-                }
-                Text {
-                    text: root.valUptime
-                    font.family: "LXGW WenKai GB Screen"
-                    font.pixelSize: 26 
-                    color: theme.text
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                }
+                Layout.preferredHeight: Math.max(360, flick.height - 236 - contentColumn.spacing)
             }
         }
     }
+
+    component InfoCard: Rectangle {
+        id: card
+        default property alias content: body.data
+        color: Appearance.colors.colLayer3
+        radius: root.cardRadius
+
+        Item {
+            id: body
+            anchors.fill: parent
+            anchors.margins: root.cardPadding
+        }
+    }
+
+    component MaterialIcon: Text {
+        property int iconSize: 20
+        font.family: root.materialFont
+        font.pixelSize: iconSize
+        color: Appearance.colors.colOnSurface
+        verticalAlignment: Text.AlignVCenter
+        horizontalAlignment: Text.AlignHCenter
+    }
+
+    component FetchLine: RowLayout {
+        id: line
+        property string icon: ""
+        property string label: ""
+        property string value: ""
+        property color accent: Appearance.colors.colPrimary
+
+        implicitHeight: 22
+        spacing: 9
+
+        MaterialIcon {
+            Layout.preferredWidth: 22
+            text: line.icon
+            iconSize: 18
+            color: line.accent
+        }
+
+        Text {
+            Layout.preferredWidth: 62
+            text: line.label + ":"
+            color: line.accent
+            font.family: Sizes.fontFamilyMono
+            font.pixelSize: 12
+            font.bold: true
+            elide: Text.ElideRight
+        }
+
+        Text {
+            Layout.fillWidth: true
+            text: line.value
+            color: Appearance.colors.colOnSurface
+            font.family: Sizes.fontFamilyMono
+            font.pixelSize: 12
+            elide: Text.ElideRight
+        }
+    }
+
+    component FetchSwatches: RowLayout {
+        spacing: 6
+
+        Rectangle {
+            Layout.preferredWidth: 24
+            Layout.preferredHeight: 10
+            radius: 3
+            color: root.fetchColorChassis
+        }
+
+        Rectangle {
+            Layout.preferredWidth: 24
+            Layout.preferredHeight: 10
+            radius: 3
+            color: root.fetchColorUptime
+        }
+
+        Rectangle {
+            Layout.preferredWidth: 24
+            Layout.preferredHeight: 10
+            radius: 3
+            color: root.fetchColorOsAge
+        }
+
+        Rectangle {
+            Layout.preferredWidth: 24
+            Layout.preferredHeight: 10
+            radius: 3
+            color: root.fetchColorKernel
+        }
+
+        Rectangle {
+            Layout.preferredWidth: 24
+            Layout.preferredHeight: 10
+            radius: 3
+            color: root.fetchColorWm
+        }
+
+        Rectangle {
+            Layout.preferredWidth: 24
+            Layout.preferredHeight: 10
+            radius: 3
+            color: root.fetchColorShell
+        }
+    }
+
 }

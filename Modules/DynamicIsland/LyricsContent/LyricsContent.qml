@@ -244,7 +244,7 @@ Item {
                     ctx.beginPath();
                     ctx.lineCap = "round"; 
                     ctx.lineWidth = 2.5;   
-                    ctx.strokeStyle = String(Colorscheme.primary); 
+                    ctx.strokeStyle = String(Appearance.colors.colPrimary); 
 
                     for(let i = 0; i < 6; i++) {
                         let val = Math.min(1.0, s[i] / 100.0);

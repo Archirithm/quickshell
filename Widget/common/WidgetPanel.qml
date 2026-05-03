@@ -10,7 +10,6 @@ Rectangle {
     default property alias content: contentLayout.data
     property var closeAction: () => {} 
 
-    Theme { id: theme }
     
     // 剥离背景色与边框，让底部固定的液态遮罩透出来！
     color: "transparent"
@@ -18,13 +17,13 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: theme.padding
+        anchors.margins: Appearance.spacing.panelPadding
         spacing: 16
 
         RowLayout {
             Layout.fillWidth: true
-            Text { text: root.icon; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: theme.primary }
-            Text { text: root.title; font.bold: true; font.pixelSize: 18; color: theme.text; Layout.fillWidth: true; Layout.leftMargin: 10 }
+            Text { text: root.icon; font.family: "Material Symbols Outlined"; font.pixelSize: 22; color: Appearance.colors.colPrimary }
+            Text { text: root.title; font.bold: true; font.pixelSize: 18; color: Appearance.colors.colOnLayer2; Layout.fillWidth: true; Layout.leftMargin: 10 }
             
             RowLayout { id: headerToolsLayout; spacing: 12 }
             
@@ -32,7 +31,7 @@ Rectangle {
             
             Text {
                 text: "close"
-                font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: theme.subtext
+                font.family: "Material Symbols Outlined"; font.pixelSize: 20; color: Appearance.colors.colOnLayer1
                 MouseArea { 
                     anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.closeAction()
                 }

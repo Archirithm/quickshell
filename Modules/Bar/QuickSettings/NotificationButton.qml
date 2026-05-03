@@ -6,7 +6,7 @@ Rectangle {
     id: root
     property bool isHovered: mouseArea.containsMouse
 
-    color: Colorscheme.secondary_container 
+    color: Appearance.colors.colSecondaryContainer 
     radius: height / 2
     implicitHeight: isHovered ? 34 : 28
     implicitWidth: isHovered ? 34 : 28
@@ -19,7 +19,10 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true 
         cursorShape: Qt.PointingHandCursor
-        onClicked: WidgetState.notifOpen = !WidgetState.notifOpen
+        onClicked: {
+            WidgetState.leftSidebarView = "info";
+            WidgetState.leftSidebarOpen = true;
+        }
     }
 
     Text {
@@ -28,7 +31,7 @@ Rectangle {
         text: "\uf0f3"
         font.family: "Font Awesome 6 Free Solid"
         font.pixelSize: root.isHovered ? 14 : 12
-        color: Colorscheme.on_secondary_container 
+        color: Appearance.colors.colOnSecondaryContainer 
         Behavior on font.pixelSize { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
     }
 }

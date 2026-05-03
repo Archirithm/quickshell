@@ -83,8 +83,8 @@ Variants {
                     ctx.arc(0, height, width, 0, -Math.PI/2, true); ctx.fill();
                 }
                 Connections { 
-                    target: Colorscheme;
-                    function onBackgroundChanged() { shadowLeftEar.requestPaint() }
+                    target: Appearance.colors
+                    function onColLayer0Changed() { shadowLeftEar.requestPaint() }
                 }
             }
 
@@ -150,8 +150,8 @@ Variants {
                     ctx.arc(width, height, width, Math.PI, Math.PI*1.5, false); ctx.fill();
                 }
                 Connections { 
-                    target: Colorscheme;
-                    function onBackgroundChanged() { shadowRightEar.requestPaint() } 
+                    target: Appearance.colors
+                    function onColLayer0Changed() { shadowRightEar.requestPaint() }
                 }
             }
         }
@@ -186,7 +186,7 @@ Variants {
                 onPaint: {
                     var ctx = getContext("2d");
                     ctx.reset();
-                    ctx.fillStyle = Colorscheme.background;
+                    ctx.fillStyle = Appearance.colors.colLayer0;
                     ctx.beginPath();
                     ctx.moveTo(0, 0);                 
                     ctx.lineTo(width, 0);             
@@ -195,8 +195,8 @@ Variants {
                     ctx.fill();
                 }
                 Connections {
-                    target: Colorscheme
-                    function onBackgroundChanged() { leftEar.requestPaint() }
+                    target: Appearance.colors
+                    function onColLayer0Changed() { leftEar.requestPaint() }
                 }
             }
 
@@ -232,11 +232,11 @@ Variants {
                 property int collapsedW: 220; property int collapsedH: 42
                 property int recordExtraW: 0 
                 property int toolsW: 480; property int toolsH: 72
-                property int notifW: 380; property int notifH: (NotificationManager.model.count * 70) + 20
+                property int notifW: 380; property int notifH: (NotificationManager.popupList.length * 70) + 20
                 property int volW: 320; property int volH: 64
                 property int audioW: 360; property int audioH: 84 
                 
-                property color color: Colorscheme.background 
+                property color color: Appearance.colors.colLayer0
                 clip: true
                 z: 100
 
@@ -274,7 +274,7 @@ Variants {
                     id: solidRootBg
                     anchors.fill: parent
                     radius: parent.radius
-                    color: Colorscheme.background
+                    color: Appearance.colors.colLayer0
                     visible: false 
                     
                     Rectangle {
@@ -579,7 +579,7 @@ Variants {
                 onPaint: {
                     var ctx = getContext("2d");
                     ctx.reset();
-                    ctx.fillStyle = Colorscheme.background;
+                    ctx.fillStyle = Appearance.colors.colLayer0;
                     ctx.beginPath();
                     ctx.moveTo(width, 0);             
                     ctx.lineTo(0, 0);                 
@@ -588,8 +588,8 @@ Variants {
                     ctx.fill();
                 }
                 Connections {
-                    target: Colorscheme
-                    function onBackgroundChanged() { rightEar.requestPaint() }
+                    target: Appearance.colors
+                    function onColLayer0Changed() { rightEar.requestPaint() }
                 }
             }
         }
@@ -620,7 +620,7 @@ Variants {
                 id: detachedBtnBg
                 anchors.fill: parent
                 radius: width / 2
-                color: Colorscheme.background 
+                color: Appearance.colors.colLayer0
                 visible: false 
             }
 
@@ -638,7 +638,7 @@ Variants {
             Rectangle {
                 anchors.fill: parent
                 radius: width / 2
-                color: Colorscheme.background
+                color: Appearance.colors.colLayer0
                 
                 Rectangle {
                     anchors.centerIn: parent

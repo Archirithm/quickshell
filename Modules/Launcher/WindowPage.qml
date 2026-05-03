@@ -85,7 +85,7 @@ Item {
         Text {
             anchors.centerIn: parent
             text: "No windows opened."
-            color: Colorscheme.on_surface_variant
+            color: Appearance.colors.colOnSurfaceVariant
             font.pixelSize: 16
             visible: root.filteredWindows.length === 0
         }
@@ -105,7 +105,7 @@ Item {
             preferredHighlightEnd: height - 56
 
             highlight: Rectangle {
-                color: Colorscheme.primary
+                color: Appearance.colors.colPrimary
                 radius: 12
             }
             highlightMoveDuration: 0
@@ -147,7 +147,7 @@ Item {
                     Text {
                         text: root.highlightText(root.cleanAppName(modelData.title, false), searchBox.text)
                         textFormat: Text.StyledText
-                        color: delegateItem.ListView.isCurrentItem ? Colorscheme.on_primary : Colorscheme.on_surface
+                        color: delegateItem.ListView.isCurrentItem ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
                         font.pixelSize: 16
                         font.bold: false
                         elide: Text.ElideRight
@@ -157,7 +157,7 @@ Item {
                     Text {
                         text: root.highlightText(root.cleanAppName(modelData.appName || modelData.appId, true), searchBox.text)
                         textFormat: Text.StyledText
-                        color: delegateItem.ListView.isCurrentItem ? Qt.rgba(1, 1, 1, 0.7) : Colorscheme.on_surface_variant
+                        color: delegateItem.ListView.isCurrentItem ? Qt.rgba(1, 1, 1, 0.7) : Appearance.colors.colOnSurfaceVariant
                         font.pixelSize: 12
                         font.family: "JetBrainsMono Nerd Font"
                     }

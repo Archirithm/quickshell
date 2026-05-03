@@ -9,7 +9,6 @@ import Clavis.Weather 1.0
 Item {
     id: root
 
-    Theme { id: theme }
 
     property int contentMargin: 16
     property int headerHeight: 62
@@ -99,7 +98,7 @@ Item {
         clip: true
         color: "transparent"
         border.width: 1
-        border.color: Qt.rgba(Colorscheme.outline_variant.r, Colorscheme.outline_variant.g, Colorscheme.outline_variant.b, 0.34)
+        border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.34)
         layer.enabled: true
         layer.effect: OpacityMask {
             maskSource: Rectangle {
@@ -284,7 +283,7 @@ Item {
                         Text {
                             width: parent.width
                             text: root.previewWeatherText
-                            color: Colorscheme.on_surface
+                            color: Appearance.colors.colOnSurface
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 26
                             font.bold: true
@@ -303,7 +302,7 @@ Item {
                                 anchors.left: parent.left
                                 anchors.bottom: parent.bottom
                                 text: fmtTempPlain(root.previewTemperatureC)
-                                color: Colorscheme.on_surface
+                                color: Appearance.colors.colOnSurface
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 132
                                 font.bold: true
@@ -325,7 +324,7 @@ Item {
                         Text {
                             width: parent.width
                             text: "体感温度: " + fmtTemp(root.previewFeelsLikeC)
-                            color: Colorscheme.on_surface
+                            color: Appearance.colors.colOnSurface
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 18
                             horizontalAlignment: Text.AlignHCenter
@@ -336,7 +335,7 @@ Item {
                             width: parent.width
                             text: "最高 " + fmtTemp(root.previewHighC)
                                   + " · 最低 " + fmtTemp(root.previewLowC)
-                            color: Colorscheme.on_surface
+                            color: Appearance.colors.colOnSurface
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 18
                             horizontalAlignment: Text.AlignHCenter
@@ -382,7 +381,7 @@ Item {
                             label: "Wind"
                             value: fmtSpeed(WeatherPlugin.currentWindSpeedMs)
                             detail: "Gust " + fmtSpeed(WeatherPlugin.currentWindGustsMs)
-                            accent: Colorscheme.primary
+                            accent: Appearance.colors.colPrimary
                         }
 
                         WeatherMetricCard {
@@ -392,7 +391,7 @@ Item {
                             label: "Humidity"
                             value: fmtPercent(WeatherPlugin.currentRelativeHumidity)
                             detail: "Dew " + fmtTemp(WeatherPlugin.currentDewPointC)
-                            accent: Colorscheme.secondary
+                            accent: Appearance.colors.colSecondary
                         }
                     }
                 }
@@ -409,7 +408,7 @@ Item {
                         icon: "compress"
                         label: "Pressure"
                         value: validNumber(WeatherPlugin.currentPressureHpa) ? Math.round(WeatherPlugin.currentPressureHpa) + " hPa" : "--"
-                        accent: Colorscheme.tertiary
+                        accent: Appearance.colors.colTertiary
                     }
 
                     WeatherMetricCard {
@@ -418,7 +417,7 @@ Item {
                         icon: "visibility"
                         label: "Visibility"
                         value: fmtDistance(WeatherPlugin.currentVisibilityM)
-                        accent: Colorscheme.primary
+                        accent: Appearance.colors.colPrimary
                     }
 
                     WeatherMetricCard {
@@ -427,7 +426,7 @@ Item {
                         icon: "cloud"
                         label: "Clouds"
                         value: fmtPercent(WeatherPlugin.currentCloudCover)
-                        accent: Colorscheme.secondary
+                        accent: Appearance.colors.colSecondary
                     }
 
                     WeatherMetricCard {
@@ -438,7 +437,7 @@ Item {
                         value: WeatherPlugin.minutelyForecast.count() > 0
                                ? WeatherPlugin.minutelyForecast.get(0).precipitationIntensityMmH.toFixed(1) + " mm/h"
                                : fmtPercent(WeatherPlugin.hourlyForecast.count() > 0 ? WeatherPlugin.hourlyForecast.get(0).precipitationProbability : NaN)
-                        accent: Colorscheme.tertiary
+                        accent: Appearance.colors.colTertiary
                     }
                 }
 
@@ -478,9 +477,9 @@ Item {
 
         radius: 22
         implicitHeight: 66
-        color: Qt.rgba(Colorscheme.surface_container.r, Colorscheme.surface_container.g, Colorscheme.surface_container.b, 0.78)
+        color: Qt.rgba(Appearance.colors.colLayer2.r, Appearance.colors.colLayer2.g, Appearance.colors.colLayer2.b, 0.78)
         border.width: 1
-        border.color: Qt.rgba(Colorscheme.outline_variant.r, Colorscheme.outline_variant.g, Colorscheme.outline_variant.b, 0.55)
+        border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.55)
 
         RowLayout {
             anchors.fill: parent
@@ -490,7 +489,7 @@ Item {
 
             Text {
                 text: pill.icon
-                color: Colorscheme.primary
+                color: Appearance.colors.colPrimary
                 font.family: "Material Symbols Outlined"
                 font.pixelSize: 22
                 Layout.alignment: Qt.AlignVCenter
@@ -502,7 +501,7 @@ Item {
 
                 Text {
                     text: pill.label
-                    color: Colorscheme.on_surface_variant
+                    color: Appearance.colors.colOnSurfaceVariant
                     font.family: "JetBrainsMono Nerd Font"
                     font.pixelSize: 11
                     elide: Text.ElideRight
@@ -510,7 +509,7 @@ Item {
 
                 Text {
                     text: pill.value
-                    color: Colorscheme.on_surface
+                    color: Appearance.colors.colOnSurface
                     font.family: "LXGW WenKai GB Screen"
                     font.pixelSize: 15
                     font.bold: true

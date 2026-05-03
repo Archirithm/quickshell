@@ -13,7 +13,7 @@ Item {
     Rectangle {
         id: bgRect
         anchors.fill: parent
-        color: Colorscheme.surface_container 
+        color: Appearance.colors.colLayer0
         radius: height / 2 
         visible: false 
     }
@@ -22,7 +22,7 @@ Item {
         source: bgRect
         anchors.fill: bgRect
         shadowEnabled: true
-        shadowColor: Qt.alpha(Colorscheme.shadow, 0.4)
+        shadowColor: Qt.alpha(Appearance.colors.colShadow, 0.4)
         shadowBlur: 0.8
         shadowVerticalOffset: 3
     }
@@ -35,7 +35,6 @@ Item {
         // 直接调用同目录下的组件，无需 import
         Network {}
         Volume {}
-        NotificationButton {}
         PowerButton {}
     }
 }

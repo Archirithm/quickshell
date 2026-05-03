@@ -34,8 +34,8 @@ Singleton {
     // 【保留】：精准打击的主题变更钩子
     // ============================================================
     Connections {
-        target: Colorscheme
-        function onBackgroundChanged() {
+        target: Appearance.colors
+        function onColLayer0Changed() {
             if (root.refCount > 0) {
                 // 监听到主题切换，主动打断 cava 进程并触发重启缓冲
                 root._internalRun = false; 

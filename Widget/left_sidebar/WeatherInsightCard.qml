@@ -6,17 +6,17 @@ Rectangle {
 
     property string icon: ""
     property string title: ""
-    property color iconColor: Colorscheme.on_surface
-    property color titleColor: Colorscheme.on_surface
+    property color iconColor: Appearance.colors.colOnSurface
+    property color titleColor: Appearance.colors.colOnSurface
     property int headerLeftMargin: 18
     property int headerTopMargin: 16
     property int headerSpacing: 6
     default property alias content: contentLayer.data
 
     radius: 34
-    color: Qt.rgba(Colorscheme.surface_container_high.r, Colorscheme.surface_container_high.g, Colorscheme.surface_container_high.b, 0.93)
+    color: Qt.rgba(Appearance.colors.colLayer3.r, Appearance.colors.colLayer3.g, Appearance.colors.colLayer3.b, 0.93)
     border.width: 1
-    border.color: Qt.rgba(Colorscheme.outline_variant.r, Colorscheme.outline_variant.g, Colorscheme.outline_variant.b, 0.26)
+    border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.26)
     clip: true
 
     Item {

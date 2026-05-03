@@ -5,12 +5,11 @@ import qs.Widget.common
 
 Item {
     id: root
-    Theme { id: theme }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: theme.padding
-        spacing: theme.padding
+        anchors.margins: Appearance.spacing.panelPadding
+        spacing: Appearance.spacing.panelPadding
 
         RowLayout {
             Layout.fillWidth: true
@@ -37,7 +36,7 @@ Item {
                     property bool isActive: WidgetState.leftSidebarView === modelData.id
                     property bool isHovered: hoverArea.containsMouse
                     
-                    property color contentColor: isActive ? Colorscheme.on_background : (isHovered ? Colorscheme.on_background : Qt.rgba(Colorscheme.on_background.r, Colorscheme.on_background.g, Colorscheme.on_background.b, 0.45))
+                    property color contentColor: isActive ? Appearance.colors.colOnLayer0 : (isHovered ? Appearance.colors.colOnLayer0 : Qt.rgba(Appearance.colors.colOnLayer0.r, Appearance.colors.colOnLayer0.g, Appearance.colors.colOnLayer0.b, 0.45))
 
                     Column {
                         anchors.centerIn: parent
@@ -70,7 +69,7 @@ Item {
                         width: tabBtn.isActive ? 40 : 0
                         height: 3
                         radius: 1.5
-                        color: Colorscheme.on_background
+                        color: Appearance.colors.colOnLayer0
                         opacity: tabBtn.isActive ? 1.0 : 0.0
                         
                         Behavior on width { 
@@ -99,7 +98,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true 
             color: "transparent"
-            radius: theme.radius
+            radius: Appearance.rounding.large
 
             InfoView {
                 anchors.fill: parent

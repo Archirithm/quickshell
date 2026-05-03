@@ -9,7 +9,7 @@ import Clavis.Sysmon 1.0
 Item {
     id: root
 
-    // 我们不再依赖 Theme，而是直接全权使用 Colorscheme 热重载注入系统！
+    // 直接使用统一的 Appearance 主题层。
 
     // 格式化工具函数
     function formatBytes(bps) {
@@ -110,8 +110,8 @@ Item {
         property color mainTrackColor: Qt.rgba(mainArcColor.r, mainArcColor.g, mainArcColor.b, 0.15)
         property color secondaryTrackColor: Qt.rgba(secondaryArcColor.r, secondaryArcColor.g, secondaryArcColor.b, 0.15)
         
-        property color mainArcColor: Colorscheme.primary
-        property color secondaryArcColor: Colorscheme.secondary
+        property color mainArcColor: Appearance.colors.colPrimary
+        property color secondaryArcColor: Appearance.colors.colSecondary
         
         implicitWidth: 230
         implicitHeight: 230
@@ -170,7 +170,7 @@ Item {
                     
                     ctx.beginPath();
                     ctx.arc(cx, cy, r, t1Base, t1ValEnd, false);
-                    ctx.strokeStyle = (gauge.mainValue > 85 && gauge.mainSuffix === "°C") ? Colorscheme.error : gauge.mainArcColor;
+                    ctx.strokeStyle = (gauge.mainValue > 85 && gauge.mainSuffix === "°C") ? Appearance.colors.colError : gauge.mainArcColor;
                     ctx.stroke();
                 }
                 
@@ -194,12 +194,12 @@ Item {
             anchors.centerIn: parent
             Text { 
                 text: Math.round(gauge.mainValue) + gauge.mainSuffix
-                font.pixelSize: 42; font.family: "JetBrainsMono Nerd Font"; color: Colorscheme.on_surface 
+                font.pixelSize: 42; font.family: "JetBrainsMono Nerd Font"; color: Appearance.colors.colOnSurface 
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             Text { 
                 text: gauge.titleText 
-                font.pixelSize: 14; font.family: "LXGW WenKai GB Screen"; color: Colorscheme.on_surface_variant 
+                font.pixelSize: 14; font.family: "LXGW WenKai GB Screen"; color: Appearance.colors.colOnSurfaceVariant 
                 anchors.horizontalCenter: parent.horizontalCenter
             }
         }
@@ -214,12 +214,12 @@ Item {
                 anchors.centerIn: parent
                 Text { 
                     text: Math.round(gauge.secondaryValue) + gauge.secondarySuffix
-                    font.pixelSize: 15; font.family: "JetBrainsMono Nerd Font"; color: Colorscheme.on_surface; font.bold: true 
+                    font.pixelSize: 15; font.family: "JetBrainsMono Nerd Font"; color: Appearance.colors.colOnSurface; font.bold: true 
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 Text { 
                     text: gauge.gapTitleText
-                    font.pixelSize: 11; font.family: "LXGW WenKai GB Screen"; color: Colorscheme.on_surface_variant 
+                    font.pixelSize: 11; font.family: "LXGW WenKai GB Screen"; color: Appearance.colors.colOnSurfaceVariant 
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
             }
@@ -249,8 +249,8 @@ Item {
                     titleText: "GPU temp"
                     mainValue: SysmonPlugin.gpuTemp
                     secondaryValue: SysmonPlugin.gpuUsage
-                    mainArcColor: Colorscheme.secondary
-                    secondaryArcColor: Colorscheme.secondary_fixed_dim
+                    mainArcColor: Appearance.colors.colSecondary
+                    secondaryArcColor: Appearance.colors.colSecondaryFixedDim
                 }
                 
                 DualArcGauge {
@@ -260,8 +260,8 @@ Item {
                     titleText: "CPU temp"
                     mainValue: SysmonPlugin.coreTemp
                     secondaryValue: SysmonPlugin.cpuUsage
-                    mainArcColor: Colorscheme.primary
-                    secondaryArcColor: Colorscheme.primary_fixed_dim
+                    mainArcColor: Appearance.colors.colPrimary
+                    secondaryArcColor: Appearance.colors.colPrimaryFixedDim
                 }
             }
 
@@ -285,7 +285,7 @@ Item {
                     property real rLeft: (isActive || isFirst || btnMouse.pressed) ? 16 : 4
                     property real rRight: (isActive || isLast || btnMouse.pressed) ? 16 : 4
                     
-                    property color bgColor: isActive ? Colorscheme.primary_container : (btnMouse.containsMouse ? Colorscheme.surface_container_highest : Colorscheme.surface_container)
+                    property color bgColor: isActive ? Appearance.colors.colPrimaryContainer : (btnMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2)
                     
                     // 稍微延长动画时长，找回微果冻动效的物理松弛感
                     Behavior on Layout.preferredWidth { NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
@@ -326,7 +326,7 @@ Item {
                         font.family: "LXGW WenKai GB Screen"
                         font.pixelSize: 13
                         font.bold: parent.isActive
-                        color: parent.isActive ? Colorscheme.on_primary_container : Colorscheme.on_surface_variant
+                        color: parent.isActive ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurfaceVariant
                         z: 2
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -358,7 +358,7 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    color: Colorscheme.surface_container_lowest
+                    color: Appearance.colors.colLayer0
                     radius: 16
                     clip: true
                     
@@ -386,11 +386,11 @@ Item {
                             if (root.currentChartTab === 0) {
                                 var net1 = root.netDownHistory.length > 1 ? root.netDownHistory : [0, 0];
                                 var net2 = root.netUpHistory.length > 1 ? root.netUpHistory : [0, 0];
-                                datasets = [ {pts: net1, color: Colorscheme.primary, fill: true}, {pts: net2, color: Colorscheme.secondary, fill: true} ];
+                                datasets = [ {pts: net1, color: Appearance.colors.colPrimary, fill: true}, {pts: net2, color: Appearance.colors.colSecondary, fill: true} ];
                                 dynamMax = root.smoothMaxNet;
                             } else if (root.currentChartTab === 1) {
                                 var ram1 = root.ramHistory.length > 1 ? root.ramHistory : [0, 0]; 
-                                datasets = [ {pts: ram1, color: Colorscheme.primary, fill: true} ]; 
+                                datasets = [ {pts: ram1, color: Appearance.colors.colPrimary, fill: true} ]; 
                                 dynamMax = 1.0;
                             } else {
                                 var load1 = root.load1History.length > 1 ? root.load1History : [0, 0];
@@ -449,18 +449,18 @@ Item {
                     
                     RowLayout {
                         spacing: 6
-                        Text { text: "download"; font.family: "Material Symbols Outlined"; color: Colorscheme.primary; font.pixelSize: 16 }
-                        Text { text: formatBytes(SysmonPlugin.netDownBps); color: Colorscheme.primary; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 14; font.bold: true }
+                        Text { text: "download"; font.family: "Material Symbols Outlined"; color: Appearance.colors.colPrimary; font.pixelSize: 16 }
+                        Text { text: formatBytes(SysmonPlugin.netDownBps); color: Appearance.colors.colPrimary; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 14; font.bold: true }
                     }
                     RowLayout {
                         spacing: 6
-                        Text { text: "upload"; font.family: "Material Symbols Outlined"; color: Colorscheme.secondary; font.pixelSize: 16 }
-                        Text { text: formatBytes(SysmonPlugin.netUpBps); color: Colorscheme.secondary; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 14; font.bold: true }
+                        Text { text: "upload"; font.family: "Material Symbols Outlined"; color: Appearance.colors.colSecondary; font.pixelSize: 16 }
+                        Text { text: formatBytes(SysmonPlugin.netUpBps); color: Appearance.colors.colSecondary; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 14; font.bold: true }
                     }
                     RowLayout {
                         spacing: 6
-                        Text { text: "memory"; font.family: "Material Symbols Outlined"; color: Colorscheme.primary; font.pixelSize: 16 }
-                        Text { text: SysmonPlugin.ramUsedGB.toFixed(1) + "/" + SysmonPlugin.ramTotalGB.toFixed(1) + " GiB"; color: Colorscheme.on_surface; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 14; font.bold: true }
+                        Text { text: "memory"; font.family: "Material Symbols Outlined"; color: Appearance.colors.colPrimary; font.pixelSize: 16 }
+                        Text { text: SysmonPlugin.ramUsedGB.toFixed(1) + "/" + SysmonPlugin.ramTotalGB.toFixed(1) + " GiB"; color: Appearance.colors.colOnSurface; font.family: "JetBrainsMono Nerd Font"; font.pixelSize: 14; font.bold: true }
                     }
                     RowLayout {
                         spacing: 6
@@ -483,7 +483,7 @@ Item {
                     property string iconTxt
                     property string title
                     property string val
-                    property color acc: Colorscheme.primary
+                    property color acc: Appearance.colors.colPrimary
                     
                     Layout.fillWidth: true
                     Layout.preferredHeight: rowContent.height
@@ -494,11 +494,11 @@ Item {
                         spacing: 8
                         
                         Text { anchors.verticalCenter: parent.verticalCenter; text: parent.parent.iconTxt; font.family: "Material Symbols Outlined"; color: parent.parent.acc; font.pixelSize: 16 }
-                        Text { anchors.verticalCenter: parent.verticalCenter; text: parent.parent.title + ":"; color: Colorscheme.on_surface_variant; font.pixelSize: 13; font.family: "LXGW WenKai GB Screen" }
+                        Text { anchors.verticalCenter: parent.verticalCenter; text: parent.parent.title + ":"; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 13; font.family: "LXGW WenKai GB Screen" }
                         Text { 
                             anchors.verticalCenter: parent.verticalCenter
                             text: parent.parent.val
-                            color: Colorscheme.on_surface
+                            color: Appearance.colors.colOnSurface
                             font.pixelSize: 14
                             font.bold: true
                             font.family: "JetBrainsMono Nerd Font" 
@@ -527,7 +527,7 @@ Item {
                     
                     Layout.fillWidth: true
                     height: 86
-                    color: Colorscheme.surface_container_lowest
+                    color: Appearance.colors.colLayer0
                     radius: 16
                     clip: true
                     
@@ -562,13 +562,13 @@ Item {
                                     Text {
                                         text: "storage"
                                         font.family: "Material Symbols Outlined"
-                                        color: Colorscheme.on_surface
+                                        color: Appearance.colors.colOnSurface
                                         font.pixelSize: 15
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     Text {
                                         text: rootCard.title
-                                        color: Colorscheme.on_surface
+                                        color: Appearance.colors.colOnSurface
                                         font.pixelSize: 15
                                         font.bold: true
                                         font.family: "LXGW WenKai GB Screen"
@@ -579,9 +579,9 @@ Item {
                                 Text { text: rootCard.val; color: rootCard.accColor; font.pixelSize: 18; font.bold:true; font.family: "JetBrainsMono Nerd Font" }
                             }
                             RowLayout {
-                                Text { text: "Used Space:"; color: Colorscheme.on_surface_variant; font.pixelSize: 13; font.family: "LXGW WenKai GB Screen" }
+                                Text { text: "Used Space:"; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 13; font.family: "LXGW WenKai GB Screen" }
                                 Item { Layout.fillWidth: true }
-                                Text { text: rootCard.usageTxt; color: Colorscheme.on_surface_variant; font.pixelSize: 13; font.family: "JetBrainsMono Nerd Font" }
+                                Text { text: rootCard.usageTxt; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 13; font.family: "JetBrainsMono Nerd Font" }
                             }
                         }
                     }
@@ -601,7 +601,7 @@ Item {
                     
                     Layout.fillWidth: true
                     height: 86
-                    color: Colorscheme.surface_container_lowest
+                    color: Appearance.colors.colLayer0
                     radius: 16
                     clip: true
                     
@@ -638,14 +638,14 @@ Item {
                             RowLayout {
                                 Text { 
                                     text: batCard.statusTxt
-                                    color: batCard.statusTxt === "Charging" ? batCard.accColor : Colorscheme.on_surface_variant
+                                    color: batCard.statusTxt === "Charging" ? batCard.accColor : Appearance.colors.colOnSurfaceVariant
                                     font.pixelSize: 13
                                     font.family: "LXGW WenKai GB Screen"
                                     font.bold: batCard.statusTxt === "Charging"
                                 }
                                 Item { Layout.fillWidth: true }
                                 // 右下部分移除冗余文字，单独留存瓦数功率
-                                Text { text: batCard.powerTxt; color: Colorscheme.on_surface_variant; font.pixelSize: 13; font.family: "JetBrainsMono Nerd Font" }
+                                Text { text: batCard.powerTxt; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 13; font.family: "JetBrainsMono Nerd Font" }
                             }
                         }
                     }
@@ -737,8 +737,8 @@ Item {
                     Layout.fillWidth: true
                     spacing: 12
                     
-                    Text { text: "leaderboard"; font.family: "Material Symbols Outlined"; color: Colorscheme.primary; font.pixelSize: 22 }
-                    Text { text: "进程"; color: Colorscheme.on_surface; font.pixelSize: 16; font.bold: true; font.family: "LXGW WenKai GB Screen" }
+                    Text { text: "leaderboard"; font.family: "Material Symbols Outlined"; color: Appearance.colors.colPrimary; font.pixelSize: 22 }
+                    Text { text: "进程"; color: Appearance.colors.colOnSurface; font.pixelSize: 16; font.bold: true; font.family: "LXGW WenKai GB Screen" }
                     
                     Item { Layout.preferredWidth: 8 }
                     
@@ -758,7 +758,7 @@ Item {
                             property real rLeft: (isActive || btnMouse.pressed) ? 15 : 8
                             property real rRight: (isActive || btnMouse.pressed) ? 15 : 8
                             
-                            property color bgColor: isActive ? Colorscheme.primary_container : (btnMouse.containsMouse ? Colorscheme.surface_container_highest : Colorscheme.surface_container)
+                            property color bgColor: isActive ? Appearance.colors.colPrimaryContainer : (btnMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2)
                             
                             Behavior on Layout.preferredWidth { NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
                             Behavior on bgColor { ColorAnimation { duration: 150 } }
@@ -787,7 +787,7 @@ Item {
                                 font.family: "LXGW WenKai GB Screen"
                                 font.pixelSize: 12
                                 font.bold: parent.isActive
-                                color: parent.isActive ? Colorscheme.on_primary_container : Colorscheme.on_surface_variant
+                                color: parent.isActive ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurfaceVariant
                                 z: 2
                                 Behavior on color { ColorAnimation { duration: 150 } }
                             }
@@ -812,17 +812,17 @@ Item {
                     Rectangle {
                         id: searchBar
                         Layout.preferredWidth: 160; Layout.preferredHeight: 30; radius: 15
-                        color: Colorscheme.surface_container_highest
-                        border.color: searchInput.activeFocus ? Colorscheme.secondary : Colorscheme.primary
+                        color: Appearance.colors.colLayer4
+                        border.color: searchInput.activeFocus ? Appearance.colors.colSecondary : Appearance.colors.colPrimary
                         border.width: 1
                         
                         RowLayout {
                             anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10; spacing: 6
-                            Text { text: "search"; font.family: "Material Symbols Outlined"; color: Colorscheme.primary; font.pixelSize: 16 }
+                            Text { text: "search"; font.family: "Material Symbols Outlined"; color: Appearance.colors.colPrimary; font.pixelSize: 16 }
                             TextField {
                                 id: searchInput
                                 Layout.fillWidth: true
-                                color: Colorscheme.on_surface
+                                color: Appearance.colors.colOnSurface
                                 font.pixelSize: 12
                                 font.family: "LXGW WenKai GB Screen"
                                 placeholderText: ""
@@ -840,7 +840,7 @@ Item {
                 Rectangle {
                     Layout.fillWidth: true
                     Layout.fillHeight: true 
-                    color: Colorscheme.surface_container_lowest
+                    color: Appearance.colors.colLayer0
                     radius: 16
                     clip: true
                     
@@ -853,7 +853,7 @@ Item {
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 8
-                            Text { text: "  名称"; color: Colorscheme.on_surface_variant; font.pixelSize: 13; font.family: "LXGW WenKai GB Screen"; Layout.fillWidth: true }
+                            Text { text: "  名称"; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 13; font.family: "LXGW WenKai GB Screen"; Layout.fillWidth: true }
                             
                             component SortHeader: Rectangle {
                                 property string title
@@ -863,7 +863,7 @@ Item {
                                 Layout.preferredWidth: colIdx === 0 ? 80 : (colIdx === 1 ? 100 : 70)
                                 height: 26
                                 radius: 13
-                                color: isActive ? Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.2) : (sortHoverMouse.containsMouse ? Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.08) : "transparent")
+                                color: isActive ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.2) : (sortHoverMouse.containsMouse ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.08) : "transparent")
                                 Behavior on color { ColorAnimation { duration: 150 } }
                                 
                                 RowLayout {
@@ -871,7 +871,7 @@ Item {
                                     spacing: 4
                                     Text { 
                                         text: parent.parent.title
-                                        color: parent.parent.isActive ? Colorscheme.primary : Colorscheme.on_surface_variant
+                                        color: parent.parent.isActive ? Appearance.colors.colPrimary : Appearance.colors.colOnSurfaceVariant
                                         font.pixelSize: 13
                                         font.family: "LXGW WenKai GB Screen"
                                         font.bold: parent.parent.isActive 
@@ -879,7 +879,7 @@ Item {
                                     Text { 
                                         text: procSection.sortAsc ? "arrow_upward" : "arrow_downward"
                                         font.family: "Material Symbols Outlined"
-                                        color: Colorscheme.primary
+                                        color: Appearance.colors.colPrimary
                                         font.pixelSize: 14
                                         visible: parent.parent.isActive
                                     }
@@ -905,7 +905,7 @@ Item {
                             SortHeader { title: "PID"; colIdx: 2 }
                         }
                         
-                        Rectangle { Layout.fillWidth: true; height: 1; color: Colorscheme.surface_container_highest }
+                        Rectangle { Layout.fillWidth: true; height: 1; color: Appearance.colors.colLayer4 }
                         
                         // 列表区域
                         ListView {
@@ -935,7 +935,7 @@ Item {
                                 property bool hovered: procMouse.containsMouse
                                 
                                 // 悬浮时使用半透明主题色填充
-                                color: hovered ? Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.12) : "transparent"
+                                color: hovered ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.12) : "transparent"
                                 
                                 Behavior on color { ColorAnimation { duration: 120 } }
                                 
@@ -944,7 +944,7 @@ Item {
                                     
                                     Text { 
                                         text: proc && proc.name ? proc.name : ""
-                                        color: Colorscheme.on_surface; font.pixelSize: 14
+                                        color: Appearance.colors.colOnSurface; font.pixelSize: 14
                                         font.family: "JetBrainsMono Nerd Font"
                                         Layout.fillWidth: true; elide: Text.ElideRight 
                                     }
@@ -953,12 +953,12 @@ Item {
                                     Rectangle {
                                         Layout.preferredWidth: 80; height: 26; radius: 13
                                         color: cpuHigh 
-                                            ? Qt.rgba(Colorscheme.error.r, Colorscheme.error.g, Colorscheme.error.b, 0.15) 
-                                            : Qt.rgba(Colorscheme.on_surface.r, Colorscheme.on_surface.g, Colorscheme.on_surface.b, 0.06)
+                                            ? Qt.rgba(Appearance.colors.colError.r, Appearance.colors.colError.g, Appearance.colors.colError.b, 0.15) 
+                                            : Qt.rgba(Appearance.colors.colOnSurface.r, Appearance.colors.colOnSurface.g, Appearance.colors.colOnSurface.b, 0.06)
                                         Text { 
                                             anchors.centerIn: parent
                                             text: (proc && proc.cpuPercent ? proc.cpuPercent : 0).toFixed(1) + "%"
-                                            color: cpuHigh ? Colorscheme.error : Colorscheme.on_surface_variant
+                                            color: cpuHigh ? Appearance.colors.colError : Appearance.colors.colOnSurfaceVariant
                                             font.pixelSize: 13; font.family: "JetBrainsMono Nerd Font"; font.bold: true 
                                         }
                                     }
@@ -967,19 +967,19 @@ Item {
                                     Rectangle {
                                         Layout.preferredWidth: 100; height: 26; radius: 13
                                         color: ramHigh 
-                                            ? Qt.rgba(Colorscheme.error.r, Colorscheme.error.g, Colorscheme.error.b, 0.15) 
-                                            : Qt.rgba(Colorscheme.on_surface.r, Colorscheme.on_surface.g, Colorscheme.on_surface.b, 0.06)
+                                            ? Qt.rgba(Appearance.colors.colError.r, Appearance.colors.colError.g, Appearance.colors.colError.b, 0.15) 
+                                            : Qt.rgba(Appearance.colors.colOnSurface.r, Appearance.colors.colOnSurface.g, Appearance.colors.colOnSurface.b, 0.06)
                                         Text { 
                                             anchors.centerIn: parent
                                             text: formatMemKB(proc && proc.memKB ? proc.memKB : 0)
-                                            color: ramHigh ? Colorscheme.error : Colorscheme.on_surface_variant
+                                            color: ramHigh ? Appearance.colors.colError : Appearance.colors.colOnSurfaceVariant
                                             font.pixelSize: 13; font.family: "JetBrainsMono Nerd Font"; font.bold: true 
                                         }
                                     }
                                     
                                     Text { 
                                         text: proc && proc.pid ? proc.pid : ""
-                                        color: Colorscheme.on_surface_variant; font.pixelSize: 14
+                                        color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 14
                                         font.family: "JetBrainsMono Nerd Font"
                                         Layout.preferredWidth: 70; horizontalAlignment: Text.AlignHCenter 
                                     }
@@ -1005,7 +1005,7 @@ Item {
                                     
                                     background: Rectangle {
                                         implicitWidth: 200
-                                        color: Colorscheme.surface_container_high
+                                        color: Appearance.colors.colLayer3
                                         radius: 12
                                     }
                                     
@@ -1014,8 +1014,8 @@ Item {
                                         property string iconTxt
                                         contentItem: RowLayout {
                                             spacing: 12
-                                            Text { text: mItem.iconTxt; font.family: "Material Symbols Outlined"; color: mItem.enabled ? Colorscheme.on_surface_variant : Colorscheme.outline; font.pixelSize: 16 }
-                                            Text { text: mItem.text; color: mItem.enabled ? Colorscheme.on_surface : Colorscheme.outline; font.pixelSize: 13; font.family: "LXGW WenKai GB Screen" }
+                                            Text { text: mItem.iconTxt; font.family: "Material Symbols Outlined"; color: mItem.enabled ? Appearance.colors.colOnSurfaceVariant : Appearance.colors.colOutline; font.pixelSize: 16 }
+                                            Text { text: mItem.text; color: mItem.enabled ? Appearance.colors.colOnSurface : Appearance.colors.colOutline; font.pixelSize: 13; font.family: "LXGW WenKai GB Screen" }
                                             Item { Layout.fillWidth: true }
                                         }
                                     }
@@ -1040,7 +1040,7 @@ Item {
                                     }
                                     
                                     MenuSeparator {
-                                        contentItem: Rectangle { implicitWidth: 180; implicitHeight: 1; color: Colorscheme.outline_variant; anchors.centerIn: parent }
+                                        contentItem: Rectangle { implicitWidth: 180; implicitHeight: 1; color: Appearance.colors.colOutlineVariant; anchors.centerIn: parent }
                                     }
                                     
                                     ProcMenuItem { 

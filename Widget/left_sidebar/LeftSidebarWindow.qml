@@ -9,7 +9,6 @@ import qs.Widget.common
 PanelWindow {
     id: root
     
-    Theme { id: theme }
 
     property int sidebarWidth: 540
     property int gap: 24 
@@ -95,7 +94,7 @@ PanelWindow {
                 // 【补偿】：由于画布向左偏移了 100，内部的 X 必须加上 100 才能回到原位
                 x: (animController.slideOffset + root.gap) + 100
                 y: 66 
-                radius: theme.radius
+                radius: Appearance.rounding.large
                 color: "black" 
             }
 
@@ -122,7 +121,7 @@ PanelWindow {
         Rectangle { 
             id: solidBg
             anchors.fill: parent 
-            color: theme.background 
+            color: Appearance.colors.colLayer0
             visible: false 
         }
 

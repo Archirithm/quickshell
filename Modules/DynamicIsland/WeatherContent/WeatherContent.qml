@@ -135,7 +135,7 @@ Item {
                     text: root.locationName 
                     font.family: Sizes.fontFamily
                     font.pixelSize: 15; font.bold: true; font.letterSpacing: 2
-                    color: Colorscheme.on_surface_variant
+                    color: Appearance.colors.colOnSurfaceVariant
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 
@@ -144,7 +144,7 @@ Item {
                     width: 24
                     height: 24
                     radius: 12
-                    color: refreshMouseArea.pressed ? Colorscheme.surface_variant : "transparent"
+                    color: refreshMouseArea.pressed ? Appearance.colors.colLayer2Hover : "transparent"
                     anchors.verticalCenter: parent.verticalCenter
                     
                     Text {
@@ -153,7 +153,7 @@ Item {
                         text: "refresh"
                         font.family: root.materialFont
                         font.pixelSize: 16
-                        color: refreshMouseArea.containsMouse ? Colorscheme.primary : Colorscheme.on_surface_variant
+                        color: refreshMouseArea.containsMouse ? Appearance.colors.colPrimary : Appearance.colors.colOnSurfaceVariant
                         
                         // 1. 无限循环的转圈动画
                         NumberAnimation {
@@ -197,14 +197,14 @@ Item {
                 spacing: 12
                 Text { 
                     text: root.currentIcon; font.family: root.materialFont; 
-                    font.pixelSize: 56; color: Colorscheme.primary 
+                    font.pixelSize: 56; color: Appearance.colors.colPrimary 
                 }
                 Text { 
                     text: root.currentTemp; font.family: Sizes.fontFamilyMono; 
-                    font.pixelSize: 56; font.bold: true; color: Colorscheme.on_surface 
+                    font.pixelSize: 56; font.bold: true; color: Appearance.colors.colOnSurface 
                 }
             }
-            Text { text: root.currentDesc; font.family: Sizes.fontFamily; font.pixelSize: 18; font.bold: true; color: Colorscheme.on_surface }
+            Text { text: root.currentDesc; font.family: Sizes.fontFamily; font.pixelSize: 18; font.bold: true; color: Appearance.colors.colOnSurface }
             
             Item { height: 10; width: 1 } 
             
@@ -213,10 +213,10 @@ Item {
                 spacing: 12
                 columnSpacing: 24
                 
-                Row { spacing: 6; Text { text: "thermometer"; font.family: root.materialFont; color: Colorscheme.on_surface_variant; font.pixelSize: 15 } Text { text: root.feelsLike; color: Colorscheme.on_surface_variant; font.family: Sizes.fontFamilyMono; font.pixelSize: 13 } }
-                Row { spacing: 6; Text { text: "water_drop"; font.family: root.materialFont; color: Colorscheme.on_surface_variant; font.pixelSize: 15 } Text { text: root.humidity; color: Colorscheme.on_surface_variant; font.family: Sizes.fontFamilyMono; font.pixelSize: 13 } }
-                Row { spacing: 6; Text { text: "air"; font.family: root.materialFont; color: Colorscheme.on_surface_variant; font.pixelSize: 15 } Text { text: root.windSpeed; color: Colorscheme.on_surface_variant; font.family: Sizes.fontFamilyMono; font.pixelSize: 13 } }
-                Row { spacing: 6; Text { text: "compress"; font.family: root.materialFont; color: Colorscheme.on_surface_variant; font.pixelSize: 15 } Text { text: root.pressure; color: Colorscheme.on_surface_variant; font.family: Sizes.fontFamilyMono; font.pixelSize: 13 } }
+                Row { spacing: 6; Text { text: "thermometer"; font.family: root.materialFont; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 15 } Text { text: root.feelsLike; color: Appearance.colors.colOnSurfaceVariant; font.family: Sizes.fontFamilyMono; font.pixelSize: 13 } }
+                Row { spacing: 6; Text { text: "water_drop"; font.family: root.materialFont; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 15 } Text { text: root.humidity; color: Appearance.colors.colOnSurfaceVariant; font.family: Sizes.fontFamilyMono; font.pixelSize: 13 } }
+                Row { spacing: 6; Text { text: "air"; font.family: root.materialFont; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 15 } Text { text: root.windSpeed; color: Appearance.colors.colOnSurfaceVariant; font.family: Sizes.fontFamilyMono; font.pixelSize: 13 } }
+                Row { spacing: 6; Text { text: "compress"; font.family: root.materialFont; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 15 } Text { text: root.pressure; color: Appearance.colors.colOnSurfaceVariant; font.family: Sizes.fontFamilyMono; font.pixelSize: 13 } }
             }
         }
     }
@@ -237,7 +237,7 @@ Item {
             // 12 Hrs 按键
             Rectangle {
                 width: (parent.width - 4) / 2; height: parent.height
-                color: root.isHourly ? Colorscheme.primary : Colorscheme.surface_variant
+                color: root.isHourly ? Appearance.colors.colPrimary : Appearance.colors.colLayer2Hover
                 
                 topLeftRadius: 20; bottomLeftRadius: 20
                 topRightRadius: root.isHourly ? 20 : 6
@@ -250,8 +250,8 @@ Item {
                 Row {
                     anchors.centerIn: parent
                     spacing: 4
-                    Text { text: "check"; font.family: root.materialFont; font.pixelSize: 14; color: Colorscheme.on_primary; visible: root.isHourly }
-                    Text { text: "12 Hrs"; font.family: Sizes.fontFamily; font.bold: true; font.pixelSize: 13; color: root.isHourly ? Colorscheme.on_primary : Colorscheme.on_surface_variant }
+                    Text { text: "check"; font.family: root.materialFont; font.pixelSize: 14; color: Appearance.colors.colOnPrimary; visible: root.isHourly }
+                    Text { text: "12 Hrs"; font.family: Sizes.fontFamily; font.bold: true; font.pixelSize: 13; color: root.isHourly ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurfaceVariant }
                 }
                 MouseArea { anchors.fill: parent; onClicked: root.isHourly = true }
             }
@@ -259,7 +259,7 @@ Item {
             // 7 Days 按键
             Rectangle {
                 width: (parent.width - 4) / 2; height: parent.height
-                color: !root.isHourly ? Colorscheme.primary : Colorscheme.surface_variant
+                color: !root.isHourly ? Appearance.colors.colPrimary : Appearance.colors.colLayer2Hover
                 
                 topRightRadius: 20; bottomRightRadius: 20
                 topLeftRadius: !root.isHourly ? 20 : 6
@@ -272,8 +272,8 @@ Item {
                 Row {
                     anchors.centerIn: parent
                     spacing: 4
-                    Text { text: "check"; font.family: root.materialFont; font.pixelSize: 14; color: Colorscheme.on_primary; visible: !root.isHourly }
-                    Text { text: "7 Days"; font.family: Sizes.fontFamily; font.bold: true; font.pixelSize: 13; color: !root.isHourly ? Colorscheme.on_primary : Colorscheme.on_surface_variant }
+                    Text { text: "check"; font.family: root.materialFont; font.pixelSize: 14; color: Appearance.colors.colOnPrimary; visible: !root.isHourly }
+                    Text { text: "7 Days"; font.family: Sizes.fontFamily; font.bold: true; font.pixelSize: 13; color: !root.isHourly ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurfaceVariant }
                 }
                 MouseArea { anchors.fill: parent; onClicked: root.isHourly = false }
             }
@@ -296,8 +296,8 @@ Item {
 
             // 【新增：监听主题色变化并强制重绘】
             Connections {
-                target: Colorscheme
-                function onPrimaryChanged() {
+                target: Appearance.colors
+                function onColPrimaryChanged() {
                     skyCanvas.requestPaint()
                 }
             }
@@ -316,14 +316,14 @@ Item {
                 }
 
                 ctx.lineWidth = 1.5;
-                ctx.strokeStyle = Colorscheme.outline_variant; 
+                ctx.strokeStyle = Appearance.colors.colOutlineVariant; 
                 
                 [0, 30, 60].forEach(function(deg) {
                     ctx.beginPath();
                     ctx.arc(cx, cy, R * (1 - deg / 90), 0, Math.PI * 2);
                     ctx.stroke();
                     if(deg > 0) {
-                        ctx.fillStyle = Colorscheme.on_surface_variant;
+                        ctx.fillStyle = Appearance.colors.colOnSurfaceVariant;
                         ctx.font = "11px '" + Sizes.fontFamilyMono + "'";
                         ctx.fillText(deg + "°", cx + 4, cy - R * (1 - deg / 90) - 4);
                     }
@@ -407,7 +407,7 @@ Item {
                     ctx.fill();
                 } 
                 
-                ctx.fillStyle = Colorscheme.on_surface;
+                ctx.fillStyle = Appearance.colors.colOnSurface;
                 ctx.font = "bold 16px '" + Sizes.fontFamilyMono + "'";
                 ctx.textAlign = "center"; ctx.textBaseline = "middle";
                 ctx.fillText("N", cx, cy - R - 20);
@@ -426,7 +426,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: 15
-        color: Colorscheme.surface_container
+        color: Appearance.colors.colLayer2
         radius: Sizes.lockCardRadius
 
         Item {
@@ -444,8 +444,8 @@ Item {
 
                 // 【新增：监听主题色变化并强制重绘】
                 Connections {
-                    target: Colorscheme
-                    function onPrimaryChanged() {
+                    target: Appearance.colors
+                    function onColPrimaryChanged() {
                         hourlyCanvas.requestPaint()
                     }
                 }
@@ -483,7 +483,7 @@ Item {
                     ctx.moveTo(points[0].x, points[0].y);
                     for (var k = 1; k < points.length; k++) { ctx.lineTo(points[k].x, points[k].y); }
                     ctx.lineWidth = 2.5;
-                    ctx.strokeStyle = Colorscheme.primary; 
+                    ctx.strokeStyle = Appearance.colors.colPrimary; 
                     ctx.stroke();
 
                     ctx.textAlign = "center";
@@ -491,17 +491,17 @@ Item {
                         var pt = points[p];
                         ctx.beginPath();
                         ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
-                        ctx.fillStyle = Colorscheme.surface_container; ctx.fill();
-                        ctx.lineWidth = 2; ctx.strokeStyle = Colorscheme.primary; ctx.stroke();
+                        ctx.fillStyle = Appearance.colors.colLayer2; ctx.fill();
+                        ctx.lineWidth = 2; ctx.strokeStyle = Appearance.colors.colPrimary; ctx.stroke();
                         
-                        ctx.fillStyle = Colorscheme.on_surface;
+                        ctx.fillStyle = Appearance.colors.colOnSurface;
                         ctx.font = "18px '" + root.materialFont + "'";
                         ctx.fillText(pt.data.icon, pt.x, pt.y - 22);
                         
                         ctx.font = "bold 13px '" + Sizes.fontFamilyMono + "'";
                         ctx.fillText(pt.data.temp + "°", pt.x, pt.y - 44);
                         
-                        ctx.fillStyle = Colorscheme.on_surface_variant;
+                        ctx.fillStyle = Appearance.colors.colOnSurfaceVariant;
                         ctx.font = "12px '" + Sizes.fontFamily + "'";
                         ctx.fillText(pt.data.time, pt.x, height - 2);
                     }
@@ -520,17 +520,17 @@ Item {
                     model: root.dailyData
                     Rectangle {
                         width: 82; height: 140; radius: 16
-                        color: Colorscheme.surface_container_highest
+                        color: Appearance.colors.colLayer4
                         
                         Column {
                             anchors.centerIn: parent
                             spacing: 12
-                            Text { text: modelData.day; color: Colorscheme.on_surface_variant; font.family: Sizes.fontFamily; font.pixelSize: 14; font.bold: true; anchors.horizontalCenter: parent.horizontalCenter }
-                            Text { text: modelData.icon; color: Colorscheme.primary; font.family: root.materialFont; font.pixelSize: 32; anchors.horizontalCenter: parent.horizontalCenter }
+                            Text { text: modelData.day; color: Appearance.colors.colOnSurfaceVariant; font.family: Sizes.fontFamily; font.pixelSize: 14; font.bold: true; anchors.horizontalCenter: parent.horizontalCenter }
+                            Text { text: modelData.icon; color: Appearance.colors.colPrimary; font.family: root.materialFont; font.pixelSize: 32; anchors.horizontalCenter: parent.horizontalCenter }
                             Column {
                                 spacing: 2; anchors.horizontalCenter: parent.horizontalCenter
-                                Text { text: modelData.maxTemp; color: Colorscheme.on_surface; font.family: Sizes.fontFamilyMono; font.pixelSize: 16; font.bold: true; anchors.horizontalCenter: parent.horizontalCenter }
-                                Text { text: modelData.minTemp; color: Colorscheme.on_surface_variant; font.family: Sizes.fontFamilyMono; font.pixelSize: 14; anchors.horizontalCenter: parent.horizontalCenter }
+                                Text { text: modelData.maxTemp; color: Appearance.colors.colOnSurface; font.family: Sizes.fontFamilyMono; font.pixelSize: 16; font.bold: true; anchors.horizontalCenter: parent.horizontalCenter }
+                                Text { text: modelData.minTemp; color: Appearance.colors.colOnSurfaceVariant; font.family: Sizes.fontFamilyMono; font.pixelSize: 14; anchors.horizontalCenter: parent.horizontalCenter }
                             }
                         }
                     }

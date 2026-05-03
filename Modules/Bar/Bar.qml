@@ -43,8 +43,8 @@ Variants {
                 spacing: 10
 
                 Workspaces { screenName: barWindow.screen.name }
-                ActiveWindow {}
                 SidebarButton {}
+                ActiveWindow {}
                 
             }
 

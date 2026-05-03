@@ -20,19 +20,19 @@ Item {
 
     function getColorById(id) {
         let colors = [
-            Colorscheme.primary_container, Colorscheme.secondary_container, 
-            Colorscheme.tertiary_container, Colorscheme.surface_variant, 
-            Qt.darker(Colorscheme.primary, 3.5), Qt.darker(Colorscheme.secondary, 3.5), 
-            Qt.darker(Colorscheme.tertiary, 3.5), Qt.darker(Colorscheme.error, 3.5)
+            Appearance.colors.colPrimaryContainer, Appearance.colors.colSecondaryContainer, 
+            Appearance.colors.colTertiaryContainer, Appearance.colors.colLayer2Hover, 
+            Qt.darker(Appearance.colors.colPrimary, 3.5), Qt.darker(Appearance.colors.colSecondary, 3.5), 
+            Qt.darker(Appearance.colors.colTertiary, 3.5), Qt.darker(Appearance.colors.colError, 3.5)
          ]; return colors[id % colors.length]; 
     }
 
     function getTextColorById(id) {
         let colors = [
-            Colorscheme.on_primary_container, Colorscheme.on_secondary_container, 
-            Colorscheme.on_tertiary_container, Colorscheme.on_surface_variant, 
-            Colorscheme.primary, Colorscheme.secondary, 
-            Colorscheme.tertiary, Colorscheme.error
+            Appearance.colors.colOnPrimaryContainer, Appearance.colors.colOnSecondaryContainer, 
+            Appearance.colors.colOnTertiaryContainer, Appearance.colors.colOnSurfaceVariant, 
+            Appearance.colors.colPrimary, Appearance.colors.colSecondary, 
+            Appearance.colors.colTertiary, Appearance.colors.colError
         ]; return colors[id % colors.length]; 
     }
 
@@ -64,7 +64,7 @@ Item {
 
     Rectangle {
         x: 0; y: 0; width: root.timeW; height: root.headerH; color: "transparent"
-        Text { anchors.centerIn: parent; text: "Time"; color: Colorscheme.on_surface_variant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily }
+        Text { anchors.centerIn: parent; text: "Time"; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily }
         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { scheduleLoader.running = false; scheduleLoader.running = true; } }
     }
 
@@ -74,7 +74,7 @@ Item {
             x: -scheduleScroll.contentItem.contentX; spacing: root.gridSpacing
             Repeater {
                 model: root.headers
-                Rectangle { width: root.cellW; height: root.headerH; color: "transparent"; Text { anchors.centerIn: parent; text: modelData; color: Colorscheme.on_surface_variant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily } }
+                Rectangle { width: root.cellW; height: root.headerH; color: "transparent"; Text { anchors.centerIn: parent; text: modelData; color: Appearance.colors.colOnSurfaceVariant; font.pixelSize: 11; font.bold: true; font.family: Sizes.fontFamily } }
             }
         }
     }
@@ -85,7 +85,7 @@ Item {
             y: -scheduleScroll.contentItem.contentY; spacing: root.gridSpacing
             Repeater {
                 model: root.timeHeaders
-                Rectangle { width: root.timeW; height: root.cellH; color: "transparent"; Text { anchors.centerIn: parent; text: modelData.replace(" - ", "\n"); color: Colorscheme.outline; font.pixelSize: 9; font.family: Sizes.fontFamily; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter } }
+                Rectangle { width: root.timeW; height: root.cellH; color: "transparent"; Text { anchors.centerIn: parent; text: modelData.replace(" - ", "\n"); color: Appearance.colors.colOutline; font.pixelSize: 9; font.family: Sizes.fontFamily; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter } }
             }
         }
     }

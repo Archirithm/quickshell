@@ -22,7 +22,7 @@ Item {
     Rectangle {
         id: bgRect
         anchors.fill: parent
-        color: Colorscheme.background
+        color: Appearance.colors.colLayer0
         radius: height / 2
         visible: false
     }
@@ -31,7 +31,7 @@ Item {
         source: bgRect
         anchors.fill: bgRect
         shadowEnabled: true
-        shadowColor: Qt.alpha(Colorscheme.shadow, 0.4)
+        shadowColor: Qt.alpha(Appearance.colors.colShadow, 0.4)
         shadowBlur: 0.8
         shadowVerticalOffset: 3
         shadowHorizontalOffset: 0
@@ -65,7 +65,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: (root.activeAppName || "?").charAt(0).toUpperCase()
-                color: Colorscheme.primary
+                color: Appearance.colors.colPrimary
                 font.pixelSize: 13
                 font.bold: true
                 visible: !appIcon.visible
@@ -78,7 +78,7 @@ Item {
 
             font.family: "LXGW WenKai GB Screen"
             font.pointSize: 11
-            color: Colorscheme.on_surface
+            color: Appearance.colors.colOnSurface
 
             Layout.maximumWidth: 250
             elide: Text.ElideRight

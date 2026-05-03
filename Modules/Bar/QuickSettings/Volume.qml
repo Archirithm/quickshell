@@ -32,7 +32,7 @@ Item {
 
                 ShapePath {
                     fillColor: "transparent"
-                    strokeColor: Colorscheme.surface_variant
+                    strokeColor: Appearance.colors.colLayer2Hover
                     strokeWidth: 3
                     capStyle: ShapePath.RoundCap 
                     PathAngleArc {
@@ -44,7 +44,7 @@ Item {
 
                 ShapePath {
                     fillColor: "transparent"
-                    strokeColor: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? Colorscheme.error : Colorscheme.primary
+                    strokeColor: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? Appearance.colors.colError : Appearance.colors.colPrimary
                     strokeWidth: 3
                     capStyle: ShapePath.RoundCap
                     PathAngleArc {
@@ -59,7 +59,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 font.pixelSize: 10
-                color: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? Colorscheme.error : Colorscheme.on_surface
+                color: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? Appearance.colors.colError : Appearance.colors.colOnSurface
                 text: {
                     if (Volume.isHeadphone) return ""
                     if (Volume.sinkMuted || Volume.sinkVolume <= 0) return ""
@@ -76,7 +76,7 @@ Item {
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 12
             font.bold: true
-            color: Colorscheme.on_surface
+            color: Appearance.colors.colOnSurface
             visible: root.isHovered
             opacity: root.isHovered ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { duration: 200 } }

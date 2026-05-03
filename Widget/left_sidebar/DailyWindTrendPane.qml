@@ -21,7 +21,7 @@ Rectangle {
     readonly property real nightArrowY: height - 70
 
     radius: 22
-    color: Qt.rgba(Colorscheme.surface_container_high.r, Colorscheme.surface_container_high.g, Colorscheme.surface_container_high.b, 0.42)
+    color: Qt.rgba(Appearance.colors.colLayer3.r, Appearance.colors.colLayer3.g, Appearance.colors.colLayer3.b, 0.42)
     clip: true
 
     function dayLabel(index, epoch) {
@@ -164,7 +164,7 @@ Rectangle {
                 y: 0
                 width: root.itemWidth
                 height: parent.height
-                color: Qt.rgba(Colorscheme.surface_container_highest.r, Colorscheme.surface_container_highest.g, Colorscheme.surface_container_highest.b, 0.18)
+                color: Qt.rgba(Appearance.colors.colLayer4.r, Appearance.colors.colLayer4.g, Appearance.colors.colLayer4.b, 0.18)
             }
 
             Repeater {
@@ -179,11 +179,11 @@ Rectangle {
                     height: root.height
 
                     readonly property color weekColor: modelData.emphasized
-                                                       ? Colorscheme.on_surface
-                                                       : Qt.rgba(Colorscheme.on_surface_variant.r, Colorscheme.on_surface_variant.g, Colorscheme.on_surface_variant.b, 0.78)
+                                                       ? Appearance.colors.colOnSurface
+                                                       : Qt.rgba(Appearance.colors.colOnSurfaceVariant.r, Appearance.colors.colOnSurfaceVariant.g, Appearance.colors.colOnSurfaceVariant.b, 0.78)
                     readonly property color dateColor: modelData.emphasized
-                                                       ? Colorscheme.on_surface_variant
-                                                       : Qt.rgba(Colorscheme.on_surface_variant.r, Colorscheme.on_surface_variant.g, Colorscheme.on_surface_variant.b, 0.62)
+                                                       ? Appearance.colors.colOnSurfaceVariant
+                                                       : Qt.rgba(Appearance.colors.colOnSurfaceVariant.r, Appearance.colors.colOnSurfaceVariant.g, Appearance.colors.colOnSurfaceVariant.b, 0.62)
                     readonly property real dayBarHeight: root.barHeight(modelData.daySpeed)
                     readonly property real nightBarHeight: root.barHeight(modelData.nightSpeed)
 
@@ -221,7 +221,7 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: root.topBarBaseY - parent.dayBarHeight - 28
                         text: modelData.dayTextValue
-                        color: Colorscheme.on_surface_variant
+                        color: Appearance.colors.colOnSurfaceVariant
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 13
                     }
@@ -251,7 +251,7 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: root.bottomBarBaseY + parent.nightBarHeight + 8
                         text: modelData.nightTextValue
-                        color: Colorscheme.on_surface_variant
+                        color: Appearance.colors.colOnSurfaceVariant
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 13
                     }
@@ -300,7 +300,7 @@ Rectangle {
         anchors.centerIn: parent
         visible: !root.hasData
         text: "风况数据暂不可用"
-        color: Colorscheme.on_surface_variant
+        color: Appearance.colors.colOnSurfaceVariant
         font.family: "LXGW WenKai GB Screen"
         font.pixelSize: 16
     }

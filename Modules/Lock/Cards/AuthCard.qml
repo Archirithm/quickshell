@@ -17,10 +17,10 @@ FocusScope {
 
     Rectangle {
         anchors.fill: parent
-        color: Colorscheme.surface_container_highest 
+        color: Appearance.colors.colLayer4 
         radius: 25 
         border.width: 1
-        border.color: input.activeFocus ? Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.5) : "transparent"
+        border.color: input.activeFocus ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.5) : "transparent"
         
         SequentialAnimation {
             id: shakeAnim
@@ -38,7 +38,7 @@ FocusScope {
             // 1. 左侧锁图标
             Text {
                 text: ""
-                color: Colorscheme.on_surface_variant
+                color: Appearance.colors.colOnSurfaceVariant
                 font.family: Sizes.fontFamilyMono
                 font.pixelSize: 16
                 Layout.alignment: Qt.AlignVCenter 
@@ -124,7 +124,7 @@ FocusScope {
                         width: dotsList.dotSize
                         height: dotsList.dotSize
                         radius: dotsList.dotSize / 2
-                        color: Colorscheme.on_surface
+                        color: Appearance.colors.colOnSurface
                     }
 
                     // 进场动画：新圆球弹出淡入
@@ -152,15 +152,15 @@ FocusScope {
                 
                 property bool hasText: input.text.length > 0
                 
-                color: hasText ? Colorscheme.primary : "transparent"
+                color: hasText ? Appearance.colors.colPrimary : "transparent"
                 border.width: hasText ? 0 : 1
-                border.color: hasText ? "transparent" : Colorscheme.outline
+                border.color: hasText ? "transparent" : Appearance.colors.colOutline
                 Behavior on color { ColorAnimation { duration: 200 } }
                 
                 Text { 
                     anchors.centerIn: parent
                     text: "➜"
-                    color: parent.hasText ? Colorscheme.on_primary : Colorscheme.outline
+                    color: parent.hasText ? Appearance.colors.colOnPrimary : Appearance.colors.colOutline
                     font.pixelSize: 14
                     font.bold: true
                 }

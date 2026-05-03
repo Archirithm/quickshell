@@ -12,13 +12,12 @@ WidgetPanel {
     title: "混音器"
     icon: "tune"
     closeAction: () => WidgetState.qsOpen = false
-    Theme { id: theme }
     property bool isActive: WidgetState.qsOpen && WidgetState.qsView === "audio"
 
     headerTools: Text {
         text: "\uf013"
         font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20
-        color: theme.subtext
+        color: Appearance.colors.colOnLayer1
         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Quickshell.execDetached(["pavucontrol"]) }
     }
 
@@ -36,7 +35,7 @@ WidgetPanel {
     Rectangle {
         Layout.fillWidth: true
         height: 104 
-        color: theme.surface; radius: theme.radius
+        color: Appearance.colors.colLayer1; radius: Appearance.rounding.large
 
         ColumnLayout {
             anchors.fill: parent; anchors.margins: 16; spacing: 12
@@ -45,15 +44,15 @@ WidgetPanel {
                 Layout.fillWidth: true
                 Text { 
                     text: isHeadphone(root.defaultSink) ? "\uf025" : "\uf028"
-                    font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20; color: theme.primary 
+                    font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20; color: Appearance.colors.colPrimary 
                 }
                 Text { 
                     text: root.defaultSink ? (root.defaultSink.description || root.defaultSink.name) : "未找到设备"
-                    font.bold: true; font.pixelSize: 15; color: theme.text; elide: Text.ElideRight; Layout.fillWidth: true 
+                    font.bold: true; font.pixelSize: 15; color: Appearance.colors.colOnLayer2; elide: Text.ElideRight; Layout.fillWidth: true 
                 }
                 Text { 
                     text: root.defaultSink ? Math.round(root.defaultSink.audio.volume * 100) + "%" : "0%"
-                    font.bold: true; font.pixelSize: 15; color: theme.primary 
+                    font.bold: true; font.pixelSize: 15; color: Appearance.colors.colPrimary 
                 }
             }
 
@@ -61,7 +60,7 @@ WidgetPanel {
         }
     }
 
-    Text { text: "应用程序"; font.pixelSize: 14; color: theme.subtext; font.bold: true; Layout.topMargin: 12 }
+    Text { text: "应用程序"; font.pixelSize: 14; color: Appearance.colors.colOnLayer1; font.bold: true; Layout.topMargin: 12 }
 
     ListView {
         id: appList // 给 ListView 起个 id 方便滚轮调用
@@ -97,7 +96,6 @@ WidgetPanel {
         }
 
         delegate: Rectangle {
-            Theme { id: itemTheme }
             required property PwLinkGroup modelData
             property var appNode: modelData.source
 
@@ -138,7 +136,7 @@ WidgetPanel {
                     Layout.fillWidth: true; spacing: 6
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: appNode.properties["application.name"] || appNode.name; font.bold: true; font.pixelSize: 14; color: itemTheme.text; elide: Text.ElideRight; Layout.fillWidth: true }
+                        Text { text: appNode.properties["application.name"] || appNode.name; font.bold: true; font.pixelSize: 14; color: Appearance.colors.colOnLayer2; elide: Text.ElideRight; Layout.fillWidth: true }
                     }
 
                     Item {
@@ -146,12 +144,12 @@ WidgetPanel {
                         Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             width: parent.width; height: 6; radius: 3
-                            color: Qt.rgba(itemTheme.text.r, itemTheme.text.g, itemTheme.text.b, 0.1)
-                            Rectangle { height: parent.height; width: parent.width * appNode.audio.volume; radius: 3; color: itemTheme.primary }
+                            color: Qt.rgba(Appearance.colors.colOnLayer2.r, Appearance.colors.colOnLayer2.g, Appearance.colors.colOnLayer2.b, 0.1)
+                            Rectangle { height: parent.height; width: parent.width * appNode.audio.volume; radius: 3; color: Appearance.colors.colPrimary }
                         }
 
                         Rectangle {
-                            width: 6; height: 16; radius: 3; color: itemTheme.text 
+                            width: 6; height: 16; radius: 3; color: Appearance.colors.colOnLayer2 
                             x: Math.max(0, Math.min(parent.width * appNode.audio.volume - width / 2, parent.width - width))
                             anchors.verticalCenter: parent.verticalCenter
 
@@ -161,10 +159,10 @@ WidgetPanel {
                                 visible: sliderMouseArea.containsMouse || sliderMouseArea.pressed
                                 
                                 Rectangle {
-                                    anchors.fill: parent; radius: 16; color: itemTheme.primary; rotation: 45 
+                                    anchors.fill: parent; radius: 16; color: Appearance.colors.colPrimary; rotation: 45 
                                     Rectangle { width: 16; height: 16; x: 16; y: 16; color: parent.color }
                                 }
-                                Text { anchors.centerIn: parent; text: Math.round(appNode.audio.volume * 100); color: itemTheme.surface; font.pixelSize: 11; font.bold: true }
+                                Text { anchors.centerIn: parent; text: Math.round(appNode.audio.volume * 100); color: Appearance.colors.colLayer1; font.pixelSize: 11; font.bold: true }
                             }
                         }
 

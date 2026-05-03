@@ -25,7 +25,7 @@ Item {
     Rectangle {
         id: bgRect
         anchors.fill: parent
-        color: Colorscheme.background
+        color: Appearance.colors.colLayer0
         radius: height / 2
         visible: false
     }
@@ -34,7 +34,7 @@ Item {
         source: bgRect
         anchors.fill: bgRect
         shadowEnabled: true
-        shadowColor: Qt.alpha(Colorscheme.shadow, 0.4)
+        shadowColor: Qt.alpha(Appearance.colors.colShadow, 0.4)
         shadowBlur: 0.8
         shadowVerticalOffset: 3
         shadowHorizontalOffset: 0
@@ -70,10 +70,10 @@ Item {
                     height: parent.implicitHeight
                     radius: height / 2
 
-                    color: delegateRoot.active ? Colorscheme.primary
-                         : delegateRoot.hasWindows ? Colorscheme.on_surface
-                         : delegateRoot.isHovered ? Colorscheme.surface_variant
-                         : Colorscheme.surface_container_highest
+                    color: delegateRoot.active ? Appearance.colors.colPrimary
+                         : delegateRoot.hasWindows ? Appearance.colors.colOnSurface
+                         : delegateRoot.isHovered ? Appearance.colors.colLayer2Hover
+                         : Appearance.colors.colLayer4
 
                     Behavior on color { ColorAnimation { duration: 200 } }
                 }

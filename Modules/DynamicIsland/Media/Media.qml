@@ -70,13 +70,13 @@ Item {
     Canvas {
         id: colorExtractor
         width: 1; height: 1; visible: false
-        property color extractedColor: Colorscheme.primary
+        property color extractedColor: Appearance.colors.colPrimary
 
         Connections {
             target: root
             function onArtUrlChanged() {
                 if (root.artUrl !== "") colorExtractor.loadImage(root.artUrl);
-                else colorExtractor.extractedColor = Colorscheme.primary;
+                else colorExtractor.extractedColor = Appearance.colors.colPrimary;
             }
         }
         onImageLoaded: {
@@ -94,7 +94,7 @@ Item {
             
             s = Math.min(1.0, s * 1.5);
             if (s < 0.1) {
-                extractedColor = Colorscheme.primary;
+                extractedColor = Appearance.colors.colPrimary;
             } else {
                 l = Math.max(0.65, Math.min(0.85, l));
                 extractedColor = Qt.hsla(h, s, l, 1.0);
@@ -162,7 +162,7 @@ Item {
         anchors.bottomMargin: 25 
  
         radius: 24 
-        color: Colorscheme.surface_container_low
+        color: Appearance.colors.colLayer1
 
         layer.enabled: true
         layer.effect: OpacityMask {
@@ -195,7 +195,7 @@ Item {
                 text: "lyrics" 
                 font.family: "Material Symbols Outlined"
                 font.pixelSize: 18
-                color: root.showLyrics ? Colorscheme.background : "white"
+                color: root.showLyrics ? Appearance.colors.colLayer0 : "white"
             }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.showLyrics = !root.showLyrics }
         }
@@ -513,7 +513,7 @@ Item {
                     width: 60; height: 60; radius: 30; color: root.dynamicThemeColor 
                     scale: playMa.pressed ? 0.9 : (playMa.containsMouse ? 1.05 : 1.0)
                     Behavior on scale { NumberAnimation { duration: 150 } }
-                    Text { anchors.centerIn: parent; text: (root.player && root.player.isPlaying) ? "pause" : "play_arrow"; color: Colorscheme.background; font.family: "Material Symbols Outlined"; font.pixelSize: 28 }
+                    Text { anchors.centerIn: parent; text: (root.player && root.player.isPlaying) ? "pause" : "play_arrow"; color: Appearance.colors.colLayer0; font.family: "Material Symbols Outlined"; font.pixelSize: 28 }
                     MouseArea { id: playMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: if(root.player) root.player.togglePlaying() }
                 }
 

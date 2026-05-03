@@ -101,7 +101,7 @@ Item {
                 radius: 12
                 
                 color: (toolsMouse.containsMouse || index === toolsRoot.selectedIndex) 
-                    ? Colorscheme.surface_variant : "transparent"
+                    ? Appearance.colors.colLayer2Hover : "transparent"
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 Text {
@@ -109,7 +109,7 @@ Item {
                     text: modelData.icon
                     font.family: "Material Symbols Rounded" 
                     font.pixelSize: 22
-                    color: Colorscheme.on_surface
+                    color: Appearance.colors.colOnSurface
                 }
 
                 MouseArea {

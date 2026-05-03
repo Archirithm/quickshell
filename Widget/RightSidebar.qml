@@ -9,7 +9,6 @@ import qs.Widget.common
 PanelWindow {
     id: root
     
-    Theme { id: theme }
 
     property int sidebarWidth: 420
     property int gap: 24 
@@ -67,7 +66,7 @@ PanelWindow {
                 height: root.qsTargetHeight
                 y: 66 
                 x: WidgetState.qsOpen ? root.targetX : root.offScreenX
-                radius: theme.radius
+                radius: Appearance.rounding.large
                 color: "black" 
                 Behavior on x { NumberAnimation { duration: 600; easing.type: Easing.OutBack; easing.overshoot: 0.3 } }
             }
@@ -88,7 +87,7 @@ PanelWindow {
 
         Rectangle { 
             id: solidBg; anchors.fill: parent; 
-            color: theme.background; 
+            color: Appearance.colors.colLayer0;
             visible: false 
         }
 

@@ -9,10 +9,10 @@ Rectangle {
     property string label: ""
     property string value: "--"
     property string detail: ""
-    property color accent: Colorscheme.secondary
+    property color accent: Appearance.colors.colSecondary
 
     radius: 24
-    color: Colorscheme.surface_container_low
+    color: Appearance.colors.colLayer1
 
     RowLayout {
         anchors.fill: parent
@@ -40,7 +40,7 @@ Rectangle {
 
             Text {
                 text: root.label
-                color: Colorscheme.on_surface_variant
+                color: Appearance.colors.colOnSurfaceVariant
                 font.family: "LXGW WenKai GB Screen"
                 font.pixelSize: 11
                 elide: Text.ElideRight
@@ -49,7 +49,7 @@ Rectangle {
 
             Text {
                 text: root.value
-                color: Colorscheme.on_surface
+                color: Appearance.colors.colOnSurface
                 font.family: "JetBrainsMono Nerd Font"
                 font.bold: true
                 font.pixelSize: 14
@@ -60,7 +60,7 @@ Rectangle {
             Text {
                 text: root.detail
                 visible: root.detail.length > 0
-                color: Colorscheme.outline
+                color: Appearance.colors.colOutline
                 font.family: "LXGW WenKai GB Screen"
                 font.pixelSize: 10
                 elide: Text.ElideRight

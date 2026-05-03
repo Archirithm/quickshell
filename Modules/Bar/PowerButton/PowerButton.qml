@@ -6,7 +6,7 @@ Rectangle {
     id: root
 
     // 警告红
-    color: Colorscheme.error 
+    color: Appearance.colors.colError 
     radius: height / 2
     implicitHeight: 28
     implicitWidth: 28
@@ -23,6 +23,6 @@ Rectangle {
         text: "⏻"
         font.pixelSize: 14 
         font.bold: true
-        color: Colorscheme.on_error 
+        color: Appearance.colors.colOnError 
     }
 }

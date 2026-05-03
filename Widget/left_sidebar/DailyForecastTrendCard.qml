@@ -12,9 +12,9 @@ Rectangle {
     property int currentTab: 0
 
     radius: 26
-    color: Qt.rgba(Colorscheme.surface_container.r, Colorscheme.surface_container.g, Colorscheme.surface_container.b, 0.86)
+    color: Qt.rgba(Appearance.colors.colLayer2.r, Appearance.colors.colLayer2.g, Appearance.colors.colLayer2.b, 0.86)
     border.width: 1
-    border.color: Qt.rgba(Colorscheme.outline_variant.r, Colorscheme.outline_variant.g, Colorscheme.outline_variant.b, 0.42)
+    border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.42)
     clip: true
 
     function modelCount() {
@@ -70,7 +70,7 @@ Rectangle {
 
                 Text {
                     text: "calendar_month"
-                    color: Colorscheme.on_surface_variant
+                    color: Appearance.colors.colOnSurfaceVariant
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 22
                     Layout.alignment: Qt.AlignVCenter
@@ -78,7 +78,7 @@ Rectangle {
 
                 Text {
                     text: "每日预报"
-                    color: Colorscheme.on_surface
+                    color: Appearance.colors.colOnSurface
                     font.family: "LXGW WenKai GB Screen"
                     font.bold: true
                     font.pixelSize: 22
@@ -107,14 +107,14 @@ Rectangle {
                     Layout.preferredHeight: 36
                     Layout.alignment: Qt.AlignVCenter
                     radius: 18
-                    color: moreMouse.containsMouse ? Colorscheme.surface_container_highest : Colorscheme.surface_container
+                    color: moreMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2
 
                     Behavior on color { ColorAnimation { duration: 150 } }
 
                     Text {
                         anchors.centerIn: parent
                         text: "more_horiz"
-                        color: Colorscheme.on_surface_variant
+                        color: Appearance.colors.colOnSurfaceVariant
                         font.family: "Material Symbols Outlined"
                         font.pixelSize: 20
                     }
@@ -262,8 +262,8 @@ Rectangle {
                             }
                             ctx.closePath()
                             const fillGradient = ctx.createLinearGradient(0, chartTop, 0, chartBottom)
-                            fillGradient.addColorStop(0, "rgba(" + Math.round(Colorscheme.primary.r * 255) + "," + Math.round(Colorscheme.primary.g * 255) + "," + Math.round(Colorscheme.primary.b * 255) + ",0.12)")
-                            fillGradient.addColorStop(1, "rgba(" + Math.round(Colorscheme.primary.r * 255) + "," + Math.round(Colorscheme.primary.g * 255) + "," + Math.round(Colorscheme.primary.b * 255) + ",0.02)")
+                            fillGradient.addColorStop(0, "rgba(" + Math.round(Appearance.colors.colPrimary.r * 255) + "," + Math.round(Appearance.colors.colPrimary.g * 255) + "," + Math.round(Appearance.colors.colPrimary.b * 255) + ",0.12)")
+                            fillGradient.addColorStop(1, "rgba(" + Math.round(Appearance.colors.colPrimary.r * 255) + "," + Math.round(Appearance.colors.colPrimary.g * 255) + "," + Math.round(Appearance.colors.colPrimary.b * 255) + ",0.02)")
                             ctx.fillStyle = fillGradient
                             ctx.fill()
 
@@ -274,21 +274,21 @@ Rectangle {
                                 const fadedBar = p === 0
                                 const barTop = chartBottom - (chartBottom - chartTop) * Math.min(100, popValue) / 100
                                 ctx.fillStyle = fadedBar
-                                    ? Qt.rgba(Colorscheme.secondary.r, Colorscheme.secondary.g, Colorscheme.secondary.b, 0.10)
-                                    : Qt.rgba(Colorscheme.secondary.r, Colorscheme.secondary.g, Colorscheme.secondary.b, 0.18)
+                                    ? Qt.rgba(Appearance.colors.colSecondary.r, Appearance.colors.colSecondary.g, Appearance.colors.colSecondary.b, 0.10)
+                                    : Qt.rgba(Appearance.colors.colSecondary.r, Appearance.colors.colSecondary.g, Appearance.colors.colSecondary.b, 0.18)
                                 ctx.beginPath()
                                 roundedRect(ctx, x - 5, barTop, 10, chartBottom - barTop, 5)
                                 ctx.fill()
                                 ctx.fillStyle = fadedBar
-                                    ? Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.42)
-                                    : Colorscheme.primary
+                                    ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.42)
+                                    : Appearance.colors.colPrimary
                                 ctx.font = "bold 11px \"JetBrainsMono Nerd Font\""
                                 ctx.textAlign = "center"
                                 ctx.fillText(root.fmtPercent(popValue), x, trendContent.rainLabelY)
                             }
 
-                            drawSeries(ctx, dayValues, minTemp, maxTemp, Colorscheme.primary, 4)
-                            drawSeries(ctx, nightValues, minTemp, maxTemp, Colorscheme.secondary, 4)
+                            drawSeries(ctx, dayValues, minTemp, maxTemp, Appearance.colors.colPrimary, 4)
+                            drawSeries(ctx, nightValues, minTemp, maxTemp, Appearance.colors.colSecondary, 4)
                         }
 
                         function drawSeries(ctx, values, minValue, maxValue, color, lineWidth) {
@@ -360,7 +360,7 @@ Rectangle {
                                 Text {
                                     width: parent.width
                                     text: root.dayLabel(index, dayItem.time)
-                                    color: Colorscheme.on_surface
+                                    color: Appearance.colors.colOnSurface
                                     font.family: "LXGW WenKai GB Screen"
                                     font.pixelSize: 16
                                     font.bold: index === 1
@@ -371,7 +371,7 @@ Rectangle {
                                 Text {
                                     width: parent.width
                                     text: root.dateLabel(dayItem.time)
-                                    color: Colorscheme.on_surface_variant
+                                    color: Appearance.colors.colOnSurfaceVariant
                                     font.family: "JetBrainsMono Nerd Font"
                                     font.pixelSize: 13
                                     horizontalAlignment: Text.AlignHCenter
@@ -393,7 +393,7 @@ Rectangle {
                                 width: parent.width
                                 y: trendContent.highTempTextY
                                 text: root.fmtTemp(root.valueAt(dayPart, "temperatureC", root.valueAt(dayItem, "temperatureMaxC", NaN)))
-                                color: Colorscheme.on_surface
+                                color: Appearance.colors.colOnSurface
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 19
                                 font.bold: true
@@ -404,7 +404,7 @@ Rectangle {
                                 width: parent.width
                                 y: trendContent.lowTempTextY
                                 text: root.fmtTemp(root.valueAt(nightPart, "temperatureC", root.valueAt(dayItem, "temperatureMinC", NaN)))
-                                color: Colorscheme.on_surface_variant
+                                color: Appearance.colors.colOnSurfaceVariant
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 18
                                 font.bold: true
@@ -489,8 +489,8 @@ Rectangle {
         property real rLeft: (isActive || isFirst || btnMouse.pressed) ? 16 : 4
         property real rRight: (isActive || isLast || btnMouse.pressed) ? 16 : 4
         property color bgColor: isActive
-                                ? Colorscheme.primary_container
-                                : (btnMouse.containsMouse ? Colorscheme.surface_container_highest : Colorscheme.surface_container)
+                                ? Appearance.colors.colPrimaryContainer
+                                : (btnMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2)
 
         Behavior on Layout.preferredWidth { NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
         Behavior on bgColor { ColorAnimation { duration: 150 } }
@@ -523,7 +523,7 @@ Rectangle {
             font.family: "LXGW WenKai GB Screen"
             font.pixelSize: 14
             font.bold: parent.isActive
-            color: parent.isActive ? Colorscheme.on_primary_container : Colorscheme.on_surface_variant
+            color: parent.isActive ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurfaceVariant
             z: 2
 
             Behavior on color { ColorAnimation { duration: 150 } }

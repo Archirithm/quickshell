@@ -27,7 +27,7 @@ Item {
             anchors.fill: parent
             radius: 24
             // 使用 Qt.alpha 更加简洁地调整透明度
-            color: Qt.alpha(Colorscheme.surface_container_lowest, 0.85)
+            color: Qt.alpha(Appearance.colors.colLayer0, 0.85)
             border.width: 0
             border.color: "transparent"
         }
@@ -50,11 +50,11 @@ Item {
 
         Rectangle {
             width: 48; height: 48; radius: 24
-            color: sliderCol.expanded ? Colorscheme.primary : Colorscheme.surface_container_highest
+            color: sliderCol.expanded ? Appearance.colors.colPrimary : Appearance.colors.colLayer4
             Behavior on color { ColorAnimation { duration: 250 } }
             Text {
                 anchors.centerIn: parent; text: sliderCol.icon; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 18
-                color: sliderCol.expanded ? Colorscheme.on_primary : Colorscheme.on_surface
+                color: sliderCol.expanded ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
             }
             MouseArea { 
                 anchors.fill: parent; cursorShape: Qt.PointingHandCursor; 
@@ -69,12 +69,12 @@ Item {
             Item {
                 anchors.centerIn: parent; width: 16; height: parent.height - 4; clip: true
                 Rectangle {
-                    anchors.fill: parent; radius: 8; color: Colorscheme.surface_container_lowest
+                    anchors.fill: parent; radius: 8; color: Appearance.colors.colLayer0
                     Rectangle {
-                        x: parent.width / 2 - width / 2; y: 4; width: 4; height: parent.height - 8; radius: 2; color: Colorscheme.surface_container_highest
+                        x: parent.width / 2 - width / 2; y: 4; width: 4; height: parent.height - 8; radius: 2; color: Appearance.colors.colLayer4
                         Rectangle {
                             width: parent.width; height: (1.0 - vSlider.visualPosition) * parent.height; y: vSlider.visualPosition * parent.height
-                            radius: 2; color: Colorscheme.primary
+                            radius: 2; color: Appearance.colors.colPrimary
                         }
                     }
                 }
@@ -89,18 +89,18 @@ Item {
                 handle: Rectangle {
                     x: vSlider.leftPadding + vSlider.availableWidth / 2 - width / 2
                     y: vSlider.topPadding + vSlider.visualPosition * (vSlider.availableHeight - height)
-                    width: 12; height: 12; radius: 6; color: Colorscheme.primary
+                    width: 12; height: 12; radius: 6; color: Appearance.colors.colPrimary
                     Item {
                         anchors.left: parent.right; anchors.leftMargin: 16; anchors.verticalCenter: parent.verticalCenter
                         width: 36; height: 36; visible: vSlider.pressed || vSlider.hovered; opacity: visible ? 1.0 : 0.0
                         Behavior on opacity { NumberAnimation { duration: 150 } }
-                        Rectangle { anchors.fill: parent; radius: 18; color: Colorscheme.primary_container }
+                        Rectangle { anchors.fill: parent; radius: 18; color: Appearance.colors.colPrimaryContainer }
                         Rectangle { 
-                            width: 12; height: 12; radius: 2; color: Colorscheme.primary_container; rotation: 45
+                            width: 12; height: 12; radius: 2; color: Appearance.colors.colPrimaryContainer; rotation: 45
                             anchors.left: parent.left; anchors.leftMargin: -4; anchors.verticalCenter: parent.verticalCenter; z: -1
                         }
                         Text { 
-                            anchors.centerIn: parent; text: Math.round(vSlider.value * 100); color: Colorscheme.on_primary_container
+                            anchors.centerIn: parent; text: Math.round(vSlider.value * 100); color: Appearance.colors.colOnPrimaryContainer
                             font.pixelSize: 14; font.bold: true; font.family: "JetBrainsMono Nerd Font" 
                         }
                     }
@@ -196,7 +196,7 @@ Item {
             Text {
                 id: leftArrow
                 anchors.right: holeBase.left; anchors.rightMargin: 10; anchors.verticalCenter: parent.verticalCenter
-                text: ""; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20; color: Colorscheme.on_surface_variant
+                text: ""; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20; color: Appearance.colors.colOnSurfaceVariant
                 opacity: leftMouse.containsMouse ? 1.0 : 0.6; Behavior on opacity { NumberAnimation { duration: 150 } }
                 MouseArea { id: leftMouse; anchors.fill: parent; anchors.margins: -12; cursorShape: Qt.PointingHandCursor; onClicked: carouselView.incrementCurrentIndex() }
             }
@@ -204,7 +204,7 @@ Item {
             Text {
                 id: rightArrow
                 anchors.left: holeBase.right; anchors.leftMargin: 10; anchors.verticalCenter: parent.verticalCenter
-                text: ""; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20; color: Colorscheme.on_surface_variant
+                text: ""; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 20; color: Appearance.colors.colOnSurfaceVariant
                 opacity: rightMouse.containsMouse ? 1.0 : 0.6; Behavior on opacity { NumberAnimation { duration: 150 } }
                 MouseArea { id: rightMouse; anchors.fill: parent; anchors.margins: -12; cursorShape: Qt.PointingHandCursor; onClicked: carouselView.decrementCurrentIndex() }
             }

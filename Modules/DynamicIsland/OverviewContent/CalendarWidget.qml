@@ -5,7 +5,7 @@ import qs.config
 
 Rectangle {
     id: root
-    color: Colorscheme.surface_container_high 
+    color: Appearance.colors.colLayer3 
     radius: 24
 
     ListModel { id: calendarModel }
@@ -62,12 +62,12 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 36
                 radius: 18
-                color: Colorscheme.surface_container_highest
+                color: Appearance.colors.colLayer4
                 
                 Text {
                     anchors.centerIn: parent
                     text: root.monthNames[root.displayMonth] + " " + root.displayYear
-                    color: Colorscheme.on_surface
+                    color: Appearance.colors.colOnSurface
                     font.family: Sizes.fontFamily
                     font.pixelSize: 15
                     font.bold: true
@@ -78,10 +78,10 @@ Rectangle {
             component NavBtn : Rectangle {
                 property string iconTxt: ""
                 Layout.preferredWidth: 42; Layout.preferredHeight: 36; radius: 18
-                color: Colorscheme.surface_container_highest
+                color: Appearance.colors.colLayer4
                 scale: ma.pressed ? 0.9 : (ma.containsMouse ? 1.05 : 1.0)
                 Behavior on scale { NumberAnimation { duration: 150 } }
-                Text { anchors.centerIn: parent; text: iconTxt; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 14; color: Colorscheme.primary }
+                Text { anchors.centerIn: parent; text: iconTxt; font.family: "Font Awesome 6 Free Solid"; font.pixelSize: 14; color: Appearance.colors.colPrimary }
                 signal clicked()
                 MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: parent.clicked() }
             }
@@ -108,12 +108,12 @@ Rectangle {
                         Layout.fillWidth: true; Layout.preferredHeight: 20
                         Text { 
                             anchors.centerIn: parent; text: modelData
-                            color: Colorscheme.on_surface_variant; font.family: Sizes.fontFamily; font.pixelSize: 13; font.bold: true 
+                            color: Appearance.colors.colOnSurfaceVariant; font.family: Sizes.fontFamily; font.pixelSize: 13; font.bold: true 
                         }
                     }
                 }
             }
-            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 2; color: Colorscheme.surface_container_highest; radius: 1 }
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 2; color: Appearance.colors.colLayer4; radius: 1 }
         }
         
         // 3. 日期网格
@@ -129,14 +129,14 @@ Rectangle {
                         width: Math.min(parent.width, parent.height) * 0.9 
                         height: width; radius: width / 2
                         anchors.centerIn: parent
-                        color: model.isToday ? Colorscheme.primary : "transparent"
+                        color: model.isToday ? Appearance.colors.colPrimary : "transparent"
                     }
                     
                     Text {
                         anchors.centerIn: parent
                         text: model.dayText
                         font.family: Sizes.fontFamily; font.pixelSize: 14; font.bold: model.isToday
-                        color: model.isToday ? Colorscheme.on_primary : (model.isCurrentMonth ? Colorscheme.on_surface : Colorscheme.surface_variant)
+                        color: model.isToday ? Appearance.colors.colOnPrimary : (model.isCurrentMonth ? Appearance.colors.colOnSurface : Appearance.colors.colLayer2Hover)
                     }
                 }
             }

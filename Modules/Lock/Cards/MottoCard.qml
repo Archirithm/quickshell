@@ -8,7 +8,7 @@ Rectangle {
     Layout.preferredHeight: 160
     
     // 使用全局配置的颜色和圆角
-    color: Colorscheme.surface_container
+    color: Appearance.colors.colLayer2
     radius: Sizes.lockCardRadius
 
     ColumnLayout {
@@ -20,7 +20,7 @@ Rectangle {
         Text {
             text: "“"
             // 使用次级文字颜色，或者用 primary 强调色
-            color: Colorscheme.on_surface_variant 
+            color: Appearance.colors.colOnSurfaceVariant 
             font.pixelSize: 60
             font.family: Sizes.fontFamily
             Layout.alignment: Qt.AlignLeft | Qt.AlignTop
@@ -30,7 +30,7 @@ Rectangle {
         // 中间正文
         Text {
             text: "休息一下，\n马上回来。"
-            color: Colorscheme.on_surface
+            color: Appearance.colors.colOnSurface
             font.family: Sizes.fontFamily
             font.pixelSize: 26
             font.bold: true
@@ -47,7 +47,7 @@ Rectangle {
         // 右下角引号
         Text {
             text: "”"
-            color: Colorscheme.on_surface_variant
+            color: Appearance.colors.colOnSurfaceVariant
             font.pixelSize: 60
             font.family: Sizes.fontFamily
             Layout.alignment: Qt.AlignRight | Qt.AlignBottom

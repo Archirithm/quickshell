@@ -27,10 +27,10 @@ PanelWindow {
 
     property int currentMode: 0 
     
-    // 【核心修复 1】：废除容易被缓存坑的软链接，直接绑定全局真理变量 Colorscheme.currentWallpaperPreview
+    // 【核心修复 1】：废除容易被缓存坑的软链接，直接绑定全局真理变量 Appearance.currentWallpaperPreview
     property string previewImage: (currentMode === 2 && wallpaperPage.currentSelectedPreview !== "") 
                                   ? wallpaperPage.currentSelectedPreview 
-                                  : (Colorscheme.currentWallpaperPreview !== "" ? Colorscheme.currentWallpaperPreview : "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current")
+                                  : (Appearance.currentWallpaperPreview !== "" ? Appearance.currentWallpaperPreview : "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current")
 
     // ==========================================
     // 【全局壁纸强制同步引擎】
@@ -46,7 +46,7 @@ PanelWindow {
                 let currentPath = path.trim().replace(/^"|"$/g, '');
                 if (currentPath !== "") {
                     // 获取到真实的绝对路径，强行刷新全局变量，QML 图片缓存瞬间失效并更新
-                    Colorscheme.currentWallpaperPreview = "file://" + currentPath;
+                    Appearance.currentWallpaperPreview = "file://" + currentPath;
                 }
             }
         }
@@ -283,14 +283,14 @@ PanelWindow {
                             height: 48
                             radius: 24
                             anchors.horizontalCenter: parent.horizontalCenter
-                            color: root.currentMode === 0 ? Colorscheme.secondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
+                            color: root.currentMode === 0 ? Appearance.colors.colSecondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
                             
                             Text {
                                 anchors.centerIn: parent
                                 text: ""
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 20
-                                color: root.currentMode === 0 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Colorscheme.secondary
+                                color: root.currentMode === 0 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Appearance.colors.colSecondary
                             }
                         }
                         
@@ -300,14 +300,14 @@ PanelWindow {
                             height: 48
                             radius: 24
                             anchors.horizontalCenter: parent.horizontalCenter
-                            color: root.currentMode === 1 ? Colorscheme.secondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
+                            color: root.currentMode === 1 ? Appearance.colors.colSecondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
                             
                             Text {
                                 anchors.centerIn: parent
                                 text: ""
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 20
-                                color: root.currentMode === 1 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Colorscheme.secondary
+                                color: root.currentMode === 1 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Appearance.colors.colSecondary
                             }
                         }
                         
@@ -317,14 +317,14 @@ PanelWindow {
                             height: 48
                             radius: 24
                             anchors.horizontalCenter: parent.horizontalCenter
-                            color: root.currentMode === 2 ? Colorscheme.secondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
+                            color: root.currentMode === 2 ? Appearance.colors.colSecondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
                             
                             Text {
                                 anchors.centerIn: parent
                                 text: ""
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 20
-                                color: root.currentMode === 2 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Colorscheme.secondary
+                                color: root.currentMode === 2 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Appearance.colors.colSecondary
                             }
                         }
                     }
@@ -365,7 +365,7 @@ PanelWindow {
         Rectangle {
             anchors.fill: parent
             color: "transparent"
-            border.color: Colorscheme.secondary_fixed
+            border.color: Appearance.colors.colSecondaryFixed
             border.width: 2
             radius: 20
         }

@@ -82,7 +82,7 @@ Item {
         // --- 左侧日期部分 ---
         Text {
             text: root.dateStr
-            color: Colorscheme.primary 
+            color: Appearance.colors.colPrimary 
             font.family: Sizes.fontFamily
             font.pixelSize: 13 
             font.bold: true
@@ -90,7 +90,7 @@ Item {
         }
         Text {
             text: "|"
-            color: Colorscheme.outline_variant
+            color: Appearance.colors.colOutlineVariant
             font.family: Sizes.fontFamily
             font.pixelSize: 13
             anchors.verticalCenter: parent.verticalCenter
@@ -107,13 +107,13 @@ Item {
                 
                 RollingDigit {
                     targetDigit: root.h0
-                    digitColor: Colorscheme.inverse_primary 
+                    digitColor: Appearance.colors.colInversePrimary 
                     digitRotation: -3 // 各自独立的倾斜角度
                     digitOffset: -2    // 各自独立的高低落差
                 }
                 RollingDigit {
                     targetDigit: root.h1
-                    digitColor: Colorscheme.primary // 不透明的主题亮色
+                    digitColor: Appearance.colors.colPrimary // 不透明的主题亮色
                     digitRotation: 3  
                     digitOffset: 1   
                 }
@@ -125,8 +125,8 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: 1 
                 
-                Rectangle { width: 4; height: 4; radius: 2; color: Colorscheme.outline_variant }
-                Rectangle { width: 4; height: 4; radius: 2; color: Colorscheme.outline_variant }
+                Rectangle { width: 4; height: 4; radius: 2; color: Appearance.colors.colOutlineVariant }
+                Rectangle { width: 4; height: 4; radius: 2; color: Appearance.colors.colOutlineVariant }
             }
 
             // 分钟部分
@@ -135,13 +135,13 @@ Item {
                 
                 RollingDigit {
                     targetDigit: root.m0
-                    digitColor: Colorscheme.inverse_primary
+                    digitColor: Appearance.colors.colInversePrimary
                     digitRotation: -2 
                     digitOffset: -1
                 }
                 RollingDigit {
                     targetDigit: root.m1
-                    digitColor: Colorscheme.primary
+                    digitColor: Appearance.colors.colPrimary
                     digitRotation: 2
                     digitOffset: 1 
                 }

@@ -9,7 +9,6 @@ import Clavis.Weather 1.0
 Item {
     id: root
 
-    Theme { id: theme }
 
     property int contentMargin: 16
     property int headerHeight: 62
@@ -255,7 +254,7 @@ Item {
         clip: true
         color: "transparent"
         border.width: 1
-        border.color: Qt.rgba(Colorscheme.outline_variant.r, Colorscheme.outline_variant.g, Colorscheme.outline_variant.b, 0.34)
+        border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.34)
         layer.enabled: true
         layer.effect: OpacityMask {
             maskSource: Rectangle {
@@ -442,7 +441,7 @@ Item {
                         Text {
                             width: parent.width
                             text: WeatherPlugin.currentWeatherText || "Unknown"
-                            color: Colorscheme.on_surface
+                            color: Appearance.colors.colOnSurface
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 26
                             font.bold: true
@@ -461,7 +460,7 @@ Item {
                                 anchors.left: parent.left
                                 anchors.bottom: parent.bottom
                                 text: fmtTempPlain(WeatherPlugin.currentTemperatureC)
-                                color: Colorscheme.on_surface
+                                color: Appearance.colors.colOnSurface
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 132
                                 font.bold: true
@@ -483,7 +482,7 @@ Item {
                         Text {
                             width: parent.width
                             text: "体感温度: " + fmtTemp(WeatherPlugin.currentFeelsLikeC)
-                            color: Colorscheme.on_surface
+                            color: Appearance.colors.colOnSurface
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 18
                             horizontalAlignment: Text.AlignHCenter
@@ -494,7 +493,7 @@ Item {
                             width: parent.width
                             text: "最高 " + fmtTemp(today().temperatureMaxC)
                                   + " · 最低 " + fmtTemp(today().temperatureMinC)
-                            color: Colorscheme.on_surface
+                            color: Appearance.colors.colOnSurface
                             font.family: "LXGW WenKai GB Screen"
                             font.pixelSize: 18
                             horizontalAlignment: Text.AlignHCenter
@@ -640,9 +639,9 @@ Item {
         default property alias content: contentLayer.data
 
         radius: 26
-        color: Qt.rgba(Colorscheme.surface_container.r, Colorscheme.surface_container.g, Colorscheme.surface_container.b, 0.78)
+        color: Qt.rgba(Appearance.colors.colLayer2.r, Appearance.colors.colLayer2.g, Appearance.colors.colLayer2.b, 0.78)
         border.width: 1
-        border.color: Qt.rgba(Colorscheme.outline_variant.r, Colorscheme.outline_variant.g, Colorscheme.outline_variant.b, 0.55)
+        border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.55)
 
         Row {
             anchors.left: parent.left
@@ -653,7 +652,7 @@ Item {
 
             Text {
                 text: card.icon
-                color: Colorscheme.on_surface
+                color: Appearance.colors.colOnSurface
                 font.family: "Material Symbols Outlined"
                 font.pixelSize: 20
                 anchors.verticalCenter: parent.verticalCenter
@@ -661,7 +660,7 @@ Item {
 
             Text {
                 text: card.title
-                color: Colorscheme.on_surface
+                color: Appearance.colors.colOnSurface
                 font.family: "LXGW WenKai GB Screen"
                 font.bold: true
                 font.pixelSize: 15

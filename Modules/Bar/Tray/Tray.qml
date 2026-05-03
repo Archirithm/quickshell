@@ -16,7 +16,7 @@ Item {
     Rectangle {
         id: bgRect
         anchors.fill: parent
-        color: Colorscheme.background
+        color: Appearance.colors.colLayer0
         radius: height / 2 // 完美的药丸圆角
         visible: false 
     }
@@ -26,7 +26,7 @@ Item {
         source: bgRect
         anchors.fill: bgRect
         shadowEnabled: true
-        shadowColor: Qt.alpha(Colorscheme.shadow, 0.4) 
+        shadowColor: Qt.alpha(Appearance.colors.colShadow, 0.4) 
         shadowBlur: 0.8
         shadowVerticalOffset: 3
         shadowHorizontalOffset: 0

@@ -12,7 +12,7 @@ Rectangle {
     implicitHeight: 28
     implicitWidth: isHovered ? (layout.width + 20) : 28
     radius: height / 2 
-    color: Colorscheme.primary_container 
+    color: Appearance.colors.colPrimaryContainer 
 
     Behavior on implicitWidth { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
 
@@ -27,7 +27,7 @@ Rectangle {
             font.family: "JetBrainsMono Nerd Font" 
             font.pixelSize: 14 
             Layout.alignment: Qt.AlignVCenter
-            color: Colorscheme.on_primary_container 
+            color: Appearance.colors.colOnPrimaryContainer 
             text: {
                 if (Network.activeConnectionType === "ETHERNET") return "󰈀";
                 if (!Network.connected) return "󰤭"; 
@@ -45,7 +45,7 @@ Rectangle {
             text: Network.activeConnection 
             font.bold: true 
             font.pixelSize: 12 
-            color: Colorscheme.on_primary_container 
+            color: Appearance.colors.colOnPrimaryContainer 
             Layout.alignment: Qt.AlignVCenter
             visible: root.isHovered
             opacity: root.isHovered ? 1.0 : 0.0

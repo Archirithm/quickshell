@@ -88,7 +88,7 @@ Item {
         preferredHighlightEnd: height - 56 
         
         highlight: Rectangle { 
-            color: Colorscheme.primary
+            color: Appearance.colors.colPrimary
             radius: 12 
         }
         highlightMoveDuration: 0 
@@ -154,7 +154,7 @@ Item {
                 Text {
                     text: root.highlightText(modelData.name, searchBox.text)
                     textFormat: Text.StyledText 
-                    color: delegateItem.ListView.isCurrentItem ? Colorscheme.on_primary : Colorscheme.on_surface
+                    color: delegateItem.ListView.isCurrentItem ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
                     font.pixelSize: 16
                     font.bold: false 
                     Layout.fillWidth: true

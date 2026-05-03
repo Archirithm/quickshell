@@ -24,13 +24,12 @@ WidgetPanel {
     }
 
     headerTools: RowLayout {
-        Theme { id: headerTheme }
         spacing: 12
         
         Text {
             text: "sync"
             font.family: root.mdFont; font.pixelSize: 20
-            color: headerTheme.subtext; opacity: scanWifi.running ? 0.5 : 1
+            color: Appearance.colors.colOnLayer1; opacity: scanWifi.running ? 0.5 : 1
             MouseArea { 
                 anchors.fill: parent; cursorShape: Qt.PointingHandCursor; 
                 onClicked: { wifiModel.clear(); scanWifi.running = true } 
@@ -44,9 +43,9 @@ WidgetPanel {
         Rectangle {
             id: mainSwitch
             width: 44; height: 24; radius: 12 
-            color: root.wifiEnabled ? headerTheme.primary : "transparent"
+            color: root.wifiEnabled ? Appearance.colors.colPrimary : "transparent"
             border.width: root.wifiEnabled ? 0 : 2
-            border.color: headerTheme.outline
+            border.color: Appearance.colors.colOutline
             Behavior on color { ColorAnimation { duration: 250 } }
             
             Rectangle { 
@@ -56,7 +55,7 @@ WidgetPanel {
                 radius: width / 2
                 x: root.wifiEnabled ? parent.width - width - 4 : 6
                 anchors.verticalCenter: parent.verticalCenter
-                color: root.wifiEnabled ? Colorscheme.on_primary : headerTheme.outline
+                color: root.wifiEnabled ? Appearance.colors.colOnPrimary : Appearance.colors.colOutline
                 
                 Behavior on x { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } } 
                 Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
@@ -69,7 +68,7 @@ WidgetPanel {
                     font.family: root.mdFont
                     font.pixelSize: 12 // 图标等比例缩小
                     font.bold: true
-                    color: headerTheme.primary
+                    color: Appearance.colors.colPrimary
                     opacity: root.wifiEnabled ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 200 } }
                 }
@@ -88,7 +87,6 @@ WidgetPanel {
     }
 
     Rectangle {
-        Theme { id: tabTheme }
         Layout.fillWidth: true; height: 42
         color: "transparent"
         
@@ -100,12 +98,12 @@ WidgetPanel {
                 Text { 
                     anchors.centerIn: parent
                     text: "Wi-Fi"; font.bold: true; font.pixelSize: 14; 
-                    color: root.currentTab === "wifi" ? tabTheme.primary : tabTheme.text 
+                    color: root.currentTab === "wifi" ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2 
                     Behavior on color { ColorAnimation { duration: 200 } }
                 }
                 Rectangle {
                     width: 48; height: 3; radius: 1.5
-                    color: tabTheme.primary
+                    color: Appearance.colors.colPrimary
                     anchors.bottom: parent.bottom; anchors.horizontalCenter: parent.horizontalCenter
                     opacity: root.currentTab === "wifi" ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -118,12 +116,12 @@ WidgetPanel {
                 Text { 
                     anchors.centerIn: parent
                     text: "以太网"; font.bold: true; font.pixelSize: 14; 
-                    color: root.currentTab === "ethernet" ? tabTheme.primary : tabTheme.text 
+                    color: root.currentTab === "ethernet" ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2 
                     Behavior on color { ColorAnimation { duration: 200 } }
                 }
                 Rectangle {
                     width: 48; height: 3; radius: 1.5
-                    color: tabTheme.primary
+                    color: Appearance.colors.colPrimary
                     anchors.bottom: parent.bottom; anchors.horizontalCenter: parent.horizontalCenter
                     opacity: root.currentTab === "ethernet" ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -133,7 +131,7 @@ WidgetPanel {
         }
         
         Rectangle {
-            width: parent.width; height: 1; color: tabTheme.outline
+            width: parent.width; height: 1; color: Appearance.colors.colOutline
             anchors.bottom: parent.bottom; opacity: 0.3
         }
     }
@@ -144,17 +142,15 @@ WidgetPanel {
         
         ColumnLayout {
             spacing: 8
-            Theme { id: contentTheme }
-            Text { text: "网络列表"; color: contentTheme.subtext; font.pixelSize: 14; font.bold: true; Layout.topMargin: 12 }
+            Text { text: "网络列表"; color: Appearance.colors.colOnLayer1; font.pixelSize: 14; font.bold: true; Layout.topMargin: 12 }
 
             ListView {
                 Layout.fillWidth: true; Layout.fillHeight: true
                 clip: true; spacing: 10; model: wifiModel 
                 
                 delegate: Rectangle {
-                    Theme { id: itemTheme }
                     height: 68; width: ListView.view.width; radius: 12; color: "transparent" 
-                    border.width: 1; border.color: ma.containsMouse ? itemTheme.primary : "transparent"
+                    border.width: 1; border.color: ma.containsMouse ? Appearance.colors.colPrimary : "transparent"
                     Behavior on border.color { ColorAnimation { duration: 150 } }
 
                     MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true }
@@ -165,23 +161,23 @@ WidgetPanel {
                         Text {
                             text: "wifi"
                             font.family: root.mdFont; font.pixelSize: 24 
-                            color: model.connected ? itemTheme.primary : itemTheme.subtext
+                            color: model.connected ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1
                             opacity: model.connected ? 1 : (model.signal / 100)
                         }
                         
                         ColumnLayout {
                             spacing: 2; Layout.alignment: Qt.AlignVCenter
-                            Text { text: model.ssid; font.bold: true; font.pixelSize: 14; color: model.connected ? itemTheme.primary : itemTheme.text }
+                            Text { text: model.ssid; font.bold: true; font.pixelSize: 14; color: model.connected ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2 }
                             RowLayout {
                                 spacing: 4
                                 Text { 
                                     text: model.connected ? "check" : "lock"
                                     font.family: root.mdFont; font.pixelSize: 14;
-                                    color: model.connected ? itemTheme.primary : itemTheme.subtext 
+                                    color: model.connected ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1 
                                 }
                                 Text { 
                                     text: model.connected ? "已连接" : (model.security === "" ? "Open" : model.security); 
-                                    font.pixelSize: 12; color: model.connected ? itemTheme.primary : itemTheme.subtext 
+                                    font.pixelSize: 12; color: model.connected ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer1 
                                 }
                             }
                         }
@@ -192,9 +188,9 @@ WidgetPanel {
                         Rectangle {
                             visible: ma.containsMouse || model.connected
                             width: 44; height: 24; radius: 12 
-                            color: model.connected ? itemTheme.primary : "transparent"
+                            color: model.connected ? Appearance.colors.colPrimary : "transparent"
                             border.width: model.connected ? 0 : 2
-                            border.color: itemTheme.outline
+                            border.color: Appearance.colors.colOutline
                             Behavior on color { ColorAnimation { duration: 250 } }
                             
                             Rectangle { 
@@ -203,7 +199,7 @@ WidgetPanel {
                                 radius: width / 2
                                 x: model.connected ? parent.width - width - 4 : 6
                                 anchors.verticalCenter: parent.verticalCenter
-                                color: model.connected ? Colorscheme.on_primary : itemTheme.outline
+                                color: model.connected ? Appearance.colors.colOnPrimary : Appearance.colors.colOutline
                                 
                                 Behavior on x { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } } 
                                 Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
@@ -216,7 +212,7 @@ WidgetPanel {
                                     font.family: root.mdFont
                                     font.pixelSize: 12
                                     font.bold: true
-                                    color: itemTheme.primary
+                                    color: Appearance.colors.colPrimary
                                     opacity: model.connected ? 1 : 0
                                     Behavior on opacity { NumberAnimation { duration: 200 } }
                                 }
@@ -253,11 +249,10 @@ WidgetPanel {
         }
 
         Item {
-            Theme { id: ethTheme }
             ColumnLayout {
                 anchors.centerIn: parent; spacing: 12
-                Text { text: "settings_ethernet"; font.family: root.mdFont; font.pixelSize: 56; color: ethTheme.outline; Layout.alignment: Qt.AlignHCenter }
-                Text { text: "以太网设置暂不可用"; font.pixelSize: 14; color: ethTheme.subtext }
+                Text { text: "settings_ethernet"; font.family: root.mdFont; font.pixelSize: 56; color: Appearance.colors.colOutline; Layout.alignment: Qt.AlignHCenter }
+                Text { text: "以太网设置暂不可用"; font.pixelSize: 14; color: Appearance.colors.colOnLayer1 }
             }
         }
     }

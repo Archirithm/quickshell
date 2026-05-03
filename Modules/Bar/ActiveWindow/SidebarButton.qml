@@ -1,23 +1,21 @@
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Effects
 import qs.config
 
 Item {
     id: root
 
-    implicitWidth: 36
     implicitHeight: 36
-    scale: mouseArea.containsMouse ? 1.08 : 1.0
+    implicitWidth: buttonRow.implicitWidth + 16
 
-    Behavior on scale {
-        NumberAnimation { duration: 140; easing.type: Easing.OutCubic }
-    }
+    Behavior on implicitWidth { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
     Rectangle {
         id: bgRect
         anchors.fill: parent
-        color: Colorscheme.background
-        radius: width / 2
+        color: Appearance.colors.colLayer0
+        radius: height / 2
         visible: false
     }
 
@@ -25,33 +23,31 @@ Item {
         source: bgRect
         anchors.fill: bgRect
         shadowEnabled: true
-        shadowColor: Qt.alpha(Colorscheme.shadow, 0.4)
+        shadowColor: Qt.alpha(Appearance.colors.colShadow, 0.4)
         shadowBlur: 0.8
         shadowVerticalOffset: 3
         shadowHorizontalOffset: 0
     }
 
-    Item {
-        width: 18
-        height: 18
+    RowLayout {
+        id: buttonRow
         anchors.centerIn: parent
+        spacing: 8
 
-        Text {
-            anchors.centerIn: parent
-            text: WidgetState.leftSidebarOpen ? "left_panel_close" : "left_panel_open"
-            font.family: "Material Symbols Rounded"
-            font.pixelSize: 22
-            color: Colorscheme.primary
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
+        SidebarPillButton {
+            viewName: "info"
+            iconName: "notifications"
+            activeColor: Appearance.colors.colSecondary
+            activeContentColor: Appearance.colors.colOnSecondary
         }
-    }
 
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: WidgetState.leftSidebarOpen = !WidgetState.leftSidebarOpen
+        SidebarPillButton {
+            viewName: "sys"
+            iconName: "memory"
+            activeColor: Appearance.colors.colTertiary
+            activeContentColor: Appearance.colors.colOnTertiary
+        }
+
+        SidebarWeatherButton {}
     }
 }

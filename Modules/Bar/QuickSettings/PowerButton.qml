@@ -6,7 +6,7 @@ Rectangle {
     id: root
     property bool isHovered: mouseArea.containsMouse
 
-    color: Colorscheme.error
+    color: Appearance.colors.colError
     radius: height / 2
     implicitHeight: isHovered ? 34 : 28
     implicitWidth: isHovered ? 34 : 28
@@ -28,7 +28,7 @@ Rectangle {
         text: "⏻"
         font.pixelSize: root.isHovered ? 16 : 14
         font.bold: true
-        color: Colorscheme.on_error 
+        color: Appearance.colors.colOnError 
         Behavior on font.pixelSize { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
     }
 }

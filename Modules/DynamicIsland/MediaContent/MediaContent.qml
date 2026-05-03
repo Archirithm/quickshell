@@ -116,7 +116,7 @@ Item {
                         id: fallbackBg
                         anchors.fill: parent
                         radius: 16 
-                        color: Colorscheme.surface_container_high
+                        color: Appearance.colors.colLayer3
                         visible: root.artUrl === ""
                         
                         Text { 
@@ -168,7 +168,7 @@ Item {
                     
                     Text {
                         text: root.title
-                        color: Colorscheme.on_surface
+                        color: Appearance.colors.colOnSurface
                         font.bold: true
                         font.pixelSize: 20
                         Layout.fillWidth: true
@@ -177,7 +177,7 @@ Item {
                   
                     Text {
                         text: root.artist
-                        color: Colorscheme.on_surface_variant
+                        color: Appearance.colors.colOnSurfaceVariant
                         font.pixelSize: 14
                         Layout.fillWidth: true
                         elide: Text.ElideRight
@@ -219,7 +219,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     height: 6
                     radius: 3
-                    color: Colorscheme.surface_variant
+                    color: Appearance.colors.colLayer2Hover
                 }
                 
                 Canvas {
@@ -297,7 +297,7 @@ Item {
                         ctx.lineTo(w, centerY - trackHeight / 2);
                         ctx.lineTo(w, centerY + trackHeight / 2); 
                         ctx.closePath(); 
-                        ctx.fillStyle = String(Colorscheme.primary); 
+                        ctx.fillStyle = String(Appearance.colors.colPrimary); 
                         ctx.fill();
                     }
                 }
@@ -307,7 +307,7 @@ Item {
                     width: 14
                     height: 14
                     radius: 7
-                    color: Colorscheme.primary
+                    color: Appearance.colors.colPrimary
                     anchors.verticalCenter: parent.verticalCenter
                     x: waveContainer.visualX - width / 2
                 }
@@ -339,7 +339,7 @@ Item {
                     property bool active: false
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 26
-                    color: active ? Colorscheme.primary : Colorscheme.on_surface
+                    color: active ? Appearance.colors.colPrimary : Appearance.colors.colOnSurface
                     opacity: active ? 1.0 : 0.7
                     scale: ma.pressed ? 0.8 : (ma.containsMouse ? 1.1 : 1.0)
                     
@@ -389,8 +389,8 @@ Item {
                         
                         // 暂停时为浅色/低对比度，播放时为深色/高对比度 (Primary)
                         color: (MediaManager.active && MediaManager.active.isPlaying) 
-                            ? Colorscheme.primary 
-                            : Colorscheme.surface_container_high
+                            ? Appearance.colors.colPrimary 
+                            : Appearance.colors.colLayer3
                         
                         // expressiveFastSpatial: 350ms, bezier(0.42, 1.67, 0.21, 0.9, 1, 1)
                         Behavior on width { 
@@ -408,7 +408,7 @@ Item {
                         Rectangle {
                             anchors.fill: parent
                             radius: parent.radius
-                            color: (MediaManager.active && MediaManager.active.isPlaying) ? Colorscheme.on_primary : Colorscheme.on_surface
+                            color: (MediaManager.active && MediaManager.active.isPlaying) ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
                             opacity: playMa.pressed ? 0.2 : (playMa.containsMouse ? 0.12 : 0.0)
                             visible: opacity > 0
                             Behavior on opacity { NumberAnimation { duration: 200 } }
@@ -421,8 +421,8 @@ Item {
                             
                             // 暂停时图标为深色，播放时为浅白
                             color: (MediaManager.active && MediaManager.active.isPlaying) 
-                                ? Colorscheme.on_primary 
-                                : Colorscheme.on_surface
+                                ? Appearance.colors.colOnPrimary 
+                                : Appearance.colors.colOnSurface
                             
                             font.family: "Material Symbols Outlined"
                             font.pixelSize: 34 
@@ -493,7 +493,7 @@ Item {
         property bool menuExpanded: false
         
         // 【核心修改】：替换为明亮且对比度高的 tertiary 颜色 (柔和紫色)
-        color: Colorscheme.tertiary
+        color: Appearance.colors.colTertiary
         
         width: menuExpanded ? 110 : pillText.width + 24
         height: menuExpanded ? (30 * MediaManager.list.length + 12) : 26
@@ -524,7 +524,7 @@ Item {
             text: MediaManager.getIdentity(MediaManager.active)
             
             // 【核心修改】：替换为深色字体，保证清晰读写
-            color: Colorscheme.on_tertiary
+            color: Appearance.colors.colOnTertiary
             font.pixelSize: 11
             font.weight: Font.DemiBold
             opacity: pillRect.menuExpanded ? 0.0 : 1.0
@@ -584,7 +584,7 @@ Item {
                             text: MediaManager.getIdentity(modelData)
                             
                             // 【核心修改】：统一所有选项字体颜色和粗细，删除激活项高亮逻辑
-                            color: Colorscheme.on_tertiary
+                            color: Appearance.colors.colOnTertiary
                             font.pixelSize: 11
                             font.weight: Font.DemiBold
                             elide: Text.ElideRight

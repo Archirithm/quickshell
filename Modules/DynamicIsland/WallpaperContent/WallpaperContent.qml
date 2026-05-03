@@ -140,7 +140,7 @@ Item {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: Colorscheme.background
+                        color: Appearance.colors.colLayer0
                     }
 
                     Image {
@@ -273,6 +273,7 @@ Item {
         if (wallpaperModel.count === 0) return;
         let currentPath = wallpaperModel.get(view.currentIndex).path;
         let home = Quickshell.env("HOME");
+        Appearance.currentWallpaperPreview = "file://" + currentPath;
         
         // 1. awww 命令
         let awwwCmd = "awww img \"" + currentPath + "\" " +
@@ -281,8 +282,10 @@ Item {
                   "--transition-fps 60 " +
                   "--transition-bezier .43,1.19,1,.4";
 
-        // 2. matugen 命令 (保留我们上次加的参数)
-        let matugenCmd = "matugen image \"" + currentPath + "\" --source-color-index 0";
+        // 2. Quickshell 专用 matugen 颜色命令
+        let matugenCmd = "bash \"" + home + "/.config/quickshell/scripts/generate_quickshell_colors.sh\" " +
+                         "--image \"" + currentPath + "\" " +
+                         "--scheme \"" + Appearance.matugenScheme + "\"";
 
         // 3. overview 脚本命令
         let overviewCmd = "bash " + home + "/.config/quickshell/scripts/overview.sh \"" + currentPath + "\"";

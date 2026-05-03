@@ -7,7 +7,7 @@ import qs.config
 
 Rectangle {
     id: root
-    color: Colorscheme.surface_container_high
+    color: Appearance.colors.colLayer3
     radius: 24 
 
     // ================== 数据获取逻辑 ==================
@@ -81,20 +81,20 @@ Rectangle {
 
             Text { 
                 text: root.sysUser + " @ " + root.sysHost
-                color: Colorscheme.on_surface 
+                color: Appearance.colors.colOnSurface 
                 font.pixelSize: 15 
                 font.family: Sizes.fontFamily 
                 font.bold: true
             }
             Text { 
                 text: "Chassis : " + root.sysChassis
-                color: Colorscheme.on_surface_variant 
+                color: Appearance.colors.colOnSurfaceVariant 
                 font.pixelSize: 12
                 font.family: Sizes.fontFamily 
             }
             Text { 
                 text: "WM : " + root.sysWm
-                color: Colorscheme.on_surface_variant 
+                color: Appearance.colors.colOnSurfaceVariant 
                 font.pixelSize: 12
                 font.family: Sizes.fontFamily 
             }

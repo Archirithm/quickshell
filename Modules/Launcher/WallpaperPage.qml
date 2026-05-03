@@ -40,7 +40,7 @@ Item {
             root.isLoading = false
             
             // 直接白嫖 LauncherWindow 刚打开时就已经查好的全局变量
-            let currentPath = Colorscheme.currentWallpaperPreview.replace("file://", "");
+            let currentPath = Appearance.currentWallpaperPreview.replace("file://", "");
             
             if (currentPath === "") return;
 
@@ -48,7 +48,7 @@ Item {
                 if (wallpaperModel.get(i).path === currentPath) {
                     wallpaperList.currentIndex = i;
                     // 初始化当前页面的预览变量
-                    root.currentSelectedPreview = Colorscheme.currentWallpaperPreview;
+                    root.currentSelectedPreview = Appearance.currentWallpaperPreview;
                     // 自动滚动到当前选中的壁纸位置
                     wallpaperList.positionViewAtIndex(i, ListView.Center);
                     break;
@@ -73,7 +73,7 @@ Item {
     Text {
         anchors.centerIn: parent 
         text: "Scanning wallpapers..."
-        color: Colorscheme.on_surface_variant
+        color: Appearance.colors.colOnSurfaceVariant
         font.pixelSize: 16
         visible: root.isLoading
     }
@@ -93,7 +93,7 @@ Item {
         preferredHighlightEnd: height - 56 
         
         highlight: Rectangle { 
-            color: Colorscheme.primary
+            color: Appearance.colors.colPrimary
             radius: 12 
         }
         highlightMoveDuration: 0 
@@ -137,7 +137,7 @@ Item {
 
                 Text {
                     text: model.fileName
-                    color: delegateItem.ListView.isCurrentItem ? Colorscheme.on_primary : Colorscheme.on_surface
+                    color: delegateItem.ListView.isCurrentItem ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
                     font.pixelSize: 16
                     font.bold: false 
                     elide: Text.ElideRight 
@@ -160,14 +160,14 @@ Item {
         
         let currentPath = wallpaperModel.get(wallpaperList.currentIndex).path
         
-        Colorscheme.currentWallpaperPreview = "file://" + currentPath;
+        Appearance.currentWallpaperPreview = "file://" + currentPath;
         let home = Quickshell.env("HOME")
         
         // 【核心修改】：
         // 1. 将 swww img 改为 awww img
-        // 2. 为 matugen 加上 --source-color-index 0
+        // 2. 只生成 Quickshell 使用的 matugen 颜色 JSON
         let scriptContent = "awww img '" + currentPath + "' --transition-type any --transition-duration 3 --transition-fps 60 --transition-bezier .43,1.19,1,.4;\n" +
-                            "matugen image '" + currentPath + "' --source-color-index 0;\n" +
+                            "bash '" + home + "/.config/quickshell/scripts/generate_quickshell_colors.sh' --image '" + currentPath + "' --scheme '" + Appearance.matugenScheme + "';\n" +
                             "bash '" + home + "/.config/quickshell/scripts/overview.sh' '" + currentPath + "'"
                            
         runScript.command = ["bash", "-c", scriptContent]

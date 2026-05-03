@@ -10,7 +10,7 @@ Rectangle {
     Layout.fillWidth: true
     Layout.preferredHeight: 160 
     
-    color: Colorscheme.surface_container 
+    color: Appearance.colors.colLayer2 
     radius: Sizes.lockCardRadius
 
     // ================== 数据属性 ==================
@@ -51,7 +51,7 @@ Rectangle {
             text: root.iconName
             font.family: "Material Symbols Outlined"
             font.pixelSize: 64
-            color: Colorscheme.primary
+            color: Appearance.colors.colPrimary
             Layout.alignment: Qt.AlignVCenter
         }
 
@@ -64,7 +64,7 @@ Rectangle {
             // 1. 巨大的温度数字
             Text {
                 text: root.temp
-                color: Colorscheme.on_surface
+                color: Appearance.colors.colOnSurface
                 font.family: Sizes.fontFamily
                 font.pixelSize: 42 
                 font.bold: true
@@ -74,7 +74,7 @@ Rectangle {
             // 2. 城市名 (小标题)
             Text {
                 text: root.loc ? root.loc : "Location"
-                color: Colorscheme.primary
+                color: Appearance.colors.colPrimary
                 font.family: Sizes.fontFamily
                 font.pixelSize: 14
                 font.bold: true
@@ -86,7 +86,7 @@ Rectangle {
             // 3. 天气状况
             Text {
                 text: root.cond 
-                color: Colorscheme.on_surface_variant
+                color: Appearance.colors.colOnSurfaceVariant
                 font.family: Sizes.fontFamily
                 font.pixelSize: 18
                 Layout.fillWidth: true

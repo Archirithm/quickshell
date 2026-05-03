@@ -21,7 +21,7 @@ Rectangle {
     readonly property real contentWidth: Math.max(width, items.length * itemWidth)
 
     radius: 22
-    color: Qt.rgba(Colorscheme.surface_container_high.r, Colorscheme.surface_container_high.g, Colorscheme.surface_container_high.b, 0.42)
+    color: Qt.rgba(Appearance.colors.colLayer3.r, Appearance.colors.colLayer3.g, Appearance.colors.colLayer3.b, 0.42)
     clip: true
 
     function aqiThresholds() {
@@ -174,7 +174,7 @@ Rectangle {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 height: 1
-                color: Qt.rgba(Colorscheme.outline_variant.r, Colorscheme.outline_variant.g, Colorscheme.outline_variant.b, 0.44)
+                color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.44)
             }
 
             Text {
@@ -183,7 +183,7 @@ Rectangle {
                 anchors.leftMargin: 2
                 anchors.bottomMargin: 5
                 text: modelData.value
-                color: Qt.rgba(Colorscheme.on_surface_variant.r, Colorscheme.on_surface_variant.g, Colorscheme.on_surface_variant.b, 0.72)
+                color: Qt.rgba(Appearance.colors.colOnSurfaceVariant.r, Appearance.colors.colOnSurfaceVariant.g, Appearance.colors.colOnSurfaceVariant.b, 0.72)
                 font.family: "JetBrainsMono Nerd Font"
                 font.pixelSize: 11
             }
@@ -194,7 +194,7 @@ Rectangle {
                 anchors.rightMargin: 2
                 anchors.bottomMargin: 5
                 text: modelData.label
-                color: Qt.rgba(Colorscheme.on_surface_variant.r, Colorscheme.on_surface_variant.g, Colorscheme.on_surface_variant.b, 0.72)
+                color: Qt.rgba(Appearance.colors.colOnSurfaceVariant.r, Appearance.colors.colOnSurfaceVariant.g, Appearance.colors.colOnSurfaceVariant.b, 0.72)
                 font.family: "LXGW WenKai GB Screen"
                 font.pixelSize: 12
             }
@@ -231,8 +231,8 @@ Rectangle {
                     readonly property real barWidth: Math.max(8, Math.min(12, width * 0.36))
                     readonly property real barHeight: !isNaN(modelData.aqi) ? Math.max(8, root.chartBottom - root.yForValue(modelData.aqi)) : 0
                     readonly property color hourColor: modelData.emphasized
-                                                       ? Colorscheme.on_surface_variant
-                                                       : Qt.rgba(Colorscheme.on_surface_variant.r, Colorscheme.on_surface_variant.g, Colorscheme.on_surface_variant.b, 0.64)
+                                                       ? Appearance.colors.colOnSurfaceVariant
+                                                       : Qt.rgba(Appearance.colors.colOnSurfaceVariant.r, Appearance.colors.colOnSurfaceVariant.g, Appearance.colors.colOnSurfaceVariant.b, 0.64)
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -257,7 +257,7 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: root.chartBottom + 8
                         text: modelData.aqiText
-                        color: Colorscheme.on_surface
+                        color: Appearance.colors.colOnSurface
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 10
                     }
@@ -296,7 +296,7 @@ Rectangle {
         anchors.centerIn: parent
         visible: !root.hasData
         text: "空气质量数据暂不可用"
-        color: Colorscheme.on_surface_variant
+        color: Appearance.colors.colOnSurfaceVariant
         font.family: "LXGW WenKai GB Screen"
         font.pixelSize: 16
     }

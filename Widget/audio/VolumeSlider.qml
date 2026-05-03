@@ -1,13 +1,13 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import qs.config
 import qs.Widget.common
 
 Item {
     id: root
     property var node
     property bool isHeadphone: false
-    property var theme: Theme {}
 
     Layout.fillWidth: true
     // 给气泡留出足够的展示空间
@@ -47,12 +47,12 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 radius: 8
-                color: Qt.rgba(theme.text.r, theme.text.g, theme.text.b, 0.1)
+                color: Qt.rgba(Appearance.colors.colOnLayer2.r, Appearance.colors.colOnLayer2.g, Appearance.colors.colOnLayer2.b, 0.1)
             }
             Rectangle {
                 width: Math.max(0, control.visualPosition * parent.width)
                 height: parent.height
-                color: theme.primary
+                color: Appearance.colors.colPrimary
                 radius: 8
             }
         }
@@ -64,7 +64,7 @@ Item {
             width: 4
             height: 32
             radius: 2
-            color: theme.text
+            color: Appearance.colors.colOnLayer2
 
             
         }

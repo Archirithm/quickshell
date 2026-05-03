@@ -94,11 +94,11 @@ PopupWindow {
     Rectangle {
         anchors.fill: parent
         // [背景] 深色容器背景
-        color: Colorscheme.surface_container
+        color: Appearance.colors.colLayer2Base
         radius: 12
         border.width: 1
         // [边框] 使用 Outline 颜色
-        border.color: Colorscheme.outline_variant
+        border.color: Appearance.colors.colOutlineVariant
         clip: true 
 
         ColumnLayout {
@@ -117,7 +117,7 @@ PopupWindow {
                     text: (menuStack.count === 0) ? (root.trayName || "Menu") : menuStack.get(menuStack.count - 1).title
                     anchors.centerIn: parent
                     font.bold: true
-                    color: Colorscheme.primary
+                    color: Appearance.colors.colPrimary
                     font.pixelSize: 15
                     width: parent.width - 60
                     horizontalAlignment: Text.AlignHCenter
@@ -133,12 +133,12 @@ PopupWindow {
                     width: 28
                     height: 28
                     radius: 6
-                    color: backMa.containsMouse ? Colorscheme.secondary_container : "transparent"
+                    color: backMa.containsMouse ? Appearance.colors.colSecondaryContainer : "transparent"
 
                     Text {
                         text: "⬅" 
                         anchors.centerIn: parent
-                        color: Colorscheme.on_secondary_container
+                        color: Appearance.colors.colOnSecondaryContainer
                         font.bold: true
                     }
 
@@ -156,7 +156,7 @@ PopupWindow {
                     anchors.bottom: parent.bottom
                     width: parent.width
                     height: 1
-                    color: Colorscheme.primary
+                    color: Appearance.colors.colPrimary
                     opacity: 0.2
                 }
             }
@@ -174,7 +174,7 @@ PopupWindow {
                 Text {
                     visible: (!parent.currentModel || parent.currentModel.length === 0)
                     text: (menuStack.count > 0) ? "Loading..." : "No Items"
-                    color: Colorscheme.secondary
+                    color: Appearance.colors.colSecondary
                     font.italic: true
                     Layout.alignment: Qt.AlignHCenter
                     Layout.margins: 10
@@ -194,7 +194,7 @@ PopupWindow {
                         radius: 8
                         
                         // [交互] 悬停背景
-                        color: (itemMa.containsMouse && !isSeparator) ? Colorscheme.secondary_container : "transparent"
+                        color: (itemMa.containsMouse && !isSeparator) ? Appearance.colors.colSecondaryContainer : "transparent"
                         Behavior on color { ColorAnimation { duration: 100 } }
 
                         // 分割线
@@ -203,7 +203,7 @@ PopupWindow {
                             anchors.centerIn: parent
                             width: parent.width - 20
                             height: 1
-                            color: Colorscheme.outline_variant
+                            color: Appearance.colors.colOutlineVariant
                             opacity: 0.5
                         }
 
@@ -236,7 +236,7 @@ PopupWindow {
                                     visible: iconRaw.status === Image.Ready
                                     colorization: 1.0 
                                     colorizationColor: itemMa.containsMouse ?
-                                        Colorscheme.on_secondary_container : Colorscheme.secondary
+                                        Appearance.colors.colOnSecondaryContainer : Appearance.colors.colSecondary
                                 }
                             }
 
@@ -244,7 +244,7 @@ PopupWindow {
                             Text {
                                 visible: modelData.toggleState === 1
                                 text: "✔"
-                                color: Colorscheme.primary
+                                color: Appearance.colors.colPrimary
                                 font.bold: true
                             }
 
@@ -254,9 +254,9 @@ PopupWindow {
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
                                 color: {
-                                    if (modelData.enabled === false) return Colorscheme.outline;
-                                    if (itemMa.containsMouse) return Colorscheme.on_secondary_container;
-                                    return Colorscheme.on_surface;
+                                    if (modelData.enabled === false) return Appearance.colors.colOutline;
+                                    if (itemMa.containsMouse) return Appearance.colors.colOnSecondaryContainer;
+                                    return Appearance.colors.colOnSurface;
                                 }
                                 font.pixelSize: 14
                                 font.weight: itemMa.containsMouse ? Font.DemiBold : Font.Normal
@@ -268,7 +268,7 @@ PopupWindow {
                                 text: "›"
                                 font.pixelSize: 20
                                 font.bold: true
-                                color: itemMa.containsMouse ? Colorscheme.on_secondary_container : Colorscheme.tertiary
+                                color: itemMa.containsMouse ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colTertiary
                             }
                         }
 

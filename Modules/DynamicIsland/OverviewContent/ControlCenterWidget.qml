@@ -14,10 +14,10 @@ Item {
     component MiniCircleBtn : Item {
         property string icon: ""
         property bool active: false
-        property color activeColor: Colorscheme.primary
-        property color inactiveColor: Colorscheme.surface_container_highest
-        property color iconActiveColor: Colorscheme.on_primary
-        property color iconInactiveColor: Colorscheme.on_surface
+        property color activeColor: Appearance.colors.colPrimary
+        property color inactiveColor: Appearance.colors.colLayer4
+        property color iconActiveColor: Appearance.colors.colOnPrimary
+        property color iconInactiveColor: Appearance.colors.colOnSurface
         
         signal clicked()
 
@@ -65,7 +65,7 @@ Item {
         radius: active ? 12 : height / 2
         Behavior on radius { NumberAnimation { duration: 350; easing.type: Easing.OutQuint } }
         
-        color: active ? Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.15) : Colorscheme.surface_container_highest
+        color: active ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.15) : Appearance.colors.colLayer4
         Behavior on color { ColorAnimation { duration: 250 } }
         
         scale: tileArea.pressed ? 0.94 : (tileArea.containsMouse ? 1.02 : 1.0)
@@ -80,13 +80,13 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             radius: tile.active ? 10 : width / 2
             Behavior on radius { NumberAnimation { duration: 350; easing.type: Easing.OutQuint } }
-            color: tile.active ? Colorscheme.primary : Colorscheme.surface_variant
+            color: tile.active ? Appearance.colors.colPrimary : Appearance.colors.colLayer2Hover
             Behavior on color { ColorAnimation { duration: 250 } }
             
             Text { 
                 anchors.centerIn: parent
                 text: tile.icon
-                color: tile.active ? Colorscheme.on_primary : Colorscheme.on_surface
+                color: tile.active ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
                 font.family: "Font Awesome 6 Free Solid"
                 font.pixelSize: 14 
             }
@@ -104,7 +104,7 @@ Item {
                 text: tile.title
                 font.pixelSize: 13
                 font.bold: true
-                color: Colorscheme.on_surface 
+                color: Appearance.colors.colOnSurface 
                 Layout.fillWidth: true       // 【新增】：填满剩余空间
                 elide: Text.ElideRight       // 【新增】：超出自动变成省略号
             }
@@ -112,7 +112,7 @@ Item {
                 text: tile.subtitle
                 font.pixelSize: 10
                 opacity: 0.8
-                color: Colorscheme.on_surface
+                color: Appearance.colors.colOnSurface
                 visible: tile.subtitle !== "" 
                 Layout.fillWidth: true       // 【新增】：填满剩余空间
                 elide: Text.ElideRight       // 【新增】：超出自动变成省略号
@@ -206,7 +206,7 @@ Item {
             Layout.preferredHeight: 48
             radius: 24
             
-            color: Colorscheme.surface_container_highest
+            color: Appearance.colors.colLayer4
             
             property int currentIndex: 1
             property var modes: ["", "", ""]
@@ -216,7 +216,7 @@ Item {
                 width: 40
                 height: 40
                 radius: 20
-                color: Colorscheme.primary
+                color: Appearance.colors.colPrimary
                 y: 4 
                 property real segmentWidth: powerBar.width / 3
                 x: (powerBar.currentIndex * segmentWidth) + ((segmentWidth - width) / 2)
@@ -236,7 +236,7 @@ Item {
                             text: powerBar.modes[index]
                             font.family: "Font Awesome 6 Free Solid"
                             font.pixelSize: 16
-                            color: powerBar.currentIndex === index ? Colorscheme.on_primary : Colorscheme.on_surface
+                            color: powerBar.currentIndex === index ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
                             Behavior on color { ColorAnimation { duration: 300 } } 
                         }
                         MouseArea { 
@@ -297,15 +297,15 @@ Item {
 
         CornerBtn { 
             icon: ""
-            bgColor: Colorscheme.tertiary_container
-            fgColor: Colorscheme.on_tertiary_container 
+            bgColor: Appearance.colors.colTertiaryContainer
+            fgColor: Appearance.colors.colOnTertiaryContainer 
             onClicked: console.log("等待后续开发：控制面板") // 占坑，先不绑定
         }
 
         CornerBtn { 
             icon: ""
-            bgColor: Colorscheme.error
-            fgColor: Colorscheme.on_error 
+            bgColor: Appearance.colors.colError
+            fgColor: Appearance.colors.colOnError 
             // 【修改】：完全绑定 wlogout 指令，完美对齐顶栏
             onClicked: Quickshell.execDetached(["wlogout", "-p", "layer-shell", "-b", "2"])
         }

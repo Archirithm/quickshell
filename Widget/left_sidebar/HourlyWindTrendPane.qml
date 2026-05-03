@@ -19,7 +19,7 @@ Rectangle {
     readonly property real contentWidth: Math.max(width, items.length * itemWidth)
 
     radius: 22
-    color: Qt.rgba(Colorscheme.surface_container_high.r, Colorscheme.surface_container_high.g, Colorscheme.surface_container_high.b, 0.42)
+    color: Qt.rgba(Appearance.colors.colLayer3.r, Appearance.colors.colLayer3.g, Appearance.colors.colLayer3.b, 0.42)
     clip: true
 
     function validNumber(value) {
@@ -149,8 +149,8 @@ Rectangle {
                     height: root.height
 
                     readonly property color hourColor: modelData.emphasized
-                                                       ? Colorscheme.on_surface_variant
-                                                       : Qt.rgba(Colorscheme.on_surface_variant.r, Colorscheme.on_surface_variant.g, Colorscheme.on_surface_variant.b, 0.64)
+                                                       ? Appearance.colors.colOnSurfaceVariant
+                                                       : Qt.rgba(Appearance.colors.colOnSurfaceVariant.r, Appearance.colors.colOnSurfaceVariant.g, Appearance.colors.colOnSurfaceVariant.b, 0.64)
                     readonly property real barTop: root.yForValue(modelData.speed)
                     readonly property real barWidth: Math.max(8, Math.min(12, width * 0.36))
 
@@ -189,7 +189,7 @@ Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
                         y: parent.barTop - 22
                         text: modelData.speedText
-                        color: Colorscheme.on_surface_variant
+                        color: Appearance.colors.colOnSurfaceVariant
                         font.family: "JetBrainsMono Nerd Font"
                         font.pixelSize: 12
                     }
@@ -228,7 +228,7 @@ Rectangle {
         anchors.centerIn: parent
         visible: !root.hasData
         text: "风况数据暂不可用"
-        color: Colorscheme.on_surface_variant
+        color: Appearance.colors.colOnSurfaceVariant
         font.family: "LXGW WenKai GB Screen"
         font.pixelSize: 16
     }

@@ -12,9 +12,9 @@ Rectangle {
     property int currentTab: 0
 
     radius: 26
-    color: Qt.rgba(Colorscheme.surface_container.r, Colorscheme.surface_container.g, Colorscheme.surface_container.b, 0.86)
+    color: Qt.rgba(Appearance.colors.colLayer2.r, Appearance.colors.colLayer2.g, Appearance.colors.colLayer2.b, 0.86)
     border.width: 1
-    border.color: Qt.rgba(Colorscheme.outline_variant.r, Colorscheme.outline_variant.g, Colorscheme.outline_variant.b, 0.42)
+    border.color: Qt.rgba(Appearance.colors.colOutlineVariant.r, Appearance.colors.colOutlineVariant.g, Appearance.colors.colOutlineVariant.b, 0.42)
     clip: true
 
     function modelCount() {
@@ -57,7 +57,7 @@ Rectangle {
 
                 Text {
                     text: "schedule"
-                    color: Colorscheme.on_surface_variant
+                    color: Appearance.colors.colOnSurfaceVariant
                     font.family: "Material Symbols Outlined"
                     font.pixelSize: 22
                     Layout.alignment: Qt.AlignVCenter
@@ -65,7 +65,7 @@ Rectangle {
 
                 Text {
                     text: "逐小时预报"
-                    color: Colorscheme.on_surface
+                    color: Appearance.colors.colOnSurface
                     font.family: "LXGW WenKai GB Screen"
                     font.bold: true
                     font.pixelSize: 22
@@ -94,14 +94,14 @@ Rectangle {
                     Layout.preferredHeight: 36
                     Layout.alignment: Qt.AlignVCenter
                     radius: 18
-                    color: moreMouse.containsMouse ? Colorscheme.surface_container_highest : Colorscheme.surface_container
+                    color: moreMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2
 
                     Behavior on color { ColorAnimation { duration: 150 } }
 
                     Text {
                         anchors.centerIn: parent
                         text: "more_horiz"
-                        color: Colorscheme.on_surface_variant
+                        color: Appearance.colors.colOnSurfaceVariant
                         font.family: "Material Symbols Outlined"
                         font.pixelSize: 20
                     }
@@ -188,7 +188,7 @@ Rectangle {
                                 minTemp -= 1
                             }
 
-                            ctx.strokeStyle = Colorscheme.primary
+                            ctx.strokeStyle = Appearance.colors.colPrimary
                             ctx.lineWidth = 3
                             ctx.lineJoin = "round"
                             ctx.lineCap = "round"
@@ -204,17 +204,17 @@ Rectangle {
                             for (let p = 0; p < count; ++p) {
                                 const px = pointX(p)
                                 const py = yAt(values[p], minTemp, maxTemp)
-                                ctx.fillStyle = Colorscheme.primary
+                                ctx.fillStyle = Appearance.colors.colPrimary
                                 ctx.beginPath()
                                 ctx.arc(px, py, 4.5, 0, Math.PI * 2)
                                 ctx.fill()
-                                ctx.fillStyle = Colorscheme.surface_container_highest
+                                ctx.fillStyle = Appearance.colors.colLayer4
                                 ctx.beginPath()
                                 ctx.arc(px, py, 2.4, 0, Math.PI * 2)
                                 ctx.fill()
                             }
 
-                            ctx.fillStyle = Colorscheme.on_surface
+                            ctx.fillStyle = Appearance.colors.colOnSurface
                             ctx.font = "bold 13px \"JetBrainsMono Nerd Font\""
                             ctx.textAlign = "center"
                             for (let n = 0; n < count; ++n) {
@@ -237,7 +237,7 @@ Rectangle {
                                 width: parent.width
                                 y: trendContent.topTextY
                                 text: root.hourLabel(hourItem.time)
-                                color: Colorscheme.on_surface_variant
+                                color: Appearance.colors.colOnSurfaceVariant
                                 font.family: "JetBrainsMono Nerd Font"
                                 font.pixelSize: 13
                                 horizontalAlignment: Text.AlignHCenter
@@ -321,8 +321,8 @@ Rectangle {
         property real rLeft: (isActive || isFirst || btnMouse.pressed) ? 16 : 4
         property real rRight: (isActive || isLast || btnMouse.pressed) ? 16 : 4
         property color bgColor: isActive
-                                ? Colorscheme.primary_container
-                                : (btnMouse.containsMouse ? Colorscheme.surface_container_highest : Colorscheme.surface_container)
+                                ? Appearance.colors.colPrimaryContainer
+                                : (btnMouse.containsMouse ? Appearance.colors.colLayer4 : Appearance.colors.colLayer2)
 
         Behavior on Layout.preferredWidth { NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 } }
         Behavior on bgColor { ColorAnimation { duration: 150 } }
@@ -355,7 +355,7 @@ Rectangle {
             font.family: "LXGW WenKai GB Screen"
             font.pixelSize: 14
             font.bold: parent.isActive
-            color: parent.isActive ? Colorscheme.on_primary_container : Colorscheme.on_surface_variant
+            color: parent.isActive ? Appearance.colors.colOnPrimaryContainer : Appearance.colors.colOnSurfaceVariant
             z: 2
 
             Behavior on color { ColorAnimation { duration: 150 } }

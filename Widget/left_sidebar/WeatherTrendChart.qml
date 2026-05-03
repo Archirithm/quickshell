@@ -7,9 +7,9 @@ Canvas {
     property var sourceModel
     property string mode: "hourly"
     property int maxItems: 8
-    property color lineColor: Colorscheme.primary
-    property color secondLineColor: Colorscheme.secondary
-    property color fillColor: Qt.rgba(Colorscheme.primary.r, Colorscheme.primary.g, Colorscheme.primary.b, 0.18)
+    property color lineColor: Appearance.colors.colPrimary
+    property color secondLineColor: Appearance.colors.colSecondary
+    property color fillColor: Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.18)
     property bool dualLine: false
 
     antialiasing: true
@@ -69,7 +69,7 @@ Canvas {
             return padY + usableH * (1 - (v - min) / (max - min))
         }
 
-        ctx.strokeStyle = Qt.rgba(Colorscheme.outline.r, Colorscheme.outline.g, Colorscheme.outline.b, 0.22)
+        ctx.strokeStyle = Qt.rgba(Appearance.colors.colOutline.r, Appearance.colors.colOutline.g, Appearance.colors.colOutline.b, 0.22)
         ctx.lineWidth = 1
         ctx.beginPath()
         ctx.moveTo(padX, yAt((min + max) / 2))
@@ -91,7 +91,7 @@ Canvas {
         drawLine(ctx, values, root.lineColor, 4)
         if (root.dualLine) drawLine(ctx, lowValues, root.secondLineColor, 3)
 
-        ctx.fillStyle = Colorscheme.on_surface_variant
+        ctx.fillStyle = Appearance.colors.colOnSurfaceVariant
         ctx.font = "11px \"JetBrainsMono Nerd Font\""
         ctx.textAlign = "center"
         for (let n = 0; n < count; ++n) {

@@ -11,43 +11,16 @@ import qs.Modules.DynamicIsland
 import qs.Widget
 // 【新增】：引入热角触发器路径
 import "./Widget/left_sidebar"
-import "./Modules/HotCorner"
 
 ShellRoot {
     Bar {}
     
     DynamicIsland {}
 
-    // 【新增】：实例化全局“热角” IPC 信号控制器，用于设置菜单全局控制
-    IpcHandler {
-        target: "hotcorner"
-        
-        // 【核心修复】：为 IPC 参数加上严格的类型注解 ': bool'
-        function setEnabled(code: bool) {
-            WidgetState.hotCornerEnabled = code
-            return `HotCorner set to: ${code}`
-        }
-        
-        // 信号：切换热角状态
-        function toggle() {
-            WidgetState.hotCornerEnabled = !WidgetState.hotCornerEnabled
-            return `HotCorner toggled to: ${WidgetState.hotCornerEnabled}`
-        }
-    }
-
     LeftSidebarWindow {}
     // 【新增】：挂载快捷设置侧边栏 (上半部，无消息面板)
     // 只要放在 ShellRoot 里，它自己配置的 Wayland Overlay 属性就会让它完美悬浮在右上侧
     RightSidebar {}
-
-    // ============================================================
-    // 【新增】：挂载独立的消息面板与热角检测器
-    // ============================================================
-    // 1. 无形的“热角”检测器，固定在屏幕最右下角。
-    HotCornerDetectorWindow {}
-    
-    // 2. 独立的“内凹曲线果冻消息面板”，固定在屏幕右下角。
-    NotificationCornerWindow {}
 
     // ================= 锁屏管理器 =================
     // (保持不变)

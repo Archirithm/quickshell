@@ -1,158 +1,200 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import qs.config 
+import Quickshell
+import qs.config
+import qs.Services
 
 Rectangle {
     id: root
+
     Layout.fillWidth: true
     Layout.fillHeight: true
-    
-    color: Colorscheme.surface_container
+
+    color: Appearance.colors.colLayer2
     radius: Sizes.lockCardRadius
     clip: true
 
-    // ================== 界面布局 ==================
+    readonly property var notifications: NotificationManager.list.slice().sort((a, b) => b.time - a.time)
+    readonly property int notificationCount: notifications.length
+
+    function normalizeSource(source) {
+        if (!source || source === "")
+            return "";
+        if (source.startsWith("/"))
+            return "file://" + source;
+        return source;
+    }
+
+    function iconSourceFor(notificationObject) {
+        if (!notificationObject)
+            return "";
+        if (notificationObject.image && notificationObject.image !== "")
+            return normalizeSource(notificationObject.image);
+        if (notificationObject.appIcon && notificationObject.appIcon !== "") {
+            if (notificationObject.appIcon.startsWith("/") || notificationObject.appIcon.startsWith("file://"))
+                return normalizeSource(notificationObject.appIcon);
+            return Quickshell.iconPath(notificationObject.appIcon, "image-missing");
+        }
+        return "";
+    }
+
+    function formatTime(timestamp) {
+        const date = new Date(Number(timestamp));
+        if (isNaN(date.getTime()))
+            return "";
+
+        const now = new Date();
+        if (date.toDateString() === now.toDateString())
+            return Qt.formatTime(date, "HH:mm");
+        return Qt.formatDate(date, "MM/dd") + " " + Qt.formatTime(date, "HH:mm");
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 20
         spacing: 10
 
-        // 标题栏
         RowLayout {
             Layout.fillWidth: true
             spacing: 10
-            
+
             Text {
                 text: "Notifications"
-                color: Colorscheme.on_surface_variant
+                color: Appearance.colors.colOnSurfaceVariant
                 font.family: Sizes.fontFamilyMono
                 font.pixelSize: 12
                 font.bold: true
             }
-            
-            // 计数器
+
             Rectangle {
-                visible: NotificationStore.model.count > 0
+                visible: root.notificationCount > 0
                 width: countText.contentWidth + 12
                 height: 18
                 radius: 9
-                color: Colorscheme.primary_container
+                color: Appearance.colors.colPrimaryContainer
+
                 Text {
                     id: countText
                     anchors.centerIn: parent
-                    text: NotificationStore.model.count
-                    color: Colorscheme.on_primary_container
+                    text: root.notificationCount
+                    color: Appearance.colors.colOnPrimaryContainer
                     font.family: Sizes.fontFamilyMono
                     font.pixelSize: 10
                     font.bold: true
                 }
             }
-            
+
             Item { Layout.fillWidth: true }
-            
-            // 清除按钮
+
             Text {
                 text: "Clear All"
-                visible: NotificationStore.model.count > 0
-                color: Colorscheme.primary
+                visible: root.notificationCount > 0
+                color: Appearance.colors.colPrimary
                 font.family: Sizes.fontFamilyMono
                 font.pixelSize: 12
                 font.underline: true
-                
+
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: NotificationStore.clear()
+                    onClicked: NotificationManager.discardAllNotifications()
                 }
             }
         }
 
         Rectangle {
-            Layout.fillWidth: true; height: 1
-            color: Colorscheme.outline; opacity: 0.2
+            Layout.fillWidth: true
+            height: 1
+            color: Appearance.colors.colOutline
+            opacity: 0.2
         }
 
-        // 通知列表
         ListView {
             id: listView
+
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
             spacing: 12
-            
-            model: NotificationStore.model
+            model: root.notifications
 
-            // 空状态提示
             Text {
                 anchors.centerIn: parent
-                visible: NotificationStore.model.count === 0
+                visible: root.notificationCount === 0
                 text: "No new notifications"
-                color: Colorscheme.on_surface_variant
+                color: Appearance.colors.colOnSurfaceVariant
                 font.family: Sizes.fontFamily
                 font.pixelSize: 14
                 opacity: 0.5
             }
 
             delegate: Rectangle {
-                width: ListView.view.width
-                height: 60
+                id: delegateRoot
+
+                required property var modelData
+
+                width: ListView.view ? ListView.view.width : 0
+                height: Math.max(68, contentRow.implicitHeight)
                 color: "transparent"
-                
+
+                readonly property string iconSource: root.iconSourceFor(modelData)
+
                 RowLayout {
+                    id: contentRow
                     anchors.fill: parent
                     spacing: 12
 
-                    // 1. 图标容器
                     Rectangle {
-                        width: 40; height: 40; radius: 12
-                        color: Colorscheme.surface_container_highest
-                        
-                        // A. 图片图标 (如果有)
+                        Layout.preferredWidth: 42
+                        Layout.preferredHeight: 42
+                        Layout.alignment: Qt.AlignTop
+                        radius: 13
+                        color: Appearance.colors.colLayer4
+                        clip: true
+
                         Image {
                             id: iconImg
                             anchors.fill: parent
-                            anchors.margins: 6
-                            source: model.imagePath
-                            fillMode: Image.PreserveAspectFit
-                            visible: status === Image.Ready && model.imagePath !== ""
+                            anchors.margins: delegateRoot.modelData && delegateRoot.modelData.image ? 0 : 6
+                            source: delegateRoot.iconSource
+                            fillMode: delegateRoot.modelData && delegateRoot.modelData.image ? Image.PreserveAspectCrop : Image.PreserveAspectFit
+                            visible: delegateRoot.iconSource !== "" && status !== Image.Error
+                            asynchronous: true
                             smooth: true
                         }
-                        
-                        // B. 默认气泡图标 (无图时显示)
-                        // 【修改】这里不再显示首字母，而是显示气泡图标
+
                         Text {
                             anchors.centerIn: parent
-                            text: "\uf0e5" // FontAwesome Comment-alt 图标
+                            text: "notifications"
                             visible: !iconImg.visible
-                            color: Colorscheme.on_surface_variant
-                            // 这里要确保用支持图标的字体，通常 Nerd Font 兼容 FontAwesome
-                            font.family: "Font Awesome 6 Free Solid" 
-                            // 如果你的环境里主要是 Nerd Font，也可以试用 "JetBrainsMono Nerd Font"
-                            // font.family: Sizes.fontFamilyMono 
-                            font.pixelSize: 18
+                            color: Appearance.colors.colOnSurfaceVariant
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: 20
                         }
                     }
 
-                    // 2. 文字内容
                     ColumnLayout {
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
-                        spacing: 2
+                        spacing: 3
 
                         RowLayout {
                             Layout.fillWidth: true
+
                             Text {
-                                text: model.appName
-                                color: Colorscheme.primary
+                                text: delegateRoot.modelData ? delegateRoot.modelData.appName : ""
+                                color: Appearance.colors.colPrimary
                                 font.family: Sizes.fontFamilyMono
                                 font.pixelSize: 10
                                 font.bold: true
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
                             }
-                            Item { Layout.fillWidth: true }
+
                             Text {
-                                text: model.time
-                                color: Colorscheme.on_surface_variant
+                                text: delegateRoot.modelData ? root.formatTime(delegateRoot.modelData.time) : ""
+                                color: Appearance.colors.colOnSurfaceVariant
                                 font.family: Sizes.fontFamilyMono
                                 font.pixelSize: 10
                                 opacity: 0.7
@@ -160,47 +202,80 @@ Rectangle {
                         }
 
                         Text {
-                            text: model.summary
-                            color: Colorscheme.on_surface
+                            text: delegateRoot.modelData ? delegateRoot.modelData.summary : ""
+                            color: Appearance.colors.colOnSurface
                             font.family: Sizes.fontFamily
                             font.pixelSize: 13
                             font.bold: true
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
-                        
+
                         Text {
-                            text: model.body
-                            color: Colorscheme.on_surface_variant
+                            text: delegateRoot.modelData ? delegateRoot.modelData.body : ""
+                            color: Appearance.colors.colOnSurfaceVariant
                             font.family: Sizes.fontFamily
                             font.pixelSize: 12
                             elide: Text.ElideRight
                             Layout.fillWidth: true
+                            maximumLineCount: 2
                             opacity: 0.8
                         }
                     }
-                    
-                    // 单条删除
+
                     Text {
-                        text: "×"
-                        color: Colorscheme.on_surface_variant
+                        Layout.alignment: Qt.AlignTop
+                        text: "close"
+                        color: Appearance.colors.colOnSurfaceVariant
+                        font.family: "Material Symbols Rounded"
                         font.pixelSize: 18
+
                         MouseArea {
                             anchors.fill: parent
-                            onClicked: NotificationStore.remove(index)
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: NotificationManager.discardNotification(delegateRoot.modelData.notificationId)
                         }
                     }
                 }
             }
-            
-            // 动画效果
+
             add: Transition {
-                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200 }
-                NumberAnimation { property: "y"; from: -20; duration: 200 }
+                ParallelAnimation {
+                    NumberAnimation {
+                        property: "opacity"
+                        from: 0
+                        to: 1
+                        duration: Appearance.animation.expressiveEffects.duration
+                        easing.type: Appearance.animation.expressiveEffects.type
+                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                    }
+                    NumberAnimation {
+                        property: "y"
+                        from: -20
+                        duration: Appearance.animation.expressiveEffects.duration
+                        easing.type: Appearance.animation.expressiveEffects.type
+                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                    }
+                }
             }
+
             remove: Transition {
-                NumberAnimation { property: "opacity"; to: 0; duration: 200 }
-                NumberAnimation { property: "height"; to: 0; duration: 200 }
+                ParallelAnimation {
+                    NumberAnimation {
+                        property: "opacity"
+                        to: 0
+                        duration: Appearance.animation.expressiveEffects.duration
+                        easing.type: Appearance.animation.expressiveEffects.type
+                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                    }
+                    NumberAnimation {
+                        property: "height"
+                        to: 0
+                        duration: Appearance.animation.expressiveEffects.duration
+                        easing.type: Appearance.animation.expressiveEffects.type
+                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                    }
+                }
             }
         }
     }

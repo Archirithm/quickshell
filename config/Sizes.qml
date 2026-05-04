@@ -7,7 +7,7 @@ Singleton {
     readonly property string fontFamilyMono: "JetBrainsMono Nerd Font" // 建议终端字体单独定义
     readonly property string fontIcon: "LXGW WenKai GB Screen"
     readonly property real cornerRadius: 10
-    readonly property real barHeight: 36
+    readonly property real barHeight: 44
 
     // ================= 新增：锁屏专用配置 =================
     readonly property real lockCardRadius: 24   // 卡片大圆角

@@ -9,6 +9,7 @@ import qs.Modules.Bar.Tray
 import qs.Modules.Bar.PowerButton
 import qs.Modules.Bar.SysMonitor
 import qs.Modules.Bar.QuickSettings
+import qs.config
 
 Variants {
     model: Quickshell.screens
@@ -21,7 +22,7 @@ Variants {
         anchors { left: true; top: true; right: true }
         color: "transparent"
         
-        property real barHeight: 52
+        property real barHeight: Sizes.barHeight
         
         // 高度不再受灵动岛影响
         implicitHeight: barWindow.barHeight
@@ -39,7 +40,7 @@ Variants {
 
             // --- 左侧组件 ---
             RowLayout {
-                anchors { left: parent.left; leftMargin: 10; verticalCenter: parent.verticalCenter }
+                anchors { left: parent.left; leftMargin: 10; bottom: parent.bottom }
                 spacing: 10
 
                 Workspaces { screenName: barWindow.screen.name }
@@ -50,7 +51,7 @@ Variants {
 
             // --- 右侧组件 ---
             RowLayout {
-                anchors { right: parent.right; rightMargin: 10; verticalCenter: parent.verticalCenter }
+                anchors { right: parent.right; rightMargin: 10; bottom: parent.bottom }
                 spacing: 10
 
                 Tray {}

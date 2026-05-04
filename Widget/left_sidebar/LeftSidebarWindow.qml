@@ -13,6 +13,7 @@ PanelWindow {
     property int sidebarWidth: 540
     property int gap: 24 
     property int gooeyRadius: 36  
+    readonly property int sidebarY: Sizes.barHeight + gap
     readonly property int closedSlideOffset: -sidebarWidth - 100
     readonly property bool contentActive: WidgetState.leftSidebarOpen || animController.slideOffset > closedSlideOffset
 
@@ -27,7 +28,7 @@ PanelWindow {
     implicitWidth: sidebarWidth + 100
     color: "transparent"
 
-    property int qsTargetHeight: root.height - 100
+    readonly property int qsTargetHeight: root.height - sidebarY - gap
 
     Connections {
         target: WidgetState
@@ -62,7 +63,7 @@ PanelWindow {
         id: hitBoxRegion
         // 【修正】：鼠标事件判定区必须使用绝对屏幕坐标
         x: animController.slideOffset + root.gap 
-        y: 66 
+        y: root.sidebarY
         width: sidebarWidth
         height: root.qsTargetHeight 
     }
@@ -93,7 +94,7 @@ PanelWindow {
                 
                 // 【补偿】：由于画布向左偏移了 100，内部的 X 必须加上 100 才能回到原位
                 x: (animController.slideOffset + root.gap) + 100
-                y: 66 
+                y: root.sidebarY
                 radius: Appearance.rounding.large
                 color: "black" 
             }
@@ -150,7 +151,7 @@ PanelWindow {
             height: root.qsTargetHeight
             // 【修正】：内容挂载区也必须使用绝对屏幕坐标
             x: animController.slideOffset + root.gap 
-            y: 66
+            y: root.sidebarY
             clip: true 
 
             Loader {

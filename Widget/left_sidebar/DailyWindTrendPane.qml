@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import qs.config
 
-Rectangle {
+Item {
     id: root
 
     property var sourceModel
@@ -20,8 +20,6 @@ Rectangle {
     readonly property real barHalfRange: Math.max(36, Math.min(64, height * 0.16))
     readonly property real nightArrowY: height - 70
 
-    radius: 22
-    color: Qt.rgba(Appearance.colors.colLayer3.r, Appearance.colors.colLayer3.g, Appearance.colors.colLayer3.b, 0.42)
     clip: true
 
     function dayLabel(index, epoch) {
@@ -157,15 +155,6 @@ Rectangle {
             id: trendContent
             width: trendFlick.contentWidth
             height: trendFlick.height
-
-            Rectangle {
-                visible: root.items.length > 0
-                x: 0
-                y: 0
-                width: root.itemWidth
-                height: parent.height
-                color: Qt.rgba(Appearance.colors.colLayer4.r, Appearance.colors.colLayer4.g, Appearance.colors.colLayer4.b, 0.18)
-            }
 
             Repeater {
                 model: root.items

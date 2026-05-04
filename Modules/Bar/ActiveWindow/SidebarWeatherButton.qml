@@ -7,7 +7,6 @@ Item {
     id: root
 
     readonly property bool isHovered: mouseArea.containsMouse
-    readonly property bool isActive: WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === "weather"
     readonly property string temperatureText: WeatherPlugin.hasValidData ? Math.round(WeatherPlugin.currentTemperatureC) + "°" : "--°"
 
     implicitHeight: isHovered ? 34 : 28
@@ -35,11 +34,11 @@ Item {
         Text {
             text: WeatherPlugin.currentIconName || "cloud"
             font.family: "Material Symbols Rounded"
-            font.pixelSize: root.isHovered ? 18 : 16
-            color: root.isActive ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+            font.variableAxes: { "FILL": 1 }
+            font.pixelSize: 20
+            color: Appearance.colors.colOnLayer2
             Layout.alignment: Qt.AlignVCenter
 
-            Behavior on font.pixelSize { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             Behavior on color { ColorAnimation { duration: 160 } }
         }
 
@@ -50,7 +49,7 @@ Item {
             font.family: "JetBrainsMono Nerd Font"
             font.pixelSize: 12
             font.bold: true
-            color: root.isActive ? Appearance.colors.colPrimary : Appearance.colors.colOnLayer2
+            color: Appearance.colors.colOnLayer2
             Layout.alignment: Qt.AlignVCenter
 
             Behavior on opacity { NumberAnimation { duration: 160 } }

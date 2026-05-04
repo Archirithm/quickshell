@@ -13,6 +13,7 @@ PanelWindow {
     property int sidebarWidth: 420
     property int gap: 24 
     property int gooeyRadius: 36  
+    readonly property int sidebarY: Sizes.barHeight + gap
     readonly property bool contentActive: WidgetState.qsOpen || qsShadow.x < root.offScreenX
 
     WlrLayershell.layer: WlrLayer.Top
@@ -42,7 +43,7 @@ PanelWindow {
     Item {
         id: hitBoxRegion
         x: qsShadow.x
-        y: 66 
+        y: root.sidebarY
         width: sidebarWidth
         height: root.qsTargetHeight 
     }
@@ -64,7 +65,7 @@ PanelWindow {
                 id: qsShadow
                 width: root.sidebarWidth
                 height: root.qsTargetHeight
-                y: 66 
+                y: root.sidebarY
                 x: WidgetState.qsOpen ? root.targetX : root.offScreenX
                 radius: Appearance.rounding.large
                 color: "black" 

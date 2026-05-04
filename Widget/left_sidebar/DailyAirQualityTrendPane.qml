@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import qs.config
 
-Rectangle {
+Item {
     id: root
 
     property var sourceModel
@@ -19,8 +19,6 @@ Rectangle {
     readonly property real chartWidth: Math.max(0, width - sidePadding * 2)
     readonly property real columnWidth: items.length > 0 ? chartWidth / items.length : chartWidth
 
-    radius: 22
-    color: Qt.rgba(Appearance.colors.colLayer3.r, Appearance.colors.colLayer3.g, Appearance.colors.colLayer3.b, 0.42)
     clip: true
 
     function aqiThresholds() {

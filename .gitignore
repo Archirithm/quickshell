@@ -1,6 +1,7 @@
 # Markdown notes
 *.md
 !README.md
+!AGENTS.md
 
 # Local tool/editor state
 .agentrules

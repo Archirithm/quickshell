@@ -13,8 +13,10 @@ PanelWindow {
     property int sidebarWidth: 420
     property int gap: 24 
     property int gooeyRadius: 36  
-    readonly property int sidebarY: Sizes.barHeight + gap
+    readonly property int panelTopMargin: Sizes.barHeight
+    readonly property int sidebarY: gap
     readonly property bool contentActive: WidgetState.qsOpen || qsShadow.x < root.offScreenX
+    readonly property bool inputActive: WidgetState.qsOpen || qsShadow.x < root.offScreenX - 0.5
 
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "qs-unified-sidebar"
@@ -23,8 +25,10 @@ PanelWindow {
     exclusiveZone: 0
 
     anchors { right: true; top: true; bottom: true }
+    margins { top: root.panelTopMargin }
     
     implicitWidth: 600
+    visible: root.inputActive
     color: "transparent"
 
     property int qsTargetHeight: 640
@@ -44,8 +48,8 @@ PanelWindow {
         id: hitBoxRegion
         x: qsShadow.x
         y: root.sidebarY
-        width: sidebarWidth
-        height: root.qsTargetHeight 
+        width: root.inputActive ? sidebarWidth : 0
+        height: root.inputActive ? root.qsTargetHeight : 0
     }
 
     mask: Region { item: hitBoxRegion }

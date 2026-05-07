@@ -9,6 +9,8 @@ Singleton {
 
     readonly property string colorsPath: Quickshell.env("HOME") + "/.cache/quickshell-dev-colorscheme/colors.json"
     property string matugenScheme: "scheme-tonal-spot"
+    property string matugenMode: "dark"
+    readonly property string effectiveMatugenMode: matugenMode.toLowerCase() === "light" ? "light" : "dark"
     property string currentWallpaperPreview: "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current"
     property real backgroundTransparency: 0
     property real contentTransparency: 0.9
@@ -70,8 +72,24 @@ Singleton {
         return result;
     }
 
+    function applyGeneratedColors(text) {
+        if (!text)
+            return;
+
+        const generatedColors = JSON.parse(text);
+        for (let key in generatedColors) {
+            const propertyName = root.snakeToM3(key);
+            if (propertyName in root.m3colors)
+                root.m3colors[propertyName] = Qt.color(generatedColors[key]);
+        }
+    }
+
+    function reloadColors() {
+        colorFile.reload();
+    }
+
     m3colors: QtObject {
-        property bool darkmode: true
+        property bool darkmode: root.effectiveMatugenMode === "dark"
         property color m3background: "#0f1416"
         property color m3error: "#ffb4ab"
         property color m3errorContainer: "#93000a"
@@ -299,16 +317,7 @@ Singleton {
 
         onLoaded: {
             try {
-                const text = colorFile.text();
-                if (!text)
-                    return;
-
-                const generatedColors = JSON.parse(text);
-                for (let key in generatedColors) {
-                    const propertyName = root.snakeToM3(key);
-                    if (propertyName in root.m3colors)
-                        root.m3colors[propertyName] = Qt.color(generatedColors[key]);
-                }
+                root.applyGeneratedColors(colorFile.text());
             } catch (error) {
             }
         }

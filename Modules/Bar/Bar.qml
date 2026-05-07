@@ -31,35 +31,9 @@ Variants {
         
         WlrLayershell.layer: WlrLayer.Top
 
-        function inputRect(item) {
-            if (!item || item.width <= 0 || item.height <= 0)
-                return { "x": 0, "y": 0, "w": 0, "h": 0 };
-
-            const pos = item.mapToItem(barWindow.contentItem, 0, 0);
-            return {
-                "x": Math.round(pos.x),
-                "y": Math.round(pos.y),
-                "w": Math.ceil(item.width),
-                "h": Math.ceil(item.height)
-            };
-        }
-
         mask: Region {
-            Region {
-                readonly property var r: barWindow.inputRect(leftSection)
-                x: r.x
-                y: r.y
-                width: r.w
-                height: r.h
-            }
-
-            Region {
-                readonly property var r: barWindow.inputRect(rightSection)
-                x: r.x
-                y: r.y
-                width: r.w
-                height: r.h
-            }
+            Region { item: leftInputRegion }
+            Region { item: rightInputRegion }
         }
 
         // --- 内容容器 ---
@@ -98,6 +72,22 @@ Variants {
                 QuickSettings { Layout.alignment: Qt.AlignVCenter }
                 
                 
+            }
+
+            Item {
+                id: leftInputRegion
+                anchors.left: leftSection.left
+                anchors.right: leftSection.right
+                anchors.top: leftSection.top
+                anchors.bottom: leftSection.bottom
+            }
+
+            Item {
+                id: rightInputRegion
+                anchors.left: rightSection.left
+                anchors.right: rightSection.right
+                anchors.top: rightSection.top
+                anchors.bottom: rightSection.bottom
             }
         }
     }

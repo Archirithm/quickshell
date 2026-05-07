@@ -13,6 +13,7 @@ Item {
     property string wallpaperPath: Quickshell.env("HOME") + "/.config/wallpaper"
     
     property string currentSelectedPreview: ""
+    property string pendingOverviewPath: ""
     property bool isLoading: true
 
     ListModel { id: wallpaperModel }
@@ -150,10 +151,14 @@ Item {
     // ==========================================
     // 脚本执行引擎
     // ==========================================
+    function wallpaperProcessesRunning() {
+        return setWallpaperProcess.running || generateColorsProcess.running || overviewProcess.running;
+    }
+
     function applyWallpaper() {
         if (wallpaperModel.count === 0 || wallpaperList.currentIndex < 0) return
         
-        if (runScript.running) {
+        if (wallpaperProcessesRunning()) {
             console.log("Wallpaper switch in progress, ignoring extra triggers...")
             return
         }
@@ -161,16 +166,44 @@ Item {
         let currentPath = wallpaperModel.get(wallpaperList.currentIndex).path
         
         Appearance.currentWallpaperPreview = "file://" + currentPath;
-        // 【核心修改】：
-        // 1. 将 swww img 改为 awww img
-        // 2. 只生成 Quickshell 使用的 matugen 颜色 JSON
-        let scriptContent = "awww img '" + currentPath + "' --transition-type any --transition-duration 3 --transition-fps 60 --transition-bezier .43,1.19,1,.4;\n" +
-                            "bash '" + Paths.scriptPath("theme", "generate_quickshell_colors.sh") + "' --image '" + currentPath + "' --scheme '" + Appearance.matugenScheme + "';\n" +
-                            "bash '" + Paths.scriptPath("system", "overview.sh") + "' '" + currentPath + "'"
-                           
-        runScript.command = ["bash", "-c", scriptContent]
-        runScript.running = true
+        root.pendingOverviewPath = currentPath
+
+        generateColorsProcess.command = [
+            "bash", Paths.scriptPath("theme", "generate_quickshell_colors.sh"),
+            "--image", currentPath,
+            "--scheme", Appearance.matugenScheme,
+            "--mode", Appearance.effectiveMatugenMode
+        ]
+        generateColorsProcess.running = true
+
+        setWallpaperProcess.command = [
+            "awww", "img", currentPath,
+            "--transition-type", "any",
+            "--transition-duration", "3",
+            "--transition-fps", "60",
+            "--transition-bezier", ".43,1.19,1,.4"
+        ]
+        setWallpaperProcess.running = true
     }
 
-    Process { id: runScript }
+    Process {
+        id: setWallpaperProcess
+        onExited: {
+            if (root.pendingOverviewPath === "")
+                return
+
+            overviewProcess.command = ["bash", Paths.scriptPath("system", "overview.sh"), root.pendingOverviewPath]
+            overviewProcess.running = true
+        }
+    }
+
+    Process {
+        id: generateColorsProcess
+        onExited: Appearance.reloadColors()
+    }
+
+    Process {
+        id: overviewProcess
+        onExited: root.pendingOverviewPath = ""
+    }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 template_path="$repo_root/matugen/templates/quickshell-colors.json"
 output_path="$HOME/.cache/quickshell-dev-colorscheme/colors.json"
 mode="dark"
@@ -51,6 +51,16 @@ if [[ -n "$image_path" && -n "$source_color" ]] || [[ -z "$image_path" && -z "$s
     exit 2
 fi
 
+if [[ "$mode" != "dark" && "$mode" != "light" ]]; then
+    usage
+    exit 2
+fi
+
+if [[ ! -f "$template_path" ]]; then
+    printf 'Missing matugen template: %s\n' "$template_path" >&2
+    exit 1
+fi
+
 mkdir -p "$(dirname "$output_path")"
 
 tmp_config="$(mktemp)"
@@ -70,3 +80,5 @@ if [[ -n "$image_path" ]]; then
 else
     matugen color hex "$source_color" --mode "$mode" --type "$scheme" -c "$tmp_config"
 fi
+
+touch "$output_path"

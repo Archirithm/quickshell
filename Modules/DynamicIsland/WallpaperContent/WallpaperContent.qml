@@ -11,6 +11,7 @@ Item {
 
     property string wallpaperPath: Quickshell.env("HOME") + "/.config/wallpaper"
     property var allWallpapers: [] 
+    property string pendingOverviewPath: ""
     
     ListModel { id: wallpaperModel }
 
@@ -269,34 +270,59 @@ Item {
     // ============================================================
     // 【核心修改】 应用壁纸并执行额外脚本
     // ============================================================
+    function wallpaperProcessesRunning() {
+        return setWallpaperProcess.running || generateColorsProcess.running || overviewProcess.running;
+    }
+
     function applyWallpaper() {
-        if (wallpaperModel.count === 0) return;
+        if (wallpaperModel.count === 0 || view.currentIndex < 0) return;
+        if (wallpaperProcessesRunning()) {
+            console.log("Wallpaper switch in progress, ignoring extra triggers...");
+            return;
+        }
+
         let currentPath = wallpaperModel.get(view.currentIndex).path;
         Appearance.currentWallpaperPreview = "file://" + currentPath;
-        
-        // 1. awww 命令
-        let awwwCmd = "awww img \"" + currentPath + "\" " +
-                  "--transition-type \"any\" " +
-                  "--transition-duration 3 " +
-                  "--transition-fps 60 " +
-                  "--transition-bezier .43,1.19,1,.4";
+        root.pendingOverviewPath = currentPath;
 
-        // 2. Quickshell 专用 matugen 颜色命令
-        let matugenCmd = "bash \"" + Paths.scriptPath("theme", "generate_quickshell_colors.sh") + "\" " +
-                         "--image \"" + currentPath + "\" " +
-                         "--scheme \"" + Appearance.matugenScheme + "\"";
+        generateColorsProcess.command = [
+            "bash", Paths.scriptPath("theme", "generate_quickshell_colors.sh"),
+            "--image", currentPath,
+            "--scheme", Appearance.matugenScheme,
+            "--mode", Appearance.effectiveMatugenMode
+        ];
+        generateColorsProcess.running = true;
 
-        // 3. overview 脚本命令
-        let overviewCmd = "bash \"" + Paths.scriptPath("system", "overview.sh") + "\" \"" + currentPath + "\"";
-
-        // 注意这里把 swwwCmd 换成了 awwwCmd
-        let combinedCmd = awwwCmd + " ; " + matugenCmd + " ; " + overviewCmd + " &";
-
-        runScript.command = ["bash", "-c", combinedCmd];
-        runScript.running = true;
+        setWallpaperProcess.command = [
+            "awww", "img", currentPath,
+            "--transition-type", "any",
+            "--transition-duration", "3",
+            "--transition-fps", "60",
+            "--transition-bezier", ".43,1.19,1,.4"
+        ];
+        setWallpaperProcess.running = true;
         
         root.wallpaperChanged();
     }
 
-    Process { id: runScript }
+    Process {
+        id: setWallpaperProcess
+        onExited: {
+            if (root.pendingOverviewPath === "")
+                return;
+
+            overviewProcess.command = ["bash", Paths.scriptPath("system", "overview.sh"), root.pendingOverviewPath];
+            overviewProcess.running = true;
+        }
+    }
+
+    Process {
+        id: generateColorsProcess
+        onExited: Appearance.reloadColors()
+    }
+
+    Process {
+        id: overviewProcess
+        onExited: root.pendingOverviewPath = ""
+    }
 }

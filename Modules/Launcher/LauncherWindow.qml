@@ -26,6 +26,7 @@ PanelWindow {
     WlrLayershell.exclusionMode: ExclusionMode.Ignore 
 
     property int currentMode: 0 
+    property bool isClosing: false
     
     // 【核心修复 1】：废除容易被缓存坑的软链接，直接绑定全局真理变量 Appearance.currentWallpaperPreview
     property string previewImage: (currentMode === 2 && wallpaperPage.currentSelectedPreview !== "") 
@@ -52,22 +53,44 @@ PanelWindow {
         }
     }
 
+    function prepareOpen(resetOpacity, delayFadeIn) {
+        root.isClosing = false
+        openFadeInDelay.stop()
+        closeAnim.stop()
+
+        if (resetOpacity)
+            mainUI.opacity = 0.0
+
+        if (delayFadeIn)
+            openFadeInDelay.restart()
+        else
+            launcherFadeIn.restart()
+
+        // 每次打开 Launcher，第一时间强制核实并同步系统真实壁纸
+        syncGlobalWallpaper.running = false;
+        syncGlobalWallpaper.running = true;
+
+        // 智能焦点路由
+        if (currentMode === 0) appPage.forceSearchFocus()
+        else if (currentMode === 1) windowPage.forceSearchFocus()
+        else mainUI.forceActiveFocus()
+    }
+
+    function openWindow() {
+        if (launcherFadeIn.running || (root.visible && !root.isClosing))
+            return
+
+        if (root.visible) {
+            prepareOpen(false, false)
+            return
+        }
+
+        root.visible = true
+    }
+
     onVisibleChanged: {
         if (visible) {
-            // 【核心修复 2】：每次打开 Launcher，第一时间强制核实并同步系统真实壁纸！
-            syncGlobalWallpaper.running = false;
-            syncGlobalWallpaper.running = true;
-
-            // 智能焦点路由
-            if (currentMode === 0) appPage.forceSearchFocus()
-            else if (currentMode === 1) windowPage.forceSearchFocus()
-            else mainUI.forceActiveFocus()
-            
-            // // 每次打开都正常播放入场动画
-            // mainUI.opacity = 0.0
-            // uiTranslate.y = 300
-            // openAnim.start()
-            mainUI.opacity = 1.0
+            prepareOpen(true, true)
             uiTranslate.y = 0
         }
     }
@@ -81,15 +104,18 @@ PanelWindow {
     }
 
     function requestClose() {
-        // if (closeAnim.running || !root.visible) return
-        // closeAnim.start()
-        if (!root.visible) return
-        root.visible = false
+        if (!root.visible || root.isClosing)
+            return
+
+        root.isClosing = true
+        openFadeInDelay.stop()
+        launcherFadeIn.stop()
+        closeAnim.restart()
     }
 
     function toggleWindow() {
-        if (root.visible) requestClose()
-        else root.visible = true 
+        if (root.visible && !root.isClosing) requestClose()
+        else openWindow()
     }
 
     MouseArea {
@@ -108,50 +134,44 @@ PanelWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
         
-        opacity: 1.0 // 原来是0
+        opacity: 0.0
         
         transform: Translate {
             id: uiTranslate
             y: 0 // 原来是300
         }
+
+        Timer {
+            id: openFadeInDelay
+            interval: 32
+            repeat: false
+            onTriggered: launcherFadeIn.restart()
+        }
         
-        // ParallelAnimation {
-        //     id: openAnim
-        //     NumberAnimation {
-        //         target: mainUI
-        //         property: "opacity"
-        //         to: 1.0
-        //         duration: 400
-        //         easing.type: Easing.OutCubic
-        //     }
-        //     NumberAnimation {
-        //         target: uiTranslate
-        //         property: "y"
-        //         to: 0
-        //         duration: 700
-        //         easing.type: Easing.OutBack
-        //         easing.overshoot: 2.5
-        //     }
-        // }
-        //
-        // ParallelAnimation {
-        //     id: closeAnim
-        //     NumberAnimation {
-        //         target: mainUI
-        //         property: "opacity"
-        //         to: 0.0
-        //         duration: 300
-        //         easing.type: Easing.InCubic
-        //     }
-        //     NumberAnimation {
-        //         target: uiTranslate
-        //         property: "y"
-        //         to: 300
-        //         duration: 300
-        //         easing.type: Easing.InCubic
-        //     }
-        //     onFinished: root.visible = false 
-        // }
+        NumberAnimation {
+            id: launcherFadeIn
+            target: mainUI
+            property: "opacity"
+            to: 1.0
+            duration: Math.max(280, Appearance.animation.expressiveEffects.duration)
+            easing.type: Appearance.animation.expressiveEffects.type
+            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+        }
+
+        NumberAnimation {
+            id: closeAnim
+            target: mainUI
+            property: "opacity"
+            to: 0.0
+            duration: Appearance.animation.emphasizedAccel.duration
+            easing.type: Appearance.animation.emphasizedAccel.type
+            easing.bezierCurve: Appearance.animation.emphasizedAccel.bezierCurve
+
+            onFinished: {
+                root.visible = false
+                root.isClosing = false
+            }
+        }
         
         color: "transparent" 
         radius: 20 

@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Shapes
 
 Item {
     id: root
@@ -15,7 +16,10 @@ Item {
     property real gap: 4
     property real waveFrequency: 0.12
     property real waveAmplitude: 2.5
-    property real step: 2
+    property real step: 8
+    property real endDotSize: Math.max(3, lineWidth * 0.55)
+    property color endDotColor: waveColor
+    property real endDotOpacity: 1.0
     property real seekMargin: 12
     property int phaseDuration: 1200
     property int smoothingDuration: 1500
@@ -35,6 +39,44 @@ Item {
         property real targetPlayhead: seekMa.pressed ? Math.max(0, Math.min(seekMa.mouseX, width)) : (root.progress * width)
         property real playheadX: targetPlayhead
         property real wavePhase: 0
+        property real centerY: height / 2
+        property real waveEndX: Math.max(root.lineWidth / 2, playheadX - (root.gap + root.lineWidth / 2))
+        property string wavePath: buildWavePath()
+
+        function waveY(x) {
+            return centerY + Math.sin((x - root.lineWidth / 2) * root.waveFrequency + wavePhase) * root.waveAmplitude;
+        }
+
+        function waveSlope(x) {
+            return Math.cos((x - root.lineWidth / 2) * root.waveFrequency + wavePhase) * root.waveAmplitude * root.waveFrequency;
+        }
+
+        function buildWavePath() {
+            const padding = root.lineWidth / 2;
+            const endX = waveEndX;
+
+            if (endX <= padding)
+                return "";
+
+            let path = "M " + padding.toFixed(2) + " " + waveY(padding).toFixed(2);
+            const sampleStep = Math.max(0.5, root.step);
+
+            for (let x = padding; x < endX; x += sampleStep) {
+                const nextX = Math.min(endX, x + sampleStep);
+                const y0 = waveY(x);
+                const y1 = waveY(nextX);
+                const dx = nextX - x;
+                const c1x = x + dx / 3;
+                const c1y = y0 + waveSlope(x) * dx / 3;
+                const c2x = nextX - dx / 3;
+                const c2y = y1 - waveSlope(nextX) * dx / 3;
+
+                path += " C " + c1x.toFixed(2) + " " + c1y.toFixed(2)
+                    + " " + c2x.toFixed(2) + " " + c2y.toFixed(2)
+                    + " " + nextX.toFixed(2) + " " + y1.toFixed(2);
+            }
+            return path;
+        }
 
         Behavior on playheadX {
             enabled: root.visible && !seekMa.pressed
@@ -53,59 +95,53 @@ Item {
             running: root.isPlaying
         }
 
-        onWavePhaseChanged: fgWave.requestPaint()
-        onPlayheadXChanged: fgWave.requestPaint()
-        onWidthChanged: fgWave.requestPaint()
-        onHeightChanged: fgWave.requestPaint()
-
-        Rectangle {
-            height: root.lineWidth
-            radius: root.lineRadius
-            color: root.trackColor
+        Shape {
+            anchors.fill: parent
             opacity: root.trackOpacity
-            x: Math.min(parent.width, waveContainer.playheadX + root.gap)
-            width: Math.max(0, parent.width - x)
-            anchors.verticalCenter: parent.verticalCenter
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                strokeWidth: root.lineWidth
+                strokeColor: root.trackColor
+                fillColor: "transparent"
+                startX: Math.min(waveContainer.width - root.lineWidth / 2, waveContainer.playheadX + root.gap)
+                startY: waveContainer.centerY
+
+                PathLine {
+                    x: waveContainer.width - root.lineWidth / 2
+                    y: waveContainer.centerY
+                }
+            }
         }
 
-        Canvas {
-            id: fgWave
+        Shape {
             anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
 
-            onPaint: {
-                var ctx = getContext("2d");
-                ctx.clearRect(0, 0, width, height);
+            ShapePath {
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                strokeWidth: root.lineWidth
+                strokeColor: root.waveColor
+                fillColor: "transparent"
 
-                let endX = waveContainer.playheadX - (root.gap + root.lineWidth / 2);
-                let padding = root.lineWidth / 2;
-
-                if (endX <= padding)
-                    return;
-
-                ctx.beginPath();
-                ctx.lineWidth = root.lineWidth;
-                ctx.lineCap = "round";
-                ctx.lineJoin = "round";
-                ctx.strokeStyle = String(root.waveColor);
-
-                for (let x = padding; x <= endX; x += root.step) {
-                    let y = height / 2 + Math.sin((x - padding) * root.waveFrequency + waveContainer.wavePhase) * root.waveAmplitude;
-                    if (x === padding)
-                        ctx.moveTo(x, y);
-                    else
-                        ctx.lineTo(x, y);
+                PathSvg {
+                    path: waveContainer.wavePath
                 }
-                ctx.stroke();
             }
+        }
 
-            Connections {
-                target: root
-                function onWaveColorChanged() { fgWave.requestPaint() }
-                function onLineWidthChanged() { fgWave.requestPaint() }
-                function onGapChanged() { fgWave.requestPaint() }
-                function onWaveFrequencyChanged() { fgWave.requestPaint() }
-                function onWaveAmplitudeChanged() { fgWave.requestPaint() }
-            }
+        Rectangle {
+            width: root.endDotSize
+            height: root.endDotSize
+            radius: width / 2
+            color: root.endDotColor
+            opacity: root.endDotOpacity
+            antialiasing: true
+            x: Math.max(0, waveContainer.width - root.lineWidth / 2 - width / 2)
+            y: waveContainer.centerY - height / 2
         }
 
         MouseArea {

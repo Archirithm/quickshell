@@ -21,12 +21,21 @@ Item {
     property string title: (player && player.trackTitle) ? player.trackTitle : "Not Playing"
     property string artist: (player && player.trackArtist) ? player.trackArtist : "Unknown Artist"
     property string album: (player && player.trackAlbum) ? player.trackAlbum : ""
+    readonly property string playerName: player ? (player.identity || player.busName || "") : ""
 
     readonly property bool isActive: root.visible && root.player
     property bool showLyrics: false 
 
     property bool _isReady: false
-    Component.onCompleted: _isReady = true
+    readonly property string spectrumToken: "dynamic-island-media"
+    Component.onCompleted: {
+        _isReady = true;
+        if (root.isActive)
+            AudioSpectrum.acquire(root.spectrumToken);
+        MediaPalette.extract(root.artUrl, Appearance.colors.colPrimary);
+        root.reloadLyrics();
+    }
+    Component.onDestruction: AudioSpectrum.release(root.spectrumToken)
 
     // ==========================================
     // 歌词抓取与解析引擎
@@ -36,7 +45,7 @@ Item {
     Process {
         id: lyricsProc
         running: false
-        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/scripts/lyrics_fetcher.py", root.title, root.artist]
+        command: ["python3", Paths.scriptPath("media", "lyrics_fetcher.py"), root.title, root.artist, root.playerName]
         
         stdout: SplitParser {
             splitMarker: "\n"
@@ -48,7 +57,7 @@ Item {
                     for(let i = 0; i < parsed.length; i++) {
                         lyricsModel.append({"time": parsed[i].time, "text": parsed[i].text});
                     }
-                    lyricsList.currentIndex = 0;
+                    lyricsView.resetToLine(0);
                 } catch(e) {}
             }
         }
@@ -57,55 +66,33 @@ Item {
     Connections {
         target: root
         function onTitleChanged() {
-            if (root.title && root.title !== "Not Playing") {
-                lyricsModel.clear();
-                lyricsModel.append({"time": 0, "text": "🎵 正在搜寻歌词..."});
-                lyricsProc.running = false;
-                lyricsProc.running = true;
-            }
+            root.reloadLyrics();
         }
     }
 
-    // ==========================================
-    // 封面主色调提取引擎
-    // ==========================================
-    Canvas {
-        id: colorExtractor
-        width: 1; height: 1; visible: false
-        property color extractedColor: Appearance.colors.colPrimary
+    function reloadLyrics() {
+        if (!root.title || root.title === "Not Playing")
+            return;
 
-        Connections {
-            target: root
-            function onArtUrlChanged() {
-                if (root.artUrl !== "") colorExtractor.loadImage(root.artUrl);
-                else colorExtractor.extractedColor = Appearance.colors.colPrimary;
-            }
-        }
-        onImageLoaded: {
-            var ctx = getContext("2d");
-            ctx.drawImage(root.artUrl, 0, 0, 1, 1);
-            var imgData = ctx.getImageData(0, 0, 1, 1).data;
-            
-            var r = imgData[0] / 255.0;
-            var g = imgData[1] / 255.0;
-            var b = imgData[2] / 255.0;
-            var baseColor = Qt.rgba(r, g, b, 1.0);
-            var h = baseColor.hslHue;
-            var s = baseColor.hslSaturation;
-            var l = baseColor.hslLightness;
-            
-            s = Math.min(1.0, s * 1.5);
-            if (s < 0.1) {
-                extractedColor = Appearance.colors.colPrimary;
-            } else {
-                l = Math.max(0.65, Math.min(0.85, l));
-                extractedColor = Qt.hsla(h, s, l, 1.0);
-            }
+        lyricsModel.clear();
+        lyricsModel.append({"time": 0, "text": "🎵 正在搜寻歌词..."});
+        lyricsView.resetToLine(0);
+        lyricsProc.running = false;
+        lyricsProc.running = true;
+    }
+
+    Connections {
+        target: root
+        function onArtUrlChanged() {
+            MediaPalette.extract(root.artUrl, Appearance.colors.colPrimary);
         }
     }
 
-    property color dynamicThemeColor: colorExtractor.extractedColor
+    property color dynamicThemeColor: MediaPalette.primary
+    property color dynamicOnThemeColor: MediaPalette.onPrimary
+    property color dynamicTrackColor: MediaPalette.track
     Behavior on dynamicThemeColor { ColorAnimation { duration: 800; easing.type: Easing.OutQuint } }
+    Behavior on dynamicTrackColor { ColorAnimation { duration: 800; easing.type: Easing.OutQuint } }
 
     // ==========================================
     // 进度与时间高频同步逻辑
@@ -113,8 +100,10 @@ Item {
     Connections {
         target: root
         function onIsActiveChanged() {
-            if (root.isActive) CavaService.refCount++;
-            else CavaService.refCount = Math.max(0, CavaService.refCount - 1);
+            if (root.isActive)
+                AudioSpectrum.acquire(root.spectrumToken);
+            else
+                AudioSpectrum.release(root.spectrumToken);
         }
     }
     
@@ -133,9 +122,8 @@ Item {
                         if (lyricsModel.get(i).time <= pos) newIdx = i;
                         else break;
                     }
-                    if (lyricsList.currentIndex !== newIdx) {
-                        lyricsList.currentIndex = newIdx;
-                    }
+                    if (lyricsView.activeLine !== newIdx)
+                        lyricsView.syncToLine(newIdx, pos, false);
                 }
             }
         }
@@ -220,7 +208,7 @@ Item {
                 text: "lyrics" 
                 font.family: "Material Symbols Outlined"
                 font.pixelSize: 18
-                color: root.showLyrics ? Appearance.colors.colLayer0 : "white"
+                color: root.showLyrics ? root.dynamicOnThemeColor : "white"
             }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.showLyrics = !root.showLyrics }
         }
@@ -263,59 +251,19 @@ Item {
                 id: coverContainer
                 width: 220; height: 220
                 y: 10 
-                
-                property var smoothValues: new Array(30).fill(0)
-                property real dynamicRotation: 90 
 
-                Timer {
-                    interval: 16 
-                    running: root.isActive && CavaService.cavaAvailable
-                    repeat: true
-                    onTriggered: {
-                        let s = parent.smoothValues;
-                        let r = CavaService.values;
-                        parent.dynamicRotation += 0.3;
-                        for (let i = 0; i < 30; i++) {
-                            let diff = r[i] - s[i];
-                            if (diff > 0) s[i] += 0.75 * diff; 
-                            else if (diff < 0) s[i] += 0.12 * diff;
-                        }
-                        parent.smoothValues = s;
-                        spectrumCanvas.rotation = parent.dynamicRotation;
-                        spectrumCanvas.requestPaint(); 
-                    }
-                }
-
-                Canvas {
-                    id: spectrumCanvas
+                RadialSpectrum {
                     anchors.fill: parent
-                    onPaint: {
-                        var ctx = getContext("2d");
-                        ctx.clearRect(0, 0, width, height);
-                        let cx = width / 2; let cy = height / 2;
-                        let baseRadius = 72;
-                        let maxAmp = 25; 
-                        let s = parent.smoothValues;
-                        let totalBars = 60;   
-                        let angleStep = (Math.PI * 2) / totalBars;
-                        ctx.beginPath();
-                        ctx.lineCap = "round";       
-                        ctx.strokeStyle = String(root.dynamicThemeColor); 
+                    values: AudioSpectrum.values
+                    barCount: AudioSpectrum.bars
+                    innerRadius: 70
+                    maxMagnitude: 36
+                    strokeWidth: 4
+                    strokeColor: root.dynamicThemeColor
+                    valueScale: 1.08
+                    opacity: root.isActive && AudioSpectrum.available ? 1 : 0.35
 
-                        for (let i = 0; i < totalBars; i++) {
-                            let dataIndex = (i < 30) ? i : (59 - i);
-                            let val = Math.min(1.2, s[dataIndex] / 100.0); 
-                            let amp = Math.max(0.01, val) * maxAmp;
-                            let angle = i * angleStep;
-                            let rInner = baseRadius - (amp * 0.05);
-                            let rOuter = baseRadius + (amp * 0.95); 
-
-                            ctx.lineWidth = 2 + (val * 3);
-                            ctx.moveTo(cx + Math.cos(angle) * rInner, cy + Math.sin(angle) * rInner);
-                            ctx.lineTo(cx + Math.cos(angle) * rOuter, cy + Math.sin(angle) * rOuter);
-                        }
-                        ctx.stroke();
-                    }
+                    Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                 }
 
                 Rectangle {
@@ -346,43 +294,22 @@ Item {
                 width: stage.width - 280
                 height: 240
                 y: 10
-                
-                transform: Rotation {
-                    origin.x: 0 
-                    origin.y: lyricsContainer.height / 2
-                    axis { x: 0; y: 1; z: 0 } 
-                    angle: -30 
-                }
-
-                ListView {
-                    id: lyricsList
+                SpringLyricView {
+                    id: lyricsView
                     anchors.fill: parent
-                    model: lyricsModel
-                    clip: true
-                    spacing: 24 
-                    preferredHighlightBegin: height / 2 - 30
-                    preferredHighlightEnd: height / 2 + 30
-                    highlightRangeMode: ListView.StrictlyEnforceRange
-                    interactive: false 
-                    highlightMoveDuration: 600
-                    highlightMoveVelocity: -1
-
-                    delegate: Text {
-                        width: ListView.view.width
-                        text: model.text
-                        color: ListView.isCurrentItem ? "white" : "#99ffffff"
-                        font.pixelSize: 18
-                        font.bold: true 
-                        opacity: ListView.isCurrentItem ? 1.0 : 0.5
-                        transformOrigin: Item.Left
-                        scale: ListView.isCurrentItem ? 1.25 : 1.0
-                        horizontalAlignment: Text.AlignLeft
-                        wrapMode: Text.WordWrap
-                        
-                        Behavior on scale { NumberAnimation { duration: 500; easing.type: Easing.OutQuart } }
-                        Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.OutQuart } }
-                        Behavior on color { ColorAnimation { duration: 500; easing.type: Easing.OutQuart } }
-                    }
+                    lyrics: lyricsModel
+                    tiltAngle: 0
+                    alignPosition: 0.35
+                    lineGap: 22
+                    currentScale: 1.0
+                    inactiveScale: 0.97
+                    activeColor: "white"
+                    inactiveColor: "#99ffffff"
+                    fontSize: 18
+                    fontFamily: "LXGW WenKai GB Screen"
+                    fontBold: true
+                    horizontalAlignment: Text.AlignLeft
+                    wrapMode: Text.WordWrap
                 }
 
                 layer.enabled: true
@@ -425,8 +352,8 @@ Item {
                         Layout.preferredHeight: 26
                         progress: root.realProgress
                         waveColor: root.dynamicThemeColor
-                        trackColor: root.dynamicThemeColor
-                        trackOpacity: 0.3
+                        trackColor: root.dynamicTrackColor
+                        trackOpacity: 1.0
                         isPlaying: root.player ? root.player.isPlaying : false
 
                         onSeekRequested: (position) => {
@@ -470,9 +397,9 @@ Item {
                 inactiveOpacity: 0.7
                 disabledOpacity: 0.35
                 playingBg: root.dynamicThemeColor
-                playingFg: Appearance.colors.colLayer0
+                playingFg: root.dynamicOnThemeColor
                 pausedBg: root.dynamicThemeColor
-                pausedFg: Appearance.colors.colLayer0
+                pausedFg: root.dynamicOnThemeColor
                 playButtonSize: 60
                 playIconSize: 28
                 playPressedScale: 0.9

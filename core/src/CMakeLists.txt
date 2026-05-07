@@ -74,3 +74,31 @@ target_link_libraries(ClavisNiriCore PRIVATE
     Qt6::Network
 )
 target_include_directories(ClavisNiriCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+qt_add_library(ClavisAudioCore STATIC)
+target_sources(ClavisAudioCore PRIVATE
+    audio_collector.h
+    audio_collector.cpp
+)
+
+set_target_properties(ClavisAudioCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+target_link_libraries(ClavisAudioCore PRIVATE
+    Qt6::Core
+    PkgConfig::Pipewire
+)
+target_include_directories(ClavisAudioCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+qt_add_library(ClavisMediaCore STATIC)
+target_sources(ClavisMediaCore PRIVATE
+    media_palette_backend.h
+    media_palette_backend.cpp
+)
+
+set_target_properties(ClavisMediaCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+target_link_libraries(ClavisMediaCore PRIVATE
+    Qt6::Core
+    Qt6::Gui
+)
+target_include_directories(ClavisMediaCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

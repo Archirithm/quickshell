@@ -21,6 +21,13 @@ Item {
     readonly property string artUrl: player ? (player.trackArtUrl || "") : ""
     
     property string currentLoadedTitle: ""
+    readonly property string spectrumToken: "dynamic-island-lyrics"
+
+    Component.onCompleted: {
+        if (root.active)
+            AudioSpectrum.acquire(root.spectrumToken);
+    }
+    Component.onDestruction: AudioSpectrum.release(root.spectrumToken)
 
     // ============================================================
     // 【动态自适应宽度引擎】
@@ -34,8 +41,10 @@ Item {
     Connections {
         target: root
         function onActiveChanged() {
-            if (root.active) CavaService.refCount++;
-            else CavaService.refCount = Math.max(0, CavaService.refCount - 1);
+            if (root.active)
+                AudioSpectrum.acquire(root.spectrumToken);
+            else
+                AudioSpectrum.release(root.spectrumToken);
         }
     }
 
@@ -182,50 +191,43 @@ Item {
 
             Timer {
                 interval: 16 
-                running: root.active && CavaService.cavaAvailable
+                running: root.active && AudioSpectrum.available
                 repeat: true
                 onTriggered: {
                     let s = spectrumContainer.smoothValues;
-                    let r = CavaService.values;
-                    if (!r || r.length < 30) return;
+                    let r = AudioSpectrum.values;
+                    if (!r || r.length < 6) return;
                     
-                    // 核心1：频段聚合函数 (找出该区间的能量最大值，绝不遗漏)
-                    let getRegionMax = (start, end) => {
+                    let getRegionMax = (startRatio, endRatio) => {
+                        let start = Math.max(0, Math.min(r.length - 1, Math.floor(r.length * startRatio)));
+                        let end = Math.max(start, Math.min(r.length - 1, Math.floor(r.length * endRatio)));
                         let maxV = 0;
                         for (let i = start; i <= end; i++) {
                             if (r[i] > maxV) maxV = r[i];
                         }
-                        return maxV;
+                        return maxV * 100;
                     };
 
                     let targets = [0, 0, 0, 0, 0, 0];
                     
-                    // 核心2：对称式频率分布映射
-                    // 柱 0, 5 (最外侧)：高频 (人声唇齿音、镲片)，高频能量天生弱，乘以 1.5 倍补偿
-                    targets[0] = getRegionMax(16, 22) * 1.5;
-                    targets[5] = getRegionMax(23, 29) * 1.5;
+                    targets[0] = getRegionMax(0.55, 0.78) * 1.5;
+                    targets[5] = getRegionMax(0.78, 0.98) * 1.5;
                     
-                    // 柱 1, 4 (内侧)：中频 (吉他、主唱)，乘以 1.2 倍补偿
-                    targets[1] = getRegionMax(6, 10) * 1.2;
-                    targets[4] = getRegionMax(11, 15) * 1.2;
+                    targets[1] = getRegionMax(0.18, 0.33) * 1.2;
+                    targets[4] = getRegionMax(0.33, 0.55) * 1.2;
                     
-                    // 柱 2, 3 (正中间)：重低频 (底鼓、贝斯)，音乐动力的心脏
-                    targets[2] = getRegionMax(0, 2);
-                    targets[3] = getRegionMax(3, 5);
+                    targets[2] = getRegionMax(0.00, 0.08);
+                    targets[3] = getRegionMax(0.08, 0.18);
 
-                    // 核心3：提取全局重音节拍
                     let globalBeat = Math.max(targets[2], targets[3]);
 
                     for (let i = 0; i < 6; i++) {
-                        // 核心4：混合共振引擎
-                        // 自身频段占 80%，全局重低音占 20%。让即使没有高频的鼓点，也能带动旁边柱子微微颤动
                         let finalTarget = Math.min(100, targets[i] * 0.8 + globalBeat * 0.2);
                         
                         let diff = finalTarget - s[i];
                         
-                        // 物理阻尼优化：攻击(Attack)极快，释放(Release)像果冻一样粘滞
-                        if (diff > 0) s[i] += 0.85 * diff; // 爆发速度提升，完美卡点
-                        else s[i] += 0.08 * diff;          // 下落拖影加长，增强顺滑感
+                        if (diff > 0) s[i] += 0.85 * diff;
+                        else s[i] += 0.08 * diff;
                     }
                     
                     spectrumContainer.smoothValues = s;

@@ -5,7 +5,7 @@ import QtQuick.Effects
 import Qt5Compat.GraphicalEffects 
 import Quickshell
 import Quickshell.Wayland 
-import qs.config
+import qs.Common
 
 Item {
     id: root
@@ -31,7 +31,7 @@ Item {
         id: wallpaper
         anchors.fill: parent
         z: 0
-        source: "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current"
+        source: Paths.fileUrl(Paths.currentWallpaper)
         fillMode: Image.PreserveAspectCrop
         visible: false 
     }
@@ -108,7 +108,7 @@ Item {
 
             Image {
                 id: lockIconSource
-                source: "file://" + Quickshell.env("HOME") + "/.config/quickshell/assets/icons/lock.svg"
+                source: Paths.icon("lock.svg")
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
                 visible: false 
@@ -189,7 +189,7 @@ Item {
                         Image {
                             id: avatarImg
                             anchors.fill: parent
-                            source: "file:///home/archirithm/Pictures/avatar/shelby.jpg"
+                            source: Paths.fileUrl(Paths.defaultAvatar)
                             sourceSize: Qt.size(180, 180)
                             fillMode: Image.PreserveAspectCrop
                             visible: false

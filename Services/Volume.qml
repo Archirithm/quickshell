@@ -64,4 +64,8 @@ Singleton {
             }
         }
     }
+
+    function openMixer() {
+        Quickshell.execDetached(["pavucontrol"]);
+    }
 }

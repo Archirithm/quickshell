@@ -3,7 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Effects  // 引入现代 Qt 6 特效库
 import Quickshell
-import qs.config 
+import qs.Common 
 
 PopupWindow {
     id: root

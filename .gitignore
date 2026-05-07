@@ -9,7 +9,7 @@
 .vscode/
 
 # Vendored/generated icon packs
-assets/meteocons/
+assets/icons/weather/meteocons/
 
 # C++/Qt build outputs
 core/build*/
@@ -31,7 +31,7 @@ core/**/*_autogen/
 core/**/meta_types/
 
 # Runtime/cache noise
-scripts/__pycache__/
+scripts/**/__pycache__/
 *.log
 *.tmp
 *.bak

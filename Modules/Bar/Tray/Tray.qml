@@ -2,7 +2,7 @@ import Quickshell.Services.SystemTray
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects  // 引入 Qt 6 特效库
-import qs.config
+import qs.Common
 
 Item {
     id: root

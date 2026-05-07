@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
-import qs.config 
+import qs.Common 
 
 // 新增引入我们的 C++ 高性能监控库
 import Clavis.Sysmon 1.0

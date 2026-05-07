@@ -5,7 +5,7 @@ import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io          // 【新增】：必须引入 IO 模块以支持命令行 Process
 import Quickshell.Wayland
-import qs.config
+import qs.Common
 
 PanelWindow {
     id: root

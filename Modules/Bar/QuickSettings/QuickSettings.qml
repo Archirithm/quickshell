@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
-import qs.config
+import qs.Common
 
 Item {
     id: root
@@ -34,6 +34,7 @@ Item {
         
         // 直接调用同目录下的组件，无需 import
         Network {}
+        Brightness {}
         Volume {}
         PowerButton {}
     }

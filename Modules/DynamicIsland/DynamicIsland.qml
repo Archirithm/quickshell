@@ -6,7 +6,7 @@ import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import Quickshell.Wayland
 import qs.Services
-import qs.config
+import qs.Common
 
 import qs.Modules.DynamicIsland.ClockContent
 import qs.Modules.DynamicIsland.MediaContent  
@@ -37,6 +37,7 @@ Variants {
         
         color: "transparent"
         exclusiveZone: -1
+        WlrLayershell.namespace: "clavis-dynamic-island"
         WlrLayershell.layer: WlrLayer.Top
 
         WlrLayershell.keyboardFocus: root.hasClosablePopup
@@ -223,6 +224,7 @@ Variants {
                 property bool isVolumeMode: showVolume && !expanded && !isAudioMode && !isHubMode && !isToolsMode && !isLyricsMode
                 property bool isNotifMode: NotificationManager.hasNotifs && !expanded && !showVolume && !isAudioMode && !isHubMode && !isToolsMode && !isLyricsMode
                 property bool isCollapsedMode: !expanded && !isNotifMode && !isVolumeMode && !isAudioMode && !isLyricsMode && !isHubMode && !isToolsMode
+                property bool isCollapsedHovered: isCollapsedMode && (islandMouseArea.containsMouse || collapsedInputArea.containsMouse)
                 property bool hasClosablePopup: expanded || showLyrics || showHub || showTools || showAudio
                 
                 property bool showOverviewHole: isHubMode && hubTabIndex === 0
@@ -242,7 +244,7 @@ Variants {
 
                 property int targetR: (expanded || isNotifMode || isVolumeMode || 
                       isLyricsMode || isHubMode || isToolsMode || isAudioMode) 
-                      ? 24 : (isCollapsedMode && islandMouseArea.containsMouse ? 18 : 16)
+                      ? 24 : (isCollapsedHovered ? 18 : 16)
 
                 property int targetW: isAudioMode ? audioW :
                     isToolsMode ? toolsW :
@@ -251,7 +253,7 @@ Variants {
                     expanded ? expandedW : 
                     isVolumeMode ? volW : 
                     isNotifMode ? notifW : 
-                    (collapsedW + (root.isRecording ? recordExtraW : 0) + (isCollapsedMode && islandMouseArea.containsMouse ? 16 : 0))
+                    (collapsedW + (root.isRecording ? recordExtraW : 0) + (isCollapsedHovered ? 16 : 0))
 
                 property int targetH: isAudioMode ? audioH :
                         isToolsMode ? toolsH : 
@@ -260,11 +262,11 @@ Variants {
                         expanded ? expandedH : 
                         isVolumeMode ? volH : 
                         isNotifMode ? notifH : 
-                        (collapsedH + (isCollapsedMode && islandMouseArea.containsMouse ? 6 : 0))
+                        (collapsedH + (isCollapsedHovered ? 6 : 0))
 
-                property real wDamping: 1.0
-                property real hDamping: 1.0
-                property real rDamping: 1.0
+                property real wDamping: DynamicIslandMotion.initialDamping
+                property real hDamping: DynamicIslandMotion.initialDamping
+                property real rDamping: DynamicIslandMotion.initialDamping
 
                 width: targetW
                 height: targetH
@@ -311,18 +313,18 @@ Variants {
                 }
 
                 onTargetWChanged: {
-                    let isExpanding = (targetW > width); wDamping = isExpanding ? 0.7 : 0.8;
+                    let isExpanding = (targetW > width); wDamping = isExpanding ? DynamicIslandMotion.expandingDamping : DynamicIslandMotion.shrinkingDamping;
                 }
                 onTargetHChanged: {
-                    let isExpanding = (targetH > height); hDamping = isExpanding ? 0.7 : 0.8;
+                    let isExpanding = (targetH > height); hDamping = isExpanding ? DynamicIslandMotion.expandingDamping : DynamicIslandMotion.shrinkingDamping;
                 }
                 onTargetRChanged: {
-                    let isExpanding = (targetR > radius); rDamping = isExpanding ? 0.7 : 0.8;
+                    let isExpanding = (targetR > radius); rDamping = isExpanding ? DynamicIslandMotion.expandingDamping : DynamicIslandMotion.shrinkingDamping;
                 }
 
-                Behavior on width { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.wDamping; epsilon: 0.01 } }
-                Behavior on height { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.hDamping; epsilon: 0.01 } }
-                Behavior on radius { SpringAnimation { spring: 5.0; mass: 3.6; damping: root.rDamping; epsilon: 0.01 } }
+                Behavior on width { SpringAnimation { spring: DynamicIslandMotion.spring; mass: DynamicIslandMotion.mass; damping: root.wDamping; epsilon: DynamicIslandMotion.epsilon } }
+                Behavior on height { SpringAnimation { spring: DynamicIslandMotion.spring; mass: DynamicIslandMotion.mass; damping: root.hDamping; epsilon: DynamicIslandMotion.epsilon } }
+                Behavior on radius { SpringAnimation { spring: DynamicIslandMotion.spring; mass: DynamicIslandMotion.mass; damping: root.rDamping; epsilon: DynamicIslandMotion.epsilon } }
 
                 focus: root.hasClosablePopup
 
@@ -566,6 +568,28 @@ Variants {
                             root.showAudio = false
                             toolsWidget.stopAudio() 
                         }
+                    }
+                }
+
+                MouseArea {
+                    id: collapsedInputArea
+                    anchors.fill: parent
+                    z: 10000
+                    enabled: root.isCollapsedMode
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+
+                    onClicked: (mouse) => {
+                        if (mouse.button === Qt.MiddleButton) {
+                            root.showLyrics = !root.showLyrics;
+                            if (root.showLyrics)
+                                root.expanded = false;
+                        } else if (mouse.button === Qt.LeftButton) {
+                            root.expanded = true;
+                        }
+
+                        mouse.accepted = true;
                     }
                 }
             }

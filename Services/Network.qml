@@ -63,11 +63,17 @@ Singleton {
             return;
         }
 
-        if (accessPoint.isSecure && !hasSavedSecret(accessPoint.ssid)) {
-            for (const network of root.wifiNetworks)
-                network.askingPassword = network === accessPoint;
-            accessPoint.askingPassword = true;
-            root.wifiConnectTarget = null;
+        if (accessPoint.isSecure) {
+            const savedConnection = savedConnectionForSsid(accessPoint.ssid);
+            if (!savedConnection) {
+                openPasswordPrompt(accessPoint);
+                cleanupSecretRequestsForSsid(accessPoint.ssid);
+                return;
+            }
+
+            accessPoint.askingPassword = false;
+            root.wifiConnectTarget = accessPoint;
+            connectProc.exec(["nmcli", "connection", "up", savedConnection.name]);
             return;
         }
 
@@ -76,8 +82,45 @@ Singleton {
         connectProc.exec(["nmcli", "dev", "wifi", "connect", accessPoint.ssid]);
     }
 
+    function openPasswordPrompt(accessPoint) {
+        if (!accessPoint)
+            return;
+
+        for (const network of root.wifiNetworks)
+            network.askingPassword = network === accessPoint;
+        accessPoint.askingPassword = true;
+        root.wifiConnectTarget = null;
+    }
+
+    function cancelPasswordRequest(network) {
+        if (!network)
+            return;
+
+        network.askingPassword = false;
+        if (root.wifiConnectTarget === network)
+            root.wifiConnectTarget = null;
+        cleanupSecretRequestsForSsid(network.ssid);
+        root.refresh();
+    }
+
+    function cleanupSecretRequestsForSsid(ssid) {
+        if (!ssid || ssid.length === 0)
+            return;
+
+        cleanupSecretRequestsProcess.exec({
+            "environment": {
+                "SSID": ssid
+            },
+            "command": ["bash", "-c", 'nmcli -t -f NAME,TYPE connection show | while IFS=: read -r name type; do case "$type" in *wireless*|*wifi*) profile_ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | head -n1)"; [ -n "$profile_ssid" ] || profile_ssid="$name"; [ "$profile_ssid" = "$SSID" ] || continue; nmcli connection down "$name" 2>/dev/null || true; flags="$(nmcli -g 802-11-wireless-security.psk-flags connection show "$name" 2>/dev/null | head -n1)"; psk="$(nmcli -s -g 802-11-wireless-security.psk connection show "$name" 2>/dev/null | head -n1)"; case "$flags" in 1|2) nmcli connection modify "$name" connection.autoconnect no 2>/dev/null || true; nmcli connection delete "$name" 2>/dev/null || true; continue;; esac; [ -z "$psk" ] && nmcli connection delete "$name" 2>/dev/null || true;; esac; done']
+        });
+    }
+
     function hasSavedSecret(ssid) {
-        return root.savedWifiConnectionsWithSecrets.indexOf(ssid) !== -1;
+        return savedConnectionForSsid(ssid) !== null;
+    }
+
+    function savedConnectionForSsid(ssid) {
+        return root.savedWifiConnectionsWithSecrets.find(connection => connection.ssid === ssid) || null;
     }
 
     function disconnectWifiNetwork() {
@@ -89,6 +132,11 @@ Singleton {
         if (!network)
             return;
 
+        if (network.isSecure && password.length === 0) {
+            openPasswordPrompt(network);
+            return;
+        }
+
         network.askingPassword = false;
         root.wifiConnectTarget = network;
         changePasswordProc.exec({
@@ -96,7 +144,7 @@ Singleton {
                 "PASSWORD": password,
                 "SSID": network.ssid
             },
-            "command": ["bash", "-c", 'nmcli dev wifi connect "$SSID" password "$PASSWORD"']
+            "command": ["bash", "-c", 'nmcli -t -f NAME,TYPE connection show | while IFS=: read -r name type; do case "$type" in *wireless*|*wifi*) profile_ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | head -n1)"; [ -n "$profile_ssid" ] || profile_ssid="$name"; [ "$profile_ssid" = "$SSID" ] || continue; nmcli connection down "$name" 2>/dev/null || true; flags="$(nmcli -g 802-11-wireless-security.psk-flags connection show "$name" 2>/dev/null | head -n1)"; psk="$(nmcli -s -g 802-11-wireless-security.psk connection show "$name" 2>/dev/null | head -n1)"; case "$flags" in 1|2) nmcli connection delete "$name" 2>/dev/null || true; continue;; esac; [ -z "$psk" ] && nmcli connection delete "$name" 2>/dev/null || true;; esac; done; nmcli dev wifi connect "$SSID" password "$PASSWORD"']
         });
     }
 
@@ -188,13 +236,19 @@ Singleton {
         }
         stderr: SplitParser {
             onRead: line => {
-                if (line.includes("Secrets were required") && root.wifiConnectTarget)
-                    root.wifiConnectTarget.askingPassword = true;
+                if (line.includes("Secrets were required") && root.wifiConnectTarget) {
+                    const target = root.wifiConnectTarget;
+                    root.cleanupSecretRequestsForSsid(target.ssid);
+                    root.openPasswordPrompt(target);
+                }
             }
         }
         onExited: exitCode => {
-            if (root.wifiConnectTarget)
-                root.wifiConnectTarget.askingPassword = exitCode !== 0;
+            if (root.wifiConnectTarget && exitCode !== 0) {
+                const target = root.wifiConnectTarget;
+                root.cleanupSecretRequestsForSsid(target.ssid);
+                root.openPasswordPrompt(target);
+            }
             root.wifiConnectTarget = null;
             root.refresh();
         }
@@ -214,11 +268,20 @@ Singleton {
     Process {
         id: changePasswordProc
         onExited: exitCode => {
-            if (root.wifiConnectTarget)
-                root.wifiConnectTarget.askingPassword = exitCode !== 0;
+            if (root.wifiConnectTarget && exitCode !== 0)
+                root.openPasswordPrompt(root.wifiConnectTarget);
             root.wifiConnectTarget = null;
             root.refresh();
         }
+    }
+
+    Process {
+        id: cleanupSecretRequestsProcess
+        environment: ({
+            LANG: "C",
+            LC_ALL: "C"
+        })
+        onExited: root.refresh()
     }
 
     Process {
@@ -239,7 +302,7 @@ Singleton {
 
     Process {
         id: savedConnectionsProcess
-        command: ["bash", "-c", 'nmcli -t -f NAME,TYPE connection show | while IFS=: read -r name type; do case "$type" in *wireless*|*wifi*) ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | head -n1)"; psk="$(nmcli -s -g 802-11-wireless-security.psk connection show "$name" 2>/dev/null | head -n1)"; [ -n "$psk" ] && printf "%s\\n" "${ssid:-$name}";; esac; done']
+        command: ["bash", "-c", 'nmcli -t -f NAME,TYPE connection show | while IFS=: read -r name type; do case "$type" in *wireless*|*wifi*) ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | head -n1)"; [ -n "$ssid" ] || ssid="$name"; flags="$(nmcli -g 802-11-wireless-security.psk-flags connection show "$name" 2>/dev/null | head -n1)"; psk="$(nmcli -s -g 802-11-wireless-security.psk connection show "$name" 2>/dev/null | head -n1)"; case "$flags" in ""|0) [ -n "$psk" ] && printf "%s\\t%s\\n" "$ssid" "$name";; esac;; esac; done']
         environment: ({
             LANG: "C",
             LC_ALL: "C"
@@ -255,10 +318,13 @@ Singleton {
                     return;
                 }
 
-                const placeholder = "STRINGWHICHHOPEFULLYWONTBEUSED";
-                const escapedColon = new RegExp("\\\\:", "g");
-                const placeholderColon = new RegExp(placeholder, "g");
-                root.savedWifiConnectionsWithSecrets = rawText.split("\n").map(line => line.replace(escapedColon, placeholder).replace(placeholderColon, ":")).filter(ssid => ssid.length > 0);
+                root.savedWifiConnectionsWithSecrets = rawText.split("\n").map(line => {
+                    const fields = line.split("\t");
+                    return {
+                        ssid: fields[0] || "",
+                        name: fields[1] || fields[0] || ""
+                    };
+                }).filter(connection => connection.ssid.length > 0 && connection.name.length > 0);
             }
         }
     }

@@ -3,7 +3,7 @@ import QtQuick.Controls
 import Qt5Compat.GraphicalEffects 
 import Quickshell
 import Quickshell.Io
-import qs.config
+import qs.Common
 
 Item {
     id: root
@@ -272,7 +272,6 @@ Item {
     function applyWallpaper() {
         if (wallpaperModel.count === 0) return;
         let currentPath = wallpaperModel.get(view.currentIndex).path;
-        let home = Quickshell.env("HOME");
         Appearance.currentWallpaperPreview = "file://" + currentPath;
         
         // 1. awww 命令
@@ -283,12 +282,12 @@ Item {
                   "--transition-bezier .43,1.19,1,.4";
 
         // 2. Quickshell 专用 matugen 颜色命令
-        let matugenCmd = "bash \"" + home + "/.config/quickshell/scripts/generate_quickshell_colors.sh\" " +
+        let matugenCmd = "bash \"" + Paths.scriptPath("theme", "generate_quickshell_colors.sh") + "\" " +
                          "--image \"" + currentPath + "\" " +
                          "--scheme \"" + Appearance.matugenScheme + "\"";
 
         // 3. overview 脚本命令
-        let overviewCmd = "bash " + home + "/.config/quickshell/scripts/overview.sh \"" + currentPath + "\"";
+        let overviewCmd = "bash \"" + Paths.scriptPath("system", "overview.sh") + "\" \"" + currentPath + "\"";
 
         // 注意这里把 swwwCmd 换成了 awwwCmd
         let combinedCmd = awwwCmd + " ; " + matugenCmd + " ; " + overviewCmd + " &";

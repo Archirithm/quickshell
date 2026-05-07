@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
-import qs.config 
+import qs.Common 
 
 Item {
     id: root
@@ -40,7 +40,7 @@ Item {
 
     Process {
         id: scheduleLoader
-        command: ["cat", Quickshell.env("HOME") + "/.cache/quickshell/schedule.json"]
+        command: ["cat", Paths.scheduleCache]
         running: false
         stdout: SplitParser { onRead: (data) => { root.jsonBuffer += data; } }
         onExited: {

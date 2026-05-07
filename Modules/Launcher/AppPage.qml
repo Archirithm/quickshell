@@ -2,9 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
-import qs.config
+import qs.Common
 
-import "../../JS/AppManager.js" as AppManager
+import "../../Common/functions/AppManager.js" as AppManager
 
 Item {
     id: root

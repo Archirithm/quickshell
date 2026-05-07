@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import qs.config
+import qs.Common
 import qs.Modules.DynamicIsland.OverviewContent
 
 Item {

@@ -1,15 +1,14 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Shapes 
 import Quickshell
 import qs.Services
-import qs.config
+import qs.Common
+import qs.Widgets.common
 
 Item {
     id: root
     property bool isHovered: mouseArea.containsMouse
 
-    // 默认高度 28，宽度在悬浮时平滑展开以容纳数字
     implicitHeight: 28
     implicitWidth: isHovered ? layout.implicitWidth : 28
 
@@ -20,56 +19,26 @@ Item {
         anchors.centerIn: parent
         spacing: 8
 
-        // 图标和表盘部分
-        Item {
+        // 圆弧仪表盘
+        ArcGauge {
             Layout.preferredWidth: 28
             Layout.preferredHeight: 28
 
-            Shape {
-                anchors.fill: parent
-                layer.enabled: true
-                layer.samples: 4 
+            value: Volume.sinkVolume
+            progressColor: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? Appearance.colors.colError : Appearance.colors.colPrimary
+            trackColor: Appearance.colors.colLayer2Hover
+            handleColor: Appearance.colors.colOnSurface
+            iconColor: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? Appearance.colors.colError : Appearance.colors.colOnSurface
 
-                ShapePath {
-                    fillColor: "transparent"
-                    strokeColor: Appearance.colors.colLayer2Hover
-                    strokeWidth: 3
-                    capStyle: ShapePath.RoundCap 
-                    PathAngleArc {
-                        centerX: 14; centerY: 14
-                        radiusX: 12; radiusY: 12
-                        startAngle: 135; sweepAngle: 270
-                    }
-                }
-
-                ShapePath {
-                    fillColor: "transparent"
-                    strokeColor: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? Appearance.colors.colError : Appearance.colors.colPrimary
-                    strokeWidth: 3
-                    capStyle: ShapePath.RoundCap
-                    PathAngleArc {
-                        centerX: 14; centerY: 14
-                        radiusX: 12; radiusY: 12
-                        startAngle: 135
-                        sweepAngle: 270 * Volume.sinkVolume
-                    }
-                }
-            }
-
-            Text {
-                anchors.centerIn: parent
-                font.pixelSize: 10
-                color: (Volume.sinkMuted || Volume.sinkVolume <= 0) ? Appearance.colors.colError : Appearance.colors.colOnSurface
-                text: {
-                    if (Volume.isHeadphone) return ""
-                    if (Volume.sinkMuted || Volume.sinkVolume <= 0) return ""
-                    if (Volume.sinkVolume < 0.5) return ""
-                    return ""
-                }
+            icon: {
+                if (Volume.isHeadphone) return "headphones"
+                if (Volume.sinkMuted || Volume.sinkVolume <= 0) return "volume_off"
+                if (Volume.sinkVolume < 0.5) return "volume_down"
+                return "volume_up"
             }
         }
 
-        // 音量数字部分（无百分号，指定字体）
+        // 音量数字（hover 时展开）
         Text {
             id: volText
             text: Math.round(Volume.sinkVolume * 100).toString()
@@ -88,7 +57,7 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        
+
         onWheel: (wheel) => {
             const step = 0.05
             let newVol = Volume.sinkVolume

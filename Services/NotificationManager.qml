@@ -5,7 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
-import qs.config
+import qs.Common
 import qs.Modules.DynamicIsland.OverviewContent
 
 Singleton {

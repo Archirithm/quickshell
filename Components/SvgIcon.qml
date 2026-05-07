@@ -1,9 +1,9 @@
 pragma Singleton
 import QtQuick
+import qs.Common
 
 QtObject {
-    // 图标所在的绝对路径
-    readonly property string basePath: "/home/archirithm/.config/quickshell/assets/icons/"
+    readonly property string basePath: Paths.iconsDir + "/"
 
     // 注册图标值
     property string previous: basePath + "previous.svg"

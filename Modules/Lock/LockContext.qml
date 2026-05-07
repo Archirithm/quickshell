@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.Pam
+import qs.Common
 
 Scope {
     id: root
@@ -22,8 +23,7 @@ Scope {
 
     PamContext {
         id: pam
-        // 指向 pam 文件夹的绝对路径
-        configDirectory: Quickshell.env("HOME") + "/.config/quickshell/Modules/Lock/pam"
+        configDirectory: Paths.shellDir + "/Modules/Lock/pam"
         config: "password.conf"
 
         onPamMessage: {

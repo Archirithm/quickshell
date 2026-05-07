@@ -1,11 +1,13 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Qt5Compat.GraphicalEffects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
-import qs.config
+import qs.Common
 import qs.Services
+import qs.Widgets.common
 
 Item {
     id: root
@@ -122,7 +124,7 @@ Item {
         running: root.isActive
         repeat: true
         onTriggered: {
-            if (root.player && !seekMa.pressed) {
+            if (root.player && !mediaProgress.pressed) {
                 root.currentPos = root.player.position;
                 if (root.showLyrics && lyricsModel.count > 0) {
                     let pos = root.currentPos;
@@ -173,12 +175,35 @@ Item {
             }
         }
 
-        Image {
-            id: bgSource; source: root.artUrl
-            anchors.fill: parent; fillMode: Image.PreserveAspectCrop; visible: false 
+        Item {
+            anchors.fill: parent
+            clip: true
+
+            Image {
+                id: bgSource
+                anchors.centerIn: parent
+                width: parent.width * 1.5
+                height: parent.height * 1.5
+                source: root.artUrl
+                fillMode: Image.PreserveAspectCrop
+                visible: false
+            }
+
+            MultiEffect {
+                anchors.fill: bgSource
+                source: bgSource
+                visible: root.artUrl !== ""
+                blurEnabled: true
+                blur: 1.0
+                blurMax: 80
+                contrast: 0.2
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: Qt.rgba(0, 0, 0, 0.5)
+            }
         }
-        FastBlur { anchors.fill: parent; source: bgSource; radius: 64; visible: root.artUrl !== "" }
-        Rectangle { anchors.fill: parent; color: Qt.rgba(0, 0, 0, 0.5) }
 
         Rectangle {
             id: lyricsToggleBtn
@@ -394,90 +419,20 @@ Item {
                     anchors.fill: parent
                     spacing: 4
 
-                    // ==========================================
-                    // 极致还原 MD3 规范的纯净波浪进度条
-                    // ==========================================
-                    Item {
-                        id: waveContainer
-                        Layout.fillWidth: true; Layout.preferredHeight: 26
+                    MaterialWaveProgressBar {
+                        id: mediaProgress
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 26
+                        progress: root.realProgress
+                        waveColor: root.dynamicThemeColor
+                        trackColor: root.dynamicThemeColor
+                        trackOpacity: 0.3
+                        isPlaying: root.player ? root.player.isPlaying : false
 
-                        property real targetPlayhead: seekMa.pressed ? Math.max(0, Math.min(seekMa.mouseX, width)) : (root.realProgress * width)
-                        property real playheadX: targetPlayhead
-                        
-                        Behavior on playheadX {
-                            enabled: root.visible && !seekMa.pressed
-                            SmoothedAnimation { velocity: 200; duration: 1500; reversingMode: SmoothedAnimation.Sync }
-                        }
-
-                        property real wavePhase: 0
-                        NumberAnimation on wavePhase {
-                            from: 0
-                            to: Math.PI * 2
-                            duration: 1200 
-                            loops: Animation.Infinite
-                            running: root.player ? root.player.isPlaying : false
-                        }
-                        onWavePhaseChanged: fgWave.requestPaint()
-                        onPlayheadXChanged: fgWave.requestPaint()
-
-                        // 1. 未播放部分 (加粗直线，带圆角和间隙)
-                        Rectangle {
-                            height: 6; radius: 3  // 【加粗】：线宽统一为 6
-                            color: root.dynamicThemeColor; opacity: 0.3 
-                            // 【完美间隙】：从 playheadX 向右偏移 4 像素作为起点，留下呼吸间距
-                            x: Math.min(parent.width, waveContainer.playheadX + 4)
-                            width: Math.max(0, parent.width - x)
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
-
-                        // 2. 已播放部分 (无衰减的圆角粗波浪)
-                        Canvas {
-                            id: fgWave
-                            anchors.fill: parent
-                            onPaint: {
-                                var ctx = getContext("2d");
-                                ctx.clearRect(0, 0, width, height); 
-                                
-                                // 【完美间隙】：因为线宽是 6，端点会向右溢出 3px
-                                // 因此实际画线的终点必须提前减去 7 (4+3)，这样视觉右边缘刚好落在 playheadX - 4 处，形成对称的 8px 间隙
-                                let endX = waveContainer.playheadX - 7;
-                                
-                                // 【起点保护】：给起点的圆角留出 3px 的物理空间，防止被 Canvas 边缘一刀切
-                                let padding = 3; 
-
-                                if (endX <= padding) return; 
-
-                                ctx.beginPath(); 
-                                ctx.lineWidth = 6.0;    // 【加粗线条】
-                                ctx.lineCap = "round";  // 【完美的端点圆润化】
-                                ctx.lineJoin = "round";
-                                ctx.strokeStyle = String(root.dynamicThemeColor); 
-                                
-                                let freq = 0.12, amp = 2.5; // 【调小振幅】
-                                
-                                // 【无振幅衰减】：x 从 padding 开始，保证起始点不被切断
-                                for (let x = padding; x <= endX; x += 2) { 
-                                    let y = height / 2 + Math.sin((x - padding) * freq + waveContainer.wavePhase) * amp;
-                                    if (x === padding) ctx.moveTo(x, y); 
-                                    else ctx.lineTo(x, y); 
-                                }
-                                ctx.stroke();
-                            }
-                            Connections { target: waveContainer; function onWidthChanged() { fgWave.requestPaint() } }
-                            Connections { target: root; function onDynamicThemeColorChanged() { fgWave.requestPaint() } }
-                        }
-
-                        // 【已删除】：彻底移除中间的圆角药丸滑块（竖线）
-
-                        MouseArea {
-                            id: seekMa
-                            anchors.fill: parent; anchors.margins: -12;
-                            cursorShape: Qt.PointingHandCursor
-                            onReleased: (mouse) => { 
-                                if (root.player && root.player.length > 0) { 
-                                    root.player.position = (Math.max(0, Math.min(mouse.x, waveContainer.width)) / waveContainer.width) * root.player.length;
-                                    root.currentPos = root.player.position; 
-                                } 
+                        onSeekRequested: (position) => {
+                            if (root.player && root.player.length > 0) {
+                                root.player.position = position * root.player.length;
+                                root.currentPos = root.player.position;
                             }
                         }
                     }
@@ -493,41 +448,51 @@ Item {
 
             Item { Layout.fillHeight: true; Layout.maximumHeight: 10 }
 
-            RowLayout {
-                Layout.fillWidth: true; Layout.alignment: Qt.AlignHCenter; spacing: 36; Layout.maximumHeight: 60 
+            MediaControlBar {
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignHCenter
+                Layout.maximumHeight: 60
+                spacing: 36
+                isPlaying: root.player ? root.player.isPlaying : false
+                shuffleActive: root.player && root.player.shuffle
+                shuffleEnabled: root.player && root.player.shuffleSupported
+                previousEnabled: root.player
+                playPauseEnabled: root.player
+                nextEnabled: root.player
+                loopEnabled: root.player && root.player.loopSupported
+                loopMode: !root.player || root.player.loopState === MprisLoopState.None
+                    ? 0
+                    : (root.player.loopState === MprisLoopState.Track ? 2 : 1)
+                activeColor: root.dynamicThemeColor
+                inactiveColor: "white"
+                iconSize: 24
+                skipIconSize: 24
+                inactiveOpacity: 0.7
+                disabledOpacity: 0.35
+                playingBg: root.dynamicThemeColor
+                playingFg: Appearance.colors.colLayer0
+                pausedBg: root.dynamicThemeColor
+                pausedFg: Appearance.colors.colLayer0
+                playButtonSize: 60
+                playIconSize: 28
+                playPressedScale: 0.9
+                playHoverScale: 1.05
+                morphEnabled: true
 
-                component CtrlBtn : Text {
-                    property bool active: false
-                    font.family: "Material Symbols Outlined"; font.pixelSize: 24
-                    color: active ? root.dynamicThemeColor : "white"; opacity: active ? 1.0 : 0.7
-                    scale: ma.pressed ? 0.8 : (ma.containsMouse ? 1.1 : 1.0)
-                    Behavior on scale { NumberAnimation { duration: 150 } }
-                    MouseArea { id: ma; anchors.fill: parent; anchors.margins: -10; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: parent.triggered() }
-                    signal triggered() 
+                onShuffleClicked: if (root.player && root.player.shuffleSupported) root.player.shuffle = !root.player.shuffle
+                onPreviousClicked: if (root.player) root.player.previous()
+                onPlayPauseClicked: if (root.player) root.player.togglePlaying()
+                onNextClicked: if (root.player) root.player.next()
+                onLoopClicked: {
+                    if (!root.player || !root.player.loopSupported)
+                        return;
+                    if (root.player.loopState === MprisLoopState.None)
+                        root.player.loopState = MprisLoopState.Playlist;
+                    else if (root.player.loopState === MprisLoopState.Playlist)
+                        root.player.loopState = MprisLoopState.Track;
+                    else
+                        root.player.loopState = MprisLoopState.None;
                 }
-
-                CtrlBtn { text: "shuffle"; active: root.player && root.player.shuffle; onTriggered: if(root.player && root.player.shuffleSupported) root.player.shuffle = !root.player.shuffle } 
-                CtrlBtn { text: "skip_previous"; onTriggered: if(root.player) root.player.previous() } 
-                
-                Rectangle {
-                    width: 60; height: 60; radius: 30; color: root.dynamicThemeColor 
-                    scale: playMa.pressed ? 0.9 : (playMa.containsMouse ? 1.05 : 1.0)
-                    Behavior on scale { NumberAnimation { duration: 150 } }
-                    Text { anchors.centerIn: parent; text: (root.player && root.player.isPlaying) ? "pause" : "play_arrow"; color: Appearance.colors.colLayer0; font.family: "Material Symbols Outlined"; font.pixelSize: 28 }
-                    MouseArea { id: playMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: if(root.player) root.player.togglePlaying() }
-                }
-
-                CtrlBtn { text: "skip_next"; onTriggered: if(root.player) root.player.next() } 
-                CtrlBtn { 
-                    active: root.player && root.player.loopState !== MprisLoopState.None
-                    text: (!root.player) ? "repeat" : (root.player.loopState === MprisLoopState.Track ? "repeat_one" : "repeat")
-                    onTriggered: {
-                        if(!root.player || !root.player.loopSupported) return;
-                        if (root.player.loopState === MprisLoopState.None) root.player.loopState = MprisLoopState.Playlist; 
-                        else if (root.player.loopState === MprisLoopState.Playlist) root.player.loopState = MprisLoopState.Track; 
-                        else root.player.loopState = MprisLoopState.None;
-                    }
-                } 
             }
         }
     }

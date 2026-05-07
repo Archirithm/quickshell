@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.Services
-import qs.config
+import qs.Common
 
 Rectangle {
     id: root

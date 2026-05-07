@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Io
+import qs.Common
 
 Item {
     id: backendRoot
@@ -13,7 +14,7 @@ Item {
     // --- 调用外部脚本开始录制 ---
     function startRecord(mode) {
         backendRoot.currentRecordMode = mode
-        recordProcess.command = ["bash", "-c", "nohup bash $HOME/.config/quickshell/scripts/record.sh start " + mode + " >/dev/null 2>&1 &"]
+        recordProcess.command = ["bash", "-c", "nohup bash \"" + Paths.scriptPath("capture", "record.sh") + "\" start " + mode + " >/dev/null 2>&1 &"]
         recordProcess.running = false
         recordProcess.running = true
     }
@@ -21,7 +22,7 @@ Item {
     // --- 调用外部脚本停止录制 ---
     function stopRecord() {
         var mode = backendRoot.currentRecordMode
-        stopProcess.command = ["bash", "-c", "nohup bash $HOME/.config/quickshell/scripts/record.sh stop " + mode + " >/dev/null 2>&1 &"]
+        stopProcess.command = ["bash", "-c", "nohup bash \"" + Paths.scriptPath("capture", "record.sh") + "\" stop " + mode + " >/dev/null 2>&1 &"]
         stopProcess.running = false
         stopProcess.running = true
     }
@@ -29,14 +30,14 @@ Item {
     // ================= 【录音控制后端】 =================
     // 接收 mode 参数 (audio_mic 或 audio_sys)
     function startAudio(mode) {
-        startAudioProcess.command = ["bash", "-c", "nohup bash $HOME/.config/quickshell/scripts/record.sh start " + mode + " >/dev/null 2>&1 &"]
+        startAudioProcess.command = ["bash", "-c", "nohup bash \"" + Paths.scriptPath("capture", "record.sh") + "\" start " + mode + " >/dev/null 2>&1 &"]
         startAudioProcess.running = false
         startAudioProcess.running = true
     }
 
     // 停止时统一传 audio
     function stopAudio() {
-        stopAudioProcess.command = ["bash", "-c", "nohup bash $HOME/.config/quickshell/scripts/record.sh stop audio >/dev/null 2>&1 &"]
+        stopAudioProcess.command = ["bash", "-c", "nohup bash \"" + Paths.scriptPath("capture", "record.sh") + "\" stop audio >/dev/null 2>&1 &"]
         stopAudioProcess.running = false
         stopAudioProcess.running = true
     }

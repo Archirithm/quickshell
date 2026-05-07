@@ -4,7 +4,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
-import qs.config 
+import qs.Common 
 import qs.Services 
 
 Item {
@@ -42,7 +42,7 @@ Item {
     // ================= 1. 歌词获取逻辑 =================
     Process {
         id: lyricsFetcher
-        command: ["python3", Quickshell.shellDir + "/scripts/lyrics_fetcher.py", root.trackTitle, root.trackArtist, root.playerName]
+        command: ["python3", Paths.scriptPath("media", "lyrics_fetcher.py"), root.trackTitle, root.trackArtist, root.playerName]
         stdout: SplitParser {
             onRead: data => {
                 try {

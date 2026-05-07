@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects 
 import Quickshell
-import qs.config
+import qs.Common
 import qs.Services
 
 Item {

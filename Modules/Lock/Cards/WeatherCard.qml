@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
-import qs.config
-import "file:///home/archirithm/.config/quickshell/JS/weather.js" as WeatherJS
+import qs.Common
+import "../../../Common/functions/weather.js" as WeatherJS
 
 Rectangle {
     id: root

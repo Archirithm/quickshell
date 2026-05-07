@@ -4,7 +4,7 @@ import QtQuick.Controls
 import Qt5Compat.GraphicalEffects 
 import Quickshell
 import Quickshell.Services.Mpris
-import qs.config
+import qs.Common
 
 Rectangle {
     id: root

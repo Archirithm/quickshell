@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Window 
-import qs.config
+import qs.Common
 
 Item {
     id: toolsRoot

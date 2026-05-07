@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Io
-import qs.config
+import qs.Common
 
 Rectangle {
     id: root
@@ -25,7 +25,7 @@ Rectangle {
     Process {
         id: monitorProc
         // 确保调用的是 python3 且路径正确
-        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/scripts/sys_monitor.py"]
+        command: ["python3", Paths.scriptPath("system", "sys_monitor.py")]
         running: true 
         
         stdout: SplitParser {

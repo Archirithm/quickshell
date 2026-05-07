@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.Pam
+import qs.Common
 
 ShellRoot {
     id: root
@@ -27,7 +28,7 @@ ShellRoot {
 
         PamContext {
             id: pam
-            configDirectory: Quickshell.env("HOME") + "/.config/quickshell/Modules/Lock/pam"
+            configDirectory: Paths.shellDir + "/Modules/Lock/pam"
             config: "password.conf"
             onPamMessage: { if (this.responseRequired) this.respond(internalContext.currentText); }
             onCompleted: result => {
@@ -56,8 +57,7 @@ ShellRoot {
                 id: uiLoader
                 anchors.fill: parent
                 
-                // 使用 HOME 环境变量拼接标准的文件 URL
-                source: "file://" + Quickshell.env("HOME") + "/.config/quickshell/Modules/Lock/LockSurface.qml"
+                source: Qt.resolvedUrl("LockSurface.qml")
                 
                 onLoaded: {
                     if (item) item.context = internalContext

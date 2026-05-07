@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
-import qs.config
+import qs.Common
 
 Item {
     id: root
@@ -161,14 +161,12 @@ Item {
         let currentPath = wallpaperModel.get(wallpaperList.currentIndex).path
         
         Appearance.currentWallpaperPreview = "file://" + currentPath;
-        let home = Quickshell.env("HOME")
-        
         // 【核心修改】：
         // 1. 将 swww img 改为 awww img
         // 2. 只生成 Quickshell 使用的 matugen 颜色 JSON
         let scriptContent = "awww img '" + currentPath + "' --transition-type any --transition-duration 3 --transition-fps 60 --transition-bezier .43,1.19,1,.4;\n" +
-                            "bash '" + home + "/.config/quickshell/scripts/generate_quickshell_colors.sh' --image '" + currentPath + "' --scheme '" + Appearance.matugenScheme + "';\n" +
-                            "bash '" + home + "/.config/quickshell/scripts/overview.sh' '" + currentPath + "'"
+                            "bash '" + Paths.scriptPath("theme", "generate_quickshell_colors.sh") + "' --image '" + currentPath + "' --scheme '" + Appearance.matugenScheme + "';\n" +
+                            "bash '" + Paths.scriptPath("system", "overview.sh") + "' '" + currentPath + "'"
                            
         runScript.command = ["bash", "-c", scriptContent]
         runScript.running = true

@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Io
+import qs.Common
 
 Item {
     id: audioRoot
@@ -53,7 +54,7 @@ Item {
 
     Process {
         id: cavaProcess
-        command: ["bash", "/home/archirithm/.config/quickshell/scripts/wave_" + audioRoot.audioMode + ".sh"]
+        command: ["bash", Paths.scriptPath("audio", "wave_" + audioRoot.audioMode + ".sh")]
         running: false
 
         stdout: SplitParser {

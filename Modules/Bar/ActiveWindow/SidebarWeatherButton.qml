@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Clavis.Weather 1.0
-import qs.config
+import qs.Common
 
 Item {
     id: root

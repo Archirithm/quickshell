@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects 
 import Quickshell
 import Quickshell.Io
-import qs.config 
+import qs.Common 
 
 Rectangle {
     id: root
@@ -56,7 +56,7 @@ Rectangle {
             Image {
                 id: avatarImg
                 anchors.fill: parent
-                source: "file:///home/archirithm/Pictures/avatar/shelby.jpg"
+                source: Paths.fileUrl(Paths.defaultAvatar)
                 sourceSize: Qt.size(144, 144) 
                 fillMode: Image.PreserveAspectCrop
                 visible: false 

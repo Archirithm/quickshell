@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import qs.config
+import qs.Common
 
 import qs.Modules.DynamicIsland.OverviewContent
 import qs.Modules.DynamicIsland.Media

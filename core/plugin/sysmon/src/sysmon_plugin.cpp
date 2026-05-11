@@ -72,6 +72,16 @@ QString SysmonPlugin::uptime() const { return m_uptime; }
 int SysmonPlugin::taskRunning() const { return m_taskRunning; }
 int SysmonPlugin::taskTotal() const { return m_taskTotal; }
 
+QString SysmonPlugin::systemUser() const { return SysmonBackend::instance().getSystemUser(); }
+QString SysmonPlugin::hostName() const { return SysmonBackend::instance().getHostName(); }
+QString SysmonPlugin::wmName() const { return SysmonBackend::instance().getWmName(); }
+QString SysmonPlugin::kernelRelease() const { return SysmonBackend::instance().getKernelRelease(); }
+QString SysmonPlugin::shellName() const { return SysmonBackend::instance().getShellName(); }
+QString SysmonPlugin::distroId() const { return SysmonBackend::instance().getDistroId(); }
+QString SysmonPlugin::distroName() const { return SysmonBackend::instance().getDistroName(); }
+QString SysmonPlugin::chassis() const { return SysmonBackend::instance().getChassis(); }
+QString SysmonPlugin::osAgeText() const { return SysmonBackend::instance().getOsAgeText(); }
+
 // === 分级更新槽 ===
 
 void SysmonPlugin::onFastTick() {

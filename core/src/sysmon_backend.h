@@ -63,6 +63,15 @@ public:
     int getFanRpm() const;
     double getCpuFreqGHz() const;
     QString getUptime() const;
+    QString getSystemUser() const;
+    QString getHostName() const;
+    QString getWmName() const;
+    QString getKernelRelease() const;
+    QString getShellName() const;
+    QString getDistroId() const;
+    QString getDistroName() const;
+    QString getChassis() const;
+    QString getOsAgeText() const;
 
 private:
     explicit SysmonBackend(QObject* parent = nullptr);

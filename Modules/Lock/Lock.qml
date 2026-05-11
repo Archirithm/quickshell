@@ -15,13 +15,17 @@ ShellRoot {
         property bool unlockInProgress: false
         property bool showFailure: false
 
+        signal unlockSucceeded()
+        signal unlockFailed()
+
         function tryUnlock() {
             if (currentText === "") return;
+            if (unlockInProgress) return;
             internalContext.unlockInProgress = true;
             pam.start();
         }
         
-        function emergencyUnlock() {
+        function finishUnlock() {
             sessionLock.locked = false;
             root.unlocked();
         }
@@ -35,10 +39,11 @@ ShellRoot {
                 if (result == PamResult.Success) {
                     internalContext.currentText = "";
                     internalContext.showFailure = false;
-                    internalContext.emergencyUnlock();
+                    internalContext.unlockSucceeded();
                 } else {
                     internalContext.currentText = "";
                     internalContext.showFailure = true;
+                    internalContext.unlockFailed();
                 }
                 internalContext.unlockInProgress = false;
             }
@@ -51,17 +56,12 @@ ShellRoot {
         locked: true
 
         WlSessionLockSurface {
-            
-            // A. UI 加载器
-            Loader {
-                id: uiLoader
+            id: lockSurface
+
+            LockSurface {
                 anchors.fill: parent
-                
-                source: Qt.resolvedUrl("LockSurface.qml")
-                
-                onLoaded: {
-                    if (item) item.context = internalContext
-                }
+                context: internalContext
+                screenRef: lockSurface.screen
             }
 
             // // C. 紧急出口 (右上角)

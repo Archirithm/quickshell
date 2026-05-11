@@ -16,11 +16,14 @@ FocusScope {
     onActiveFocusChanged: if (activeFocus) input.forceActiveFocus()
 
     Rectangle {
+        id: inputFrame
         anchors.fill: parent
         color: Appearance.colors.colLayer4 
         radius: 25 
         border.width: 1
-        border.color: input.activeFocus ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.5) : "transparent"
+        border.color: input.activeFocus ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.5)
+            : root.context && root.context.showFailure ? Qt.rgba(Appearance.colors.colError.r, Appearance.colors.colError.g, Appearance.colors.colError.b, 0.7)
+            : "transparent"
         
         SequentialAnimation {
             id: shakeAnim
@@ -37,11 +40,19 @@ FocusScope {
 
             // 1. 左侧锁图标
             Text {
-                text: ""
+                text: root.context && root.context.unlockInProgress ? "sync" : "lock"
                 color: Appearance.colors.colOnSurfaceVariant
-                font.family: Sizes.fontFamilyMono
-                font.pixelSize: 16
+                font.family: "Material Symbols Rounded"
+                font.pixelSize: 18
                 Layout.alignment: Qt.AlignVCenter 
+
+                RotationAnimation on rotation {
+                    running: root.context && root.context.unlockInProgress
+                    loops: Animation.Infinite
+                    from: 0
+                    to: 360
+                    duration: 900
+                }
             }
 
             // 2. 核心输入区
@@ -61,7 +72,8 @@ FocusScope {
                     echoMode: TextInput.Password
                     
                     onAccepted: {
-                        root.requestUnlock()
+                        if (!root.context || !root.context.unlockInProgress)
+                            root.requestUnlock()
                     }
                     
                     onTextChanged: {
@@ -92,6 +104,24 @@ FocusScope {
                 // 数据模型
                 ListModel {
                     id: dotsModel
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: root.context && root.context.unlockInProgress ? "Checking..." : "Enter password"
+                    visible: input.text.length === 0
+                    opacity: visible ? 0.8 : 0
+                    color: Appearance.colors.colOnSurfaceVariant
+                    font.family: Sizes.fontFamilyMono
+                    font.pixelSize: 13
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Appearance.animation.expressiveEffects.duration
+                            easing.type: Appearance.animation.expressiveEffects.type
+                            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                        }
+                    }
                 }
 
                 // 居中的自定义密码点：改用 ListView 以支持完美退场动画
@@ -159,16 +189,16 @@ FocusScope {
                 
                 Text { 
                     anchors.centerIn: parent
-                    text: "➜"
+                    text: "arrow_forward"
                     color: parent.hasText ? Appearance.colors.colOnPrimary : Appearance.colors.colOutline
-                    font.pixelSize: 14
-                    font.bold: true
+                    font.family: "Material Symbols Rounded"
+                    font.pixelSize: 18
                 }
                 
                 MouseArea { 
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    enabled: parent.hasText
+                    enabled: parent.hasText && (!root.context || !root.context.unlockInProgress)
                     onClicked: {
                         input.forceActiveFocus()
                         if(parent.hasText) root.requestUnlock()

@@ -44,6 +44,17 @@ class SysmonPlugin : public QObject {
     Q_PROPERTY(int taskRunning READ taskRunning NOTIFY mediumDataChanged)
     Q_PROPERTY(int taskTotal READ taskTotal NOTIFY mediumDataChanged)
 
+    // === Static system info ===
+    Q_PROPERTY(QString systemUser READ systemUser CONSTANT)
+    Q_PROPERTY(QString hostName READ hostName CONSTANT)
+    Q_PROPERTY(QString wmName READ wmName CONSTANT)
+    Q_PROPERTY(QString kernelRelease READ kernelRelease CONSTANT)
+    Q_PROPERTY(QString shellName READ shellName CONSTANT)
+    Q_PROPERTY(QString distroId READ distroId CONSTANT)
+    Q_PROPERTY(QString distroName READ distroName CONSTANT)
+    Q_PROPERTY(QString chassis READ chassis CONSTANT)
+    Q_PROPERTY(QString osAgeText READ osAgeText CONSTANT)
+
 public:
     explicit SysmonPlugin(QObject *parent = nullptr);
     ~SysmonPlugin() override = default;
@@ -81,6 +92,16 @@ public:
     QString uptime() const;
     int taskRunning() const;
     int taskTotal() const;
+
+    QString systemUser() const;
+    QString hostName() const;
+    QString wmName() const;
+    QString kernelRelease() const;
+    QString shellName() const;
+    QString distroId() const;
+    QString distroName() const;
+    QString chassis() const;
+    QString osAgeText() const;
 
 signals:
     void fastDataChanged();

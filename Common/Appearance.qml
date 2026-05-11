@@ -246,57 +246,8 @@ Singleton {
         property color colErrorContainerActive: root.mix(colErrorContainer, colOnErrorContainer, 0.70)
     }
 
-    animationCurves: QtObject {
-        readonly property list<real> expressiveFastSpatial: [0.42, 1.67, 0.21, 0.90, 1, 1]
-        readonly property list<real> expressiveDefaultSpatial: [0.38, 1.21, 0.22, 1.00, 1, 1]
-        readonly property list<real> expressiveEffects: [0.34, 0.80, 0.34, 1.00, 1, 1]
-        readonly property list<real> emphasizedAccel: [0.3, 0, 0.8, 0.15, 1, 1]
-        readonly property list<real> standardDecel: [0, 0, 0, 1, 1, 1]
-
-        readonly property int expressiveFastSpatialDuration: 350
-        readonly property int expressiveDefaultSpatialDuration: 500
-        readonly property int expressiveEffectsDuration: 200
-        readonly property int emphasizedAccelDuration: 200
-        readonly property int standardDecelDuration: 200
-    }
-
-    animation: QtObject {
-        readonly property QtObject expressiveFastSpatial: QtObject {
-            readonly property int duration: root.animationCurves.expressiveFastSpatialDuration
-            readonly property int type: Easing.BezierSpline
-            readonly property list<real> bezierCurve: root.animationCurves.expressiveFastSpatial
-        }
-
-        readonly property QtObject expressiveDefaultSpatial: QtObject {
-            readonly property int duration: root.animationCurves.expressiveDefaultSpatialDuration
-            readonly property int type: Easing.BezierSpline
-            readonly property list<real> bezierCurve: root.animationCurves.expressiveDefaultSpatial
-        }
-
-        readonly property QtObject expressiveEffects: QtObject {
-            readonly property int duration: root.animationCurves.expressiveEffectsDuration
-            readonly property int type: Easing.BezierSpline
-            readonly property list<real> bezierCurve: root.animationCurves.expressiveEffects
-        }
-
-        readonly property QtObject emphasizedAccel: QtObject {
-            readonly property int duration: root.animationCurves.emphasizedAccelDuration
-            readonly property int type: Easing.BezierSpline
-            readonly property list<real> bezierCurve: root.animationCurves.emphasizedAccel
-        }
-
-        readonly property QtObject standardDecel: QtObject {
-            readonly property int duration: root.animationCurves.standardDecelDuration
-            readonly property int type: Easing.BezierSpline
-            readonly property list<real> bezierCurve: root.animationCurves.standardDecel
-        }
-
-        readonly property QtObject clickBounce: QtObject {
-            readonly property int duration: 400
-            readonly property int type: Easing.BezierSpline
-            readonly property list<real> bezierCurve: root.animationCurves.expressiveDefaultSpatial
-        }
-    }
+    animationCurves: Animations.curves
+    animation: Animations.animation
 
     rounding: QtObject {
         property int small: 12

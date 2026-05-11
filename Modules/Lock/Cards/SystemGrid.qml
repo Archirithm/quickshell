@@ -1,8 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
-import Quickshell
-import Quickshell.Io
+import Clavis.Sysmon 1.0
 import qs.Common
 
 Rectangle {
@@ -12,45 +11,6 @@ Rectangle {
     
     color: Appearance.colors.colLayer2
     radius: Sizes.lockCardRadius
-
-    // ================== 数据属性 (初始化为 0 防止 undefined 报错) ==================
-    property var sysData: ({
-        cpu: { value: 0, text: "--%" },
-        ram: { value: 0, text: "--%" },
-        disk: { value: 0, text: "--%" },
-        temp: { value: 0, text: "--°C" }
-    })
-
-    // ================== 数据获取 ==================
-    Process {
-        id: monitorProc
-        // 确保调用的是 python3 且路径正确
-        command: ["python3", Paths.scriptPath("system", "sys_monitor.py")]
-        running: true 
-        
-        stdout: SplitParser {
-            onRead: (data) => {
-                try {
-                    // 解析 JSON 并更新属性
-                    var json = JSON.parse(data.trim());
-                    root.sysData = json;
-                } catch(e) {
-                    console.log("SysMonitor JSON Error: " + e);
-                }
-            }
-        }
-    }
-
-    // 定时刷新 (每 2 秒一次)
-    Timer {
-        interval: 2000
-        running: true
-        repeat: true
-        onTriggered: monitorProc.running = true
-    }
-    
-    // 界面显示时立即刷新一次
-    Component.onCompleted: monitorProc.running = true
 
     // ================== 网格布局 ==================
     GridLayout {
@@ -63,37 +23,37 @@ Rectangle {
         // 1. CPU (紫色)
         SystemCircle { 
             title: "CPU"
-            icon: "" // Nerd Font Chip
-            value: root.sysData.cpu.value
-            display: root.sysData.cpu.text
-            accent: "#C586C0" 
+            icon: "memory"
+            value: SysmonPlugin.cpuUsage / 100.0
+            display: Math.round(SysmonPlugin.cpuUsage) + "%"
+            accent: Appearance.colors.colPrimary
         }
 
         // 2. Temp (红/橙色)
         SystemCircle { 
             title: "TEMP"
-            icon: "" // Thermometer
-            value: root.sysData.temp.value
-            display: root.sysData.temp.text
-            accent: "#F08080" 
+            icon: "thermostat"
+            value: Math.min(Math.max(SysmonPlugin.coreTemp / 100.0, 0), 1)
+            display: Math.round(SysmonPlugin.coreTemp) + "°C"
+            accent: Appearance.colors.colError
         }
 
         // 3. RAM (蓝色)
         SystemCircle { 
             title: "RAM"
-            icon: "\ue266" // Memory
-            value: root.sysData.ram.value
-            display: root.sysData.ram.text
-            accent: "#569CD6" 
+            icon: "developer_board"
+            value: SysmonPlugin.ramUsage / 100.0
+            display: SysmonPlugin.ramUsedGB.toFixed(1) + "G"
+            accent: Appearance.colors.colSecondary
         }
 
         // 4. Disk (青/黄色)
         SystemCircle { 
             title: "DISK"
-            icon: "" // HDD
-            value: root.sysData.disk.value
-            display: root.sysData.disk.text
-            accent: "#DCDCAA" 
+            icon: "hard_disk"
+            value: SysmonPlugin.diskUsage / 100.0
+            display: Math.round(SysmonPlugin.diskUsage) + "%"
+            accent: Appearance.colors.colTertiary
         }
     }
 
@@ -104,6 +64,7 @@ Rectangle {
         property real value: 0.0
         property string display: ""
         property color accent
+        property real animatedValue: value
         
         Layout.fillWidth: true
         Layout.fillHeight: true
@@ -148,8 +109,7 @@ Rectangle {
                         PathAngleArc { 
                             centerX: 30; centerY: 30; radiusX: 27; radiusY: 27; 
                             startAngle: 0; 
-                            // 确保 value 不为 undefined 且在 0-1 之间
-                            sweepAngle: 360 * (Math.min(Math.max(value, 0), 1))
+                            sweepAngle: 360 * (Math.min(Math.max(animatedValue, 0), 1))
                         }
                     }
                 }
@@ -159,7 +119,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: icon
                     color: accent
-                    font.family: Sizes.fontFamilyMono
+                    font.family: "Material Symbols Outlined"
                     font.pixelSize: 22
                 }
             }
@@ -172,6 +132,14 @@ Rectangle {
                 font.pixelSize: 12
                 font.bold: true
                 Layout.alignment: Qt.AlignHCenter
+            }
+        }
+
+        Behavior on animatedValue {
+            NumberAnimation {
+                duration: Appearance.animation.expressiveDefaultSpatial.duration
+                easing.type: Appearance.animation.expressiveDefaultSpatial.type
+                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
             }
         }
     }

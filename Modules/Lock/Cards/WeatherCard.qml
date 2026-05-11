@@ -1,9 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Io
+import Clavis.Weather 1.0
 import qs.Common
-import "../../../Common/functions/weather.js" as WeatherJS
 
 Rectangle {
     id: root
@@ -13,32 +11,15 @@ Rectangle {
     color: Appearance.colors.colLayer2 
     radius: Sizes.lockCardRadius
 
-    // ================== 数据属性 ==================
-    property string temp: "--"
-    property string cond: "Loading..."
-    property string loc: ""
-    property string iconName: "cloud"
-    property bool isDay: true
+    readonly property string temp: WeatherPlugin.hasValidData ? Math.round(WeatherPlugin.currentTemperatureC) + "°" : "--"
+    readonly property string cond: WeatherPlugin.loading ? "Loading..." : (WeatherPlugin.currentWeatherText || "Unknown")
+    readonly property string loc: WeatherPlugin.locationName || "Location"
+    readonly property string iconName: WeatherPlugin.currentIconName || "cloud"
 
-    // ================== 原生 JS 数据获取 ==================
-    function fetchData() {
-        WeatherJS.fetchLocationAndWeather(function(data) {
-            if (!data) {
-                root.cond = "Error";
-                return;
-            }
-            
-            root.temp = Math.round(data.current.temperature_2m) + "°";
-            root.cond = WeatherJS.getWeatherDesc(data.current.weather_code);
-            root.loc = data.locName;
-            root.isDay = data.current.is_day === 1;
-            root.iconName = WeatherJS.getMaterialIcon(data.current.weather_code);
-        });
+    Component.onCompleted: {
+        if (!WeatherPlugin.hasValidData)
+            WeatherPlugin.refresh();
     }
-
-    onVisibleChanged: if (visible) fetchData()
-    Component.onCompleted: fetchData()
-    Timer { interval: 1800000; running: true; repeat: true; onTriggered: fetchData() }
 
     // ================== 界面布局 ==================
     RowLayout {

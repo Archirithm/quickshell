@@ -103,3 +103,12 @@ double SysmonBackend::getGpuTempCelsius() const { return m_gpuProvider.getGpuTem
 int SysmonBackend::getFanRpm() const { return m_miscProvider.getFanRpm(); }
 double SysmonBackend::getCpuFreqGHz() const { return m_miscProvider.getCpuFreqGHz(); }
 QString SysmonBackend::getUptime() const { return m_miscProvider.getUptime(); }
+QString SysmonBackend::getSystemUser() const { return m_miscProvider.getSystemUser(); }
+QString SysmonBackend::getHostName() const { return m_miscProvider.getHostName(); }
+QString SysmonBackend::getWmName() const { return m_miscProvider.getWmName(); }
+QString SysmonBackend::getKernelRelease() const { return m_miscProvider.getKernelRelease(); }
+QString SysmonBackend::getShellName() const { return m_miscProvider.getShellName(); }
+QString SysmonBackend::getDistroId() const { return m_miscProvider.getDistroId(); }
+QString SysmonBackend::getDistroName() const { return m_miscProvider.getDistroName(); }
+QString SysmonBackend::getChassis() const { return m_miscProvider.getChassis(); }
+QString SysmonBackend::getOsAgeText() const { return m_miscProvider.getOsAgeText(); }

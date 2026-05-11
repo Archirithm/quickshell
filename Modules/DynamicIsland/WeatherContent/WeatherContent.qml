@@ -1,6 +1,6 @@
 import QtQuick
+import Clavis.Weather 1.0
 import qs.Common
-import "../../../Common/functions/weather.js" as WeatherJS
 import "../../../Common/functions/astro.js" as AstroJS
 
 Item {
@@ -29,7 +29,23 @@ Item {
     property real sunAltitude: 0
 
     Component.onCompleted: {
-        fetchData() 
+        syncWeatherData()
+        if (!WeatherPlugin.hasValidData)
+            WeatherPlugin.refresh()
+    }
+
+    Connections {
+        target: WeatherPlugin
+
+        function onDataChanged() {
+            root.syncWeatherData()
+            root.stopRefreshAnim()
+        }
+
+        function onLoadingChanged() {
+            if (!WeatherPlugin.loading)
+                root.stopRefreshAnim()
+        }
     }
 
     // ================== 全局 UI 超时控制 ==================
@@ -49,57 +65,57 @@ Item {
     }
 
     function fetchData() {
-        WeatherJS.fetchLocationAndWeather(function(data) {
-            // 收到任何回调，立刻停止动画并归位
-            root.stopRefreshAnim()
-            
-            if (!data) return;
+        WeatherPlugin.refresh()
+    }
 
-            root.latitude = data.lat
-            root.longitude = data.lon
-            root.locationName = data.locName
+    function syncWeatherData() {
+        if (!WeatherPlugin.hasValidData) {
+            root.locationName = WeatherPlugin.loading ? "LOADING..." : "UNAVAILABLE"
+            return
+        }
 
-            root.currentTemp = Math.round(data.current.temperature_2m) + "°"
-            root.currentIcon = WeatherJS.getMaterialIcon(data.current.weather_code)
-            root.currentDesc = WeatherJS.getWeatherDesc(data.current.weather_code)
-            root.feelsLike = Math.round(data.current.apparent_temperature) + "°C"
-            root.humidity = data.current.relative_humidity_2m + "%"
-            root.windSpeed = data.current.wind_speed_10m + " km/h"
-            root.pressure = data.current.surface_pressure + " hPa"
+        root.latitude = WeatherPlugin.latitude
+        root.longitude = WeatherPlugin.longitude
+        root.locationName = WeatherPlugin.locationName || "UNKNOWN"
 
-            var now = new Date()
-            var startIndex = 0
-            for (var i = 0; i < data.hourly.time.length; i++) {
-                if (new Date(data.hourly.time[i]) >= now) { startIndex = Math.max(0, i - 1); break }
-            }
-            var tempHourly = []
-            for (var h = 0; h < 12; h++) {
-                var idx = startIndex + h
-                var timeObj = new Date(data.hourly.time[idx])
-                tempHourly.push({
-                    time: timeObj.getHours().toString().padStart(2, '0') + ":00",
-                    temp: Math.round(data.hourly.temperature_2m[idx]),
-                    icon: WeatherJS.getMaterialIcon(data.hourly.weather_code[idx])
-                })
-            }
-            root.hourlyData = tempHourly
+        root.currentTemp = Math.round(WeatherPlugin.currentTemperatureC) + "°"
+        root.currentIcon = WeatherPlugin.currentIconName || "cloud"
+        root.currentDesc = WeatherPlugin.currentWeatherText || "Unknown"
+        root.feelsLike = Math.round(WeatherPlugin.currentFeelsLikeC) + "°C"
+        root.humidity = Math.round(WeatherPlugin.currentRelativeHumidity) + "%"
+        root.windSpeed = Math.round(WeatherPlugin.currentWindSpeedMs * 3.6) + " km/h"
+        root.pressure = Math.round(WeatherPlugin.currentPressureHpa) + " hPa"
 
-            var tempDaily = []
-            var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
-            for (var d = 0; d < 7; d++) {
-                var dateObj = new Date(data.daily.time[d])
-                tempDaily.push({
-                    day: (d === 0) ? "Today" : days[dateObj.getDay()],
-                    icon: WeatherJS.getMaterialIcon(data.daily.weather_code[d]),
-                    maxTemp: Math.round(data.daily.temperature_2m_max[d]) + "°",
-                    minTemp: Math.round(data.daily.temperature_2m_min[d]) + "°"
-                })
-            }
-            root.dailyData = tempDaily
-            
-            updateAstroData()
-            hourlyCanvas.requestPaint()
-        })
+        const tempHourly = []
+        const hourlyCount = Math.min(12, WeatherPlugin.hourlyForecast.count())
+        for (let h = 0; h < hourlyCount; h++) {
+            const item = WeatherPlugin.hourlyForecast.get(h)
+            const timeObj = new Date(Number(item.time || 0) * 1000)
+            tempHourly.push({
+                time: timeObj.getHours().toString().padStart(2, "0") + ":00",
+                temp: Math.round(Number(item.temperatureC || 0)),
+                icon: item.iconName || "cloud"
+            })
+        }
+        root.hourlyData = tempHourly
+
+        const tempDaily = []
+        const dailyCount = Math.min(7, WeatherPlugin.dailyForecast.count())
+        for (let d = 0; d < dailyCount; d++) {
+            const item = WeatherPlugin.dailyForecast.get(d)
+            const dateObj = item.date ? new Date(item.date + "T00:00:00") : new Date(Number(item.time || 0) * 1000)
+            const dayPart = item.day || ({})
+            tempDaily.push({
+                day: d === 0 ? "Today" : Qt.formatDate(dateObj, "ddd"),
+                icon: dayPart.iconName || item.iconName || "cloud",
+                maxTemp: Math.round(Number(item.temperatureMaxC || dayPart.temperatureC || 0)) + "°",
+                minTemp: Math.round(Number(item.temperatureMinC || 0)) + "°"
+            })
+        }
+        root.dailyData = tempDaily
+
+        updateAstroData()
+        hourlyCanvas.requestPaint()
     }
 
     function updateAstroData() {

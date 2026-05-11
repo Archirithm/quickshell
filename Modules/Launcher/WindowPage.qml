@@ -9,11 +9,41 @@ Item {
 
     signal requestCloseLauncher()
 
+    property string query: ""
     property var filteredWindows: []
 
-    function decrementCurrentIndex() { windowsList.decrementCurrentIndex() }
-    function incrementCurrentIndex() { windowsList.incrementCurrentIndex() }
-    function forceSearchFocus() { searchBox.forceActiveFocus() }
+    RofiStyle {
+        id: rofiStyle
+    }
+
+    function decrementCurrentIndex() { setCurrentIndex(windowsList.currentIndex - 1) }
+    function incrementCurrentIndex() { setCurrentIndex(windowsList.currentIndex + 1) }
+
+    function setCurrentIndex(index) {
+        if (filteredWindows.length === 0) {
+            windowsList.currentIndex = -1
+            windowsList.contentY = 0
+            return
+        }
+
+        windowsList.currentIndex = Math.max(0, Math.min(index, filteredWindows.length - 1))
+        ensureCurrentVisible()
+    }
+
+    function ensureCurrentVisible() {
+        if (windowsList.currentIndex < 0)
+            return
+
+        let firstVisibleIndex = Math.round(windowsList.contentY / rofiStyle.listStep)
+        if (windowsList.currentIndex < firstVisibleIndex)
+            firstVisibleIndex = windowsList.currentIndex
+        else if (windowsList.currentIndex >= firstVisibleIndex + rofiStyle.listRows)
+            firstVisibleIndex = windowsList.currentIndex - rofiStyle.listRows + 1
+
+        const maxFirstIndex = Math.max(0, filteredWindows.length - rofiStyle.listRows)
+        firstVisibleIndex = Math.max(0, Math.min(firstVisibleIndex, maxFirstIndex))
+        windowsList.contentY = firstVisibleIndex * rofiStyle.listStep
+    }
 
     function cleanAppName(rawName, isAppId) {
         if (!rawName) return ""
@@ -31,25 +61,23 @@ Item {
 
     function search(text) {
         filteredWindows = Niri.searchWindows(text)
-        if (windowsList.currentIndex >= filteredWindows.length) {
-            windowsList.currentIndex = 0
-        }
+        windowsList.contentY = 0
+        setCurrentIndex(0)
     }
 
     Connections {
         target: Niri
         function onWindowsChanged() {
-            if (root.visible) {
-                root.search(searchBox.text)
-            }
+            if (root.visible)
+                root.search(root.query)
         }
     }
 
+    onQueryChanged: search(query)
+
     onVisibleChanged: {
-        if (visible) {
-            searchBox.text = ""
-            search("")
-        }
+        if (visible)
+            search(query)
     }
 
     function highlightText(fullText, query) {
@@ -60,107 +88,96 @@ Item {
         return safeText.replace(regex, "<u><b>$1</b></u>")
     }
 
-    TextInput {
-        id: searchBox
-        x: -1000
-        y: -1000
-        width: 0
-        height: 0
-        opacity: 0
-        visible: true
-
-        onTextChanged: {
-            root.search(text)
-            windowsList.currentIndex = 0
-        }
-        Keys.onReturnPressed: (event) => { focusSelectedWindow(); event.accepted = true }
-        Keys.onEnterPressed: (event) => { focusSelectedWindow(); event.accepted = true }
-        Keys.onUpPressed: (event) => { windowsList.decrementCurrentIndex(); event.accepted = true }
-        Keys.onDownPressed: (event) => { windowsList.incrementCurrentIndex(); event.accepted = true }
+    Text {
+        anchors.centerIn: parent
+        text: "No windows opened."
+        color: Appearance.colors.colOnSurfaceVariant
+        font.family: Sizes.fontFamilyMono
+        font.pixelSize: rofiStyle.fontPixelSize
+        visible: root.filteredWindows.length === 0
     }
 
-    Item {
-        anchors.fill: parent
+    ListView {
+        id: windowsList
+        width: parent.width
+        height: rofiStyle.listHeight
+        anchors.top: parent.top
+        clip: true
+        spacing: rofiStyle.listSpacing
+        visible: root.filteredWindows.length > 0
 
-        Text {
-            anchors.centerIn: parent
-            text: "No windows opened."
-            color: Appearance.colors.colOnSurfaceVariant
-            font.pixelSize: 16
-            visible: root.filteredWindows.length === 0
+        model: root.filteredWindows
+
+        boundsBehavior: Flickable.StopAtBounds
+        interactive: false
+        highlightFollowsCurrentItem: true
+        highlightRangeMode: ListView.NoHighlightRange
+
+        highlight: Rectangle {
+            width: windowsList.width
+            height: rofiStyle.rowHeight
+            color: Appearance.colors.colPrimary
+            radius: rofiStyle.controlRadius
         }
+        highlightMoveDuration: 0
 
-        ListView {
-            id: windowsList
-            width: parent.width
-            height: 504
-            anchors.verticalCenter: parent.verticalCenter
-            clip: true
+        delegate: Item {
+            id: delegateItem
+            width: ListView.view.width
+            height: rofiStyle.rowHeight
 
-            model: root.filteredWindows
-
-            boundsBehavior: Flickable.StopAtBounds
-            highlightRangeMode: ListView.StrictlyEnforceRange
-            preferredHighlightBegin: 0
-            preferredHighlightEnd: height - 56
-
-            highlight: Rectangle {
-                color: Appearance.colors.colPrimary
-                radius: 12
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    root.setCurrentIndex(index)
+                    focusSelectedWindow()
+                }
             }
-            highlightMoveDuration: 0
 
-            delegate: Item {
-                id: delegateItem
-                width: ListView.view.width
-                height: 56
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: rofiStyle.itemPadding
+                spacing: rofiStyle.itemSpacing
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        windowsList.currentIndex = index
-                        focusSelectedWindow()
+                Item {
+                    Layout.preferredWidth: rofiStyle.iconSize
+                    Layout.preferredHeight: rofiStyle.iconSize
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Image {
+                        anchors.fill: parent
+                        sourceSize.width: rofiStyle.iconSize * 2
+                        sourceSize.height: rofiStyle.iconSize * 2
+                        fillMode: Image.PreserveAspectFit
+                        asynchronous: true
+                        smooth: true
+                        source: modelData.iconPath || "image://icon/application-x-executable"
                     }
                 }
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 16
-                    spacing: 16
+                Text {
+                    text: root.highlightText(root.cleanAppName(modelData.title, false), root.query)
+                    textFormat: Text.StyledText
+                    color: delegateItem.ListView.isCurrentItem ? Appearance.colors.colOnSecondary : Appearance.colors.colOnSurface
+                    font.family: Sizes.fontFamilyMono
+                    font.pixelSize: rofiStyle.fontPixelSize
+                    font.bold: false
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                }
 
-                    Item {
-                        Layout.preferredWidth: 36
-                        Layout.preferredHeight: 36
-
-                        Image {
-                            anchors.fill: parent
-                            sourceSize.width: 64
-                            sourceSize.height: 64
-                            fillMode: Image.PreserveAspectFit
-                            asynchronous: true
-                            smooth: true
-                            source: modelData.iconPath || "image://icon/application-x-executable"
-                        }
-                    }
-
-                    Text {
-                        text: root.highlightText(root.cleanAppName(modelData.title, false), searchBox.text)
-                        textFormat: Text.StyledText
-                        color: delegateItem.ListView.isCurrentItem ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
-                        font.pixelSize: 16
-                        font.bold: false
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
-
-                    Text {
-                        text: root.highlightText(root.cleanAppName(modelData.appName || modelData.appId, true), searchBox.text)
-                        textFormat: Text.StyledText
-                        color: delegateItem.ListView.isCurrentItem ? Qt.rgba(1, 1, 1, 0.7) : Appearance.colors.colOnSurfaceVariant
-                        font.pixelSize: 12
-                        font.family: "JetBrainsMono Nerd Font"
-                    }
+                Text {
+                    text: root.highlightText(root.cleanAppName(modelData.appName || modelData.appId, true), root.query)
+                    textFormat: Text.StyledText
+                    color: delegateItem.ListView.isCurrentItem ? Appearance.applyAlpha(Appearance.colors.colOnSecondary, 0.7) : Appearance.colors.colOnSurfaceVariant
+                    font.family: Sizes.fontFamilyMono
+                    font.pixelSize: rofiStyle.secondaryFontPixelSize
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                    Layout.alignment: Qt.AlignVCenter
                 }
             }
         }

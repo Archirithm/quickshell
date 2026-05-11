@@ -42,19 +42,10 @@ function updateFilter(inputText, DesktopEntries) {
     let result = [];
     for (let i = 0; i < filterApps.length; i++) {
         let app = filterApps[i];
-        
-        let rawIcon = app.icon || "";
-        let finalPath = rawIcon;
-
-        // 【核心修改】：如果自带图标名不是绝对路径，强行劫持到 Tela 图标库！
-        if (rawIcon && rawIcon.indexOf("/") === -1) {
-            finalPath = "/usr/share/icons/Tela-circle-dracula/scalable/apps/" + rawIcon + ".svg";
-        }
 
         result.push({
             name: app.name,
-            icon: finalPath,         // 传给 QML 的主要路径（Tela 的绝对路径）
-            fallbackIcon: rawIcon,   // 【重点】把原始图标名也传过去，留作兜底备用！
+            icon: app.icon || "",
             appObj: app 
         });
         

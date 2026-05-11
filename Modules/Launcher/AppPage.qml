@@ -8,45 +8,69 @@ import "../../Common/functions/AppManager.js" as AppManager
 
 Item {
     id: root
-    
+
     signal requestCloseLauncher()
 
+    property string query: ""
     property var filteredAppsModel: []
-    
 
-    function decrementCurrentIndex() { appsList.decrementCurrentIndex() }
-    function incrementCurrentIndex() { appsList.incrementCurrentIndex() }
-    function forceSearchFocus() { searchBox.forceActiveFocus() }
+    RofiStyle {
+        id: rofiStyle
+    }
+
+    function decrementCurrentIndex() { setCurrentIndex(appsList.currentIndex - 1) }
+    function incrementCurrentIndex() { setCurrentIndex(appsList.currentIndex + 1) }
+
+    function setCurrentIndex(index) {
+        if (filteredAppsModel.length === 0) {
+            appsList.currentIndex = -1
+            appsList.contentY = 0
+            return
+        }
+
+        appsList.currentIndex = Math.max(0, Math.min(index, filteredAppsModel.length - 1))
+        ensureCurrentVisible()
+    }
+
+    function ensureCurrentVisible() {
+        if (appsList.currentIndex < 0)
+            return
+
+        let firstVisibleIndex = Math.round(appsList.contentY / rofiStyle.listStep)
+        if (appsList.currentIndex < firstVisibleIndex)
+            firstVisibleIndex = appsList.currentIndex
+        else if (appsList.currentIndex >= firstVisibleIndex + rofiStyle.listRows)
+            firstVisibleIndex = appsList.currentIndex - rofiStyle.listRows + 1
+
+        const maxFirstIndex = Math.max(0, filteredAppsModel.length - rofiStyle.listRows)
+        firstVisibleIndex = Math.max(0, Math.min(firstVisibleIndex, maxFirstIndex))
+        appsList.contentY = firstVisibleIndex * rofiStyle.listStep
+    }
 
     function search(text) {
         filteredAppsModel = AppManager.updateFilter(text, DesktopEntries)
-        appsList.currentIndex = 0
+        appsList.contentY = 0
+        setCurrentIndex(0)
     }
 
-    // ==========================================
-    // 异步等待机制
-    // ==========================================
     Timer {
         id: startupPollTimer
-        interval: 50 // 频率加快到 50 毫秒（0.05秒）
+        interval: 50
         repeat: true
-        running: true 
+        running: true
         onTriggered: {
-            // 直接去底层看一眼，有数据了吗？
             if (DesktopEntries.applications.values.length > 0) {
-                // 有数据了！立刻执行搜索并渲染
-                root.search(searchBox.text)
-                // 任务完成，当场自毁。
-                running = false 
+                root.search(root.query)
+                running = false
             }
         }
     }
 
+    onQueryChanged: search(query)
+
     onVisibleChanged: {
-        if (visible) {
-            searchBox.text = ""
-            search("")
-        }
+        if (visible)
+            search(query)
     }
 
     function highlightText(fullText, query) {
@@ -57,107 +81,104 @@ Item {
         return safeText.replace(regex, "<u><b>$1</b></u>")
     }
 
-    TextInput {
-        id: searchBox
-        x: -1000 
-        y: -1000
-        width: 0
-        height: 0
-        opacity: 0
-        visible: true 
-        
-        onTextChanged: root.search(text)
-        Keys.onReturnPressed: (event) => { runSelectedApp(); event.accepted = true }
-        Keys.onEnterPressed: (event) => { runSelectedApp(); event.accepted = true }
-        Keys.onUpPressed: (event) => { appsList.decrementCurrentIndex(); event.accepted = true }
-        Keys.onDownPressed: (event) => { appsList.incrementCurrentIndex(); event.accepted = true }
+    function fallbackIconSource() {
+        const fallback = Quickshell.iconPath("application-x-executable", "");
+        return fallback && fallback !== "" ? fallback : "image://icon/application-x-executable";
+    }
+
+    function iconSource(icon) {
+        if (!icon || icon === "")
+            return fallbackIconSource();
+        if (icon.startsWith("/"))
+            return "file://" + icon;
+        if (icon.startsWith("file://") || icon.startsWith("image://"))
+            return icon;
+
+        const resolved = Quickshell.iconPath(icon, "application-x-executable");
+        return resolved && resolved !== "" ? resolved : fallbackIconSource();
     }
 
     ListView {
         id: appsList
         width: parent.width
-        height: 504 
-        anchors.verticalCenter: parent.verticalCenter 
+        height: rofiStyle.listHeight
+        anchors.top: parent.top
         clip: true
-        
+        spacing: rofiStyle.listSpacing
+
         model: filteredAppsModel
-        
+
         boundsBehavior: Flickable.StopAtBounds
-        highlightRangeMode: ListView.StrictlyEnforceRange 
-        preferredHighlightBegin: 0
-        preferredHighlightEnd: height - 56 
-        
-        highlight: Rectangle { 
+        interactive: false
+        highlightFollowsCurrentItem: true
+        highlightRangeMode: ListView.NoHighlightRange
+
+        highlight: Rectangle {
+            width: appsList.width
+            height: rofiStyle.rowHeight
             color: Appearance.colors.colPrimary
-            radius: 12 
+            radius: rofiStyle.controlRadius
         }
-        highlightMoveDuration: 0 
+        highlightMoveDuration: 0
 
         delegate: Item {
-            id: delegateItem 
+            id: delegateItem
             width: ListView.view.width
-            height: 56
+            height: rofiStyle.rowHeight
 
             MouseArea {
                 anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    appsList.currentIndex = index
+                    root.setCurrentIndex(index)
                     runSelectedApp()
                 }
             }
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 16
-                spacing: 16
+                anchors.margins: rofiStyle.itemPadding
+                spacing: rofiStyle.itemSpacing
 
                 Item {
-                    Layout.preferredWidth: 36
-                    Layout.preferredHeight: 36
+                    Layout.preferredWidth: rofiStyle.iconSize
+                    Layout.preferredHeight: rofiStyle.iconSize
+                    Layout.alignment: Qt.AlignVCenter
 
                     Image {
                         anchors.fill: parent
-                        sourceSize.width: 64
-                        sourceSize.height: 64
+                        sourceSize.width: rofiStyle.iconSize * 2
+                        sourceSize.height: rofiStyle.iconSize * 2
                         fillMode: Image.PreserveAspectFit
                         asynchronous: true
                         smooth: true
 
-                        source: {
-                            let ic = modelData.icon
-                            if (!ic) return ""
-                            // 因为我们在 JS 里已经拼接成 /usr 开头了，所以这里会自动加上 file://
-                            if (ic.startsWith("/")) return "file://" + ic
-                            if (ic.startsWith("file://") || ic.startsWith("image://")) return ic
-                            return "image://icon/" + ic
-                        }
-                        
-                        property int failCount: 0
-                        
+                        property bool fallbackApplied: false
+                        readonly property string requestedSource: root.iconSource(modelData.icon)
+                        readonly property string fallbackSource: root.fallbackIconSource()
+
+                        source: fallbackApplied ? fallbackSource : requestedSource
+
+                        onRequestedSourceChanged: fallbackApplied = false
+
                         onStatusChanged: {
-                            // 【兜底策略】：
-                            if (status === Image.Error) {
-                                failCount++
-                                if (failCount === 1) {
-                                    // 第一次失败：说明 Tela 库里没有这个 svg，我们退回让系统用原名去找
-                                    source = "image://icon/" + modelData.fallbackIcon
-                                } else if (failCount === 2) {
-                                    // 第二次失败：系统里也彻底找不到，那就显示一个通用的执行文件图标
-                                    source = "image://icon/application-x-executable"
-                                }
-                            }
+                            if (status === Image.Error && !fallbackApplied && source !== fallbackSource)
+                                fallbackApplied = true
                         }
                     }
                 }
 
                 Text {
-                    text: root.highlightText(modelData.name, searchBox.text)
-                    textFormat: Text.StyledText 
-                    color: delegateItem.ListView.isCurrentItem ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
-                    font.pixelSize: 16
-                    font.bold: false 
+                    text: root.highlightText(modelData.name, root.query)
+                    textFormat: Text.StyledText
+                    color: delegateItem.ListView.isCurrentItem ? Appearance.colors.colOnSecondary : Appearance.colors.colOnSurface
+                    font.family: Sizes.fontFamilyMono
+                    font.pixelSize: rofiStyle.fontPixelSize
+                    font.bold: false
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
                 }
             }
         }
@@ -166,10 +187,9 @@ Item {
     function runSelectedApp() {
         if (filteredAppsModel.length > 0 && appsList.currentIndex >= 0) {
             let appData = filteredAppsModel[appsList.currentIndex]
-            if (appData && appData.appObj) {
+            if (appData && appData.appObj)
                 appData.appObj.execute()
-            }
-            root.requestCloseLauncher() 
+            root.requestCloseLauncher()
         }
     }
 }

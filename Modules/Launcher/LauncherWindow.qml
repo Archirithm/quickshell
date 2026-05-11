@@ -1,56 +1,93 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import Qt5Compat.GraphicalEffects 
+import Qt5Compat.GraphicalEffects
 import Quickshell
-import Quickshell.Io          // 【新增】：必须引入 IO 模块以支持命令行 Process
+import Quickshell.Io
 import Quickshell.Wayland
 import qs.Common
 
 PanelWindow {
     id: root
-    
+
     visible: false
-    color: "transparent" 
-    
+    color: "transparent"
+
     anchors {
         top: true
         bottom: true
         left: true
         right: true
     }
-    
-    WlrLayershell.namespace: "rofi-launcher-overlay"
-    WlrLayershell.layer: WlrLayer.Overlay 
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive 
-    WlrLayershell.exclusionMode: ExclusionMode.Ignore 
 
-    property int currentMode: 0 
+    WlrLayershell.namespace: "rofi-launcher-overlay"
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    WlrLayershell.exclusionMode: ExclusionMode.Ignore
+
+    property int currentMode: 0
     property bool isClosing: false
-    
-    // 【核心修复 1】：废除容易被缓存坑的软链接，直接绑定全局真理变量 Appearance.currentWallpaperPreview
-    property string previewImage: (currentMode === 2 && wallpaperPage.currentSelectedPreview !== "") 
-                                  ? wallpaperPage.currentSelectedPreview 
+    property string query: ""
+    readonly property var modeLabels: ["Applications", "Windows", "Wallpapers"]
+
+    property string previewImage: (currentMode === 2 && wallpaperPage.currentSelectedPreview !== "")
+                                  ? wallpaperPage.currentSelectedPreview
                                   : (Appearance.currentWallpaperPreview !== "" ? Appearance.currentWallpaperPreview : "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current")
 
-    // ==========================================
-    // 【全局壁纸强制同步引擎】
-    // ==========================================
+    RofiStyle {
+        id: rofiStyle
+    }
+
     Process {
         id: syncGlobalWallpaper
-        // 【核心修改】：已将 swww 替换为 awww
         command: ["bash", "-c", "awww query | awk -F 'image: ' '{print $2}' | head -n 1"]
         running: false
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: (path) => {
-                let currentPath = path.trim().replace(/^"|"$/g, '');
-                if (currentPath !== "") {
-                    // 获取到真实的绝对路径，强行刷新全局变量，QML 图片缓存瞬间失效并更新
+                let currentPath = path.trim().replace(/^"|"$/g, "");
+                if (currentPath !== "")
                     Appearance.currentWallpaperPreview = "file://" + currentPath;
-                }
             }
         }
+    }
+
+    function resetSearch() {
+        if (searchInput.text !== "")
+            searchInput.text = ""
+        if (root.query !== "")
+            root.query = ""
+    }
+
+    function focusSearch() {
+        searchInput.forceActiveFocus()
+    }
+
+    function decrementCurrentIndex() {
+        if (root.currentMode === 0) appPage.decrementCurrentIndex()
+        else if (root.currentMode === 1) windowPage.decrementCurrentIndex()
+        else wallpaperPage.decrementCurrentIndex()
+    }
+
+    function incrementCurrentIndex() {
+        if (root.currentMode === 0) appPage.incrementCurrentIndex()
+        else if (root.currentMode === 1) windowPage.incrementCurrentIndex()
+        else wallpaperPage.incrementCurrentIndex()
+    }
+
+    function activateSelected() {
+        if (root.currentMode === 0) appPage.runSelectedApp()
+        else if (root.currentMode === 1) windowPage.focusSelectedWindow()
+        else wallpaperPage.applyWallpaper()
+    }
+
+    function setMode(mode) {
+        if (root.currentMode === mode) {
+            root.focusSearch()
+            return
+        }
+
+        root.currentMode = mode
     }
 
     function prepareOpen(resetOpacity, delayFadeIn) {
@@ -58,22 +95,22 @@ PanelWindow {
         openFadeInDelay.stop()
         closeAnim.stop()
 
-        if (resetOpacity)
+        if (resetOpacity) {
             mainUI.opacity = 0.0
+            uiScale.xScale = rofiStyle.popinScale
+            uiScale.yScale = rofiStyle.popinScale
+        }
+
+        root.resetSearch()
 
         if (delayFadeIn)
             openFadeInDelay.restart()
         else
             launcherFadeIn.restart()
 
-        // 每次打开 Launcher，第一时间强制核实并同步系统真实壁纸
-        syncGlobalWallpaper.running = false;
-        syncGlobalWallpaper.running = true;
-
-        // 智能焦点路由
-        if (currentMode === 0) appPage.forceSearchFocus()
-        else if (currentMode === 1) windowPage.forceSearchFocus()
-        else mainUI.forceActiveFocus()
+        syncGlobalWallpaper.running = false
+        syncGlobalWallpaper.running = true
+        root.focusSearch()
     }
 
     function openWindow() {
@@ -97,9 +134,8 @@ PanelWindow {
 
     onCurrentModeChanged: {
         if (visible) {
-            if (currentMode === 0) appPage.forceSearchFocus()
-            else if (currentMode === 1) windowPage.forceSearchFocus()
-            else mainUI.forceActiveFocus()
+            root.resetSearch()
+            root.focusSearch()
         }
     }
 
@@ -123,23 +159,31 @@ PanelWindow {
         onClicked: root.requestClose()
     }
 
-    // ==========================================
-    // 主界面 UI
-    // ==========================================
     Rectangle {
         id: mainUI
-        width: 1008
-        height: 567
-        
+        width: rofiStyle.windowWidth
+        height: rofiStyle.windowHeight
+
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        
+        anchors.verticalCenterOffset: Sizes.barHeight / 2
+
         opacity: 0.0
-        
-        transform: Translate {
-            id: uiTranslate
-            y: 0 // 原来是300
-        }
+
+        transformOrigin: Item.Center
+        transform: [
+            Translate {
+                id: uiTranslate
+                y: 0
+            },
+            Scale {
+                id: uiScale
+                origin.x: mainUI.width / 2
+                origin.y: mainUI.height / 2
+                xScale: rofiStyle.popinScale
+                yScale: rofiStyle.popinScale
+            }
+        ]
 
         Timer {
             id: openFadeInDelay
@@ -147,62 +191,89 @@ PanelWindow {
             repeat: false
             onTriggered: launcherFadeIn.restart()
         }
-        
-        NumberAnimation {
+
+        ParallelAnimation {
             id: launcherFadeIn
-            target: mainUI
-            property: "opacity"
-            to: 1.0
-            duration: Math.max(280, Appearance.animation.expressiveEffects.duration)
-            easing.type: Appearance.animation.expressiveEffects.type
-            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+            NumberAnimation {
+                target: mainUI
+                property: "opacity"
+                to: 1.0
+                duration: rofiStyle.openDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: rofiStyle.fadeBezier
+            }
+            NumberAnimation {
+                target: uiScale
+                property: "xScale"
+                to: 1.0
+                duration: rofiStyle.openDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: rofiStyle.openBezier
+            }
+            NumberAnimation {
+                target: uiScale
+                property: "yScale"
+                to: 1.0
+                duration: rofiStyle.openDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: rofiStyle.openBezier
+            }
         }
 
-        NumberAnimation {
+        ParallelAnimation {
             id: closeAnim
-            target: mainUI
-            property: "opacity"
-            to: 0.0
-            duration: Appearance.animation.emphasizedAccel.duration
-            easing.type: Appearance.animation.emphasizedAccel.type
-            easing.bezierCurve: Appearance.animation.emphasizedAccel.bezierCurve
+            NumberAnimation {
+                target: mainUI
+                property: "opacity"
+                to: 0.0
+                duration: rofiStyle.closeDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: rofiStyle.fadeBezier
+            }
+            NumberAnimation {
+                target: uiScale
+                property: "xScale"
+                to: rofiStyle.popinScale
+                duration: rofiStyle.closeDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: rofiStyle.closeBezier
+            }
+            NumberAnimation {
+                target: uiScale
+                property: "yScale"
+                to: rofiStyle.popinScale
+                duration: rofiStyle.closeDuration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: rofiStyle.closeBezier
+            }
 
             onFinished: {
                 root.visible = false
                 root.isClosing = false
             }
         }
-        
-        color: "transparent" 
-        radius: 20 
-        focus: true 
-        
-        // 全局键盘网关
+
+        color: Appearance.colors.colOnPrimaryFixed
+        radius: rofiStyle.windowRadius
+        focus: true
+
         Keys.onUpPressed: (event) => {
-            if (root.currentMode === 0) appPage.decrementCurrentIndex()
-            else if (root.currentMode === 1) windowPage.decrementCurrentIndex()
-            else if (root.currentMode === 2) wallpaperPage.decrementCurrentIndex()
+            root.decrementCurrentIndex()
             event.accepted = true
         }
-        
+
         Keys.onDownPressed: (event) => {
-            if (root.currentMode === 0) appPage.incrementCurrentIndex()
-            else if (root.currentMode === 1) windowPage.incrementCurrentIndex()
-            else if (root.currentMode === 2) wallpaperPage.incrementCurrentIndex()
+            root.incrementCurrentIndex()
             event.accepted = true
         }
 
         Keys.onReturnPressed: (event) => {
-            if (root.currentMode === 0) appPage.runSelectedApp()
-            else if (root.currentMode === 1) windowPage.focusSelectedWindow()
-            else if (root.currentMode === 2) wallpaperPage.applyWallpaper()
+            root.activateSelected()
             event.accepted = true
         }
-        
+
         Keys.onEnterPressed: (event) => {
-            if (root.currentMode === 0) appPage.runSelectedApp()
-            else if (root.currentMode === 1) windowPage.focusSelectedWindow()
-            else if (root.currentMode === 2) wallpaperPage.applyWallpaper()
+            root.activateSelected()
             event.accepted = true
         }
 
@@ -212,21 +283,24 @@ PanelWindow {
         }
 
         Keys.onTabPressed: (event) => {
-            root.currentMode = (root.currentMode + 1) % 3
+            root.setMode((root.currentMode + 1) % root.modeLabels.length)
             event.accepted = true
         }
-        
-        MouseArea { anchors.fill: parent } 
-        
+
+        MouseArea {
+            anchors.fill: parent
+        }
+
         Rectangle {
             id: globalMask
             anchors.fill: parent
-            radius: 20
+            radius: rofiStyle.windowRadius
             visible: false
         }
 
         Item {
             anchors.fill: parent
+            anchors.margins: rofiStyle.borderWidth
             layer.enabled: true
             layer.effect: OpacityMask {
                 maskSource: globalMask
@@ -235,146 +309,173 @@ PanelWindow {
             RowLayout {
                 anchors.fill: parent
                 spacing: 0
-                
-                // --- 左侧：海报区 ---
+
                 Item {
-                    Layout.preferredWidth: 640 
+                    Layout.preferredWidth: rofiStyle.leftPaneWidth
                     Layout.fillHeight: true
-                    clip: true 
-                    
-                    Rectangle {
-                        anchors.fill: parent
-                        color: "black"
-                    }
+                    clip: true
 
                     Image {
-                        id: rawPreviewForBlur
-                        width: 1008
-                        height: 567
-                        x: 0 
-                        y: 0
+                        anchors.fill: parent
                         source: root.previewImage
-                        fillMode: Image.PreserveAspectCrop 
+                        fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        visible: false 
-                        sourceSize.width: 1008
-                        sourceSize.height: 567
+                        sourceSize.width: rofiStyle.windowWidth
+                        sourceSize.height: rofiStyle.windowHeight
                     }
 
-                    FastBlur {
-                        anchors.fill: rawPreviewForBlur
-                        source: rawPreviewForBlur
-                        radius: 64 
-                        transparentBorder: false
-                    }
-
-                    Rectangle {
+                    ColumnLayout {
                         anchors.fill: parent
-                        color: Qt.rgba(0, 0, 0, 0.2)
-                    }
+                        anchors.margins: rofiStyle.panelPadding
+                        spacing: 0
 
-                    Item {
-                        anchors.fill: parent
-                        anchors.leftMargin: 80 
-                        clip: true 
-                        
-                        Image {
-                            width: 1008
-                            height: 567
-                            x: -80  
-                            y: 0
-                            fillMode: Image.PreserveAspectCrop
-                            source: root.previewImage
-                            asynchronous: true  
-                            sourceSize.width: 1008
-                            sourceSize.height: 567
-                        }
-                    }
-
-                    Column {
-                        width: 80
-                        anchors.left: parent.left
-                        anchors.verticalCenter: parent.verticalCenter
-                        spacing: 24
-                        
-                        // 标签页 1：应用
                         Rectangle {
-                            width: 48
-                            height: 48
-                            radius: 24
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            color: root.currentMode === 0 ? Appearance.colors.colSecondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
-                            
-                            Text {
-                                anchors.centerIn: parent
-                                text: ""
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: 20
-                                color: root.currentMode === 0 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Appearance.colors.colSecondary
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: rofiStyle.controlHeight
+                            radius: rofiStyle.controlRadius
+                            color: Appearance.colors.colOnPrimary
+                            clip: true
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: rofiStyle.controlPadding
+                                spacing: rofiStyle.controlSpacing
+
+                                Text {
+                                    text: "  "
+                                    color: Appearance.colors.colOnSurface
+                                    font.family: Sizes.fontFamilyMono
+                                    font.pixelSize: rofiStyle.fontPixelSize
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+
+                                    Text {
+                                        anchors.fill: parent
+                                        text: "Search"
+                                        color: Appearance.applyAlpha(Appearance.colors.colOnSurface, 0.65)
+                                        font.family: Sizes.fontFamilyMono
+                                        font.pixelSize: rofiStyle.fontPixelSize
+                                        verticalAlignment: Text.AlignVCenter
+                                        visible: searchInput.text.length === 0
+                                    }
+
+                                    TextInput {
+                                        id: searchInput
+                                        anchors.fill: parent
+                                        color: Appearance.colors.colOnSurface
+                                        selectionColor: Appearance.colors.colPrimary
+                                        selectedTextColor: Appearance.colors.colOnSecondary
+                                        font.family: Sizes.fontFamilyMono
+                                        font.pixelSize: rofiStyle.fontPixelSize
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        clip: true
+                                        focus: true
+                                        selectByMouse: true
+
+                                        onTextChanged: root.query = text
+
+                                        Keys.onUpPressed: (event) => {
+                                            root.decrementCurrentIndex()
+                                            event.accepted = true
+                                        }
+
+                                        Keys.onDownPressed: (event) => {
+                                            root.incrementCurrentIndex()
+                                            event.accepted = true
+                                        }
+
+                                        Keys.onReturnPressed: (event) => {
+                                            root.activateSelected()
+                                            event.accepted = true
+                                        }
+
+                                        Keys.onEnterPressed: (event) => {
+                                            root.activateSelected()
+                                            event.accepted = true
+                                        }
+
+                                        Keys.onEscapePressed: (event) => {
+                                            root.requestClose()
+                                            event.accepted = true
+                                        }
+
+                                        Keys.onTabPressed: (event) => {
+                                            root.setMode((root.currentMode + 1) % root.modeLabels.length)
+                                            event.accepted = true
+                                        }
+                                    }
+                                }
                             }
                         }
-                        
-                        // 标签页 2：窗口
-                        Rectangle {
-                            width: 48
-                            height: 48
-                            radius: 24
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            color: root.currentMode === 1 ? Appearance.colors.colSecondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
-                            
-                            Text {
-                                anchors.centerIn: parent
-                                text: ""
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: 20
-                                color: root.currentMode === 1 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Appearance.colors.colSecondary
-                            }
+
+                        Item {
+                            Layout.fillHeight: true
                         }
-                        
-                        // 标签页 3：壁纸
-                        Rectangle {
-                            width: 48
-                            height: 48
-                            radius: 24
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            color: root.currentMode === 2 ? Appearance.colors.colSecondary : Qt.rgba(0.06, 0.06, 0.1, 0.8)
-                            
-                            Text {
-                                anchors.centerIn: parent
-                                text: ""
-                                font.family: "JetBrainsMono Nerd Font"
-                                font.pixelSize: 20
-                                color: root.currentMode === 2 ? Qt.rgba(0.06, 0.06, 0.1, 1.0) : Appearance.colors.colSecondary
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: rofiStyle.modeSpacing
+
+                            Repeater {
+                                model: root.modeLabels
+
+                                delegate: Rectangle {
+                                    id: modeButton
+                                    readonly property bool selected: root.currentMode === index
+
+                                    Layout.preferredWidth: rofiStyle.modeButtonWidth
+                                    Layout.preferredHeight: rofiStyle.controlHeight
+                                    radius: rofiStyle.controlRadius
+                                    color: selected ? Appearance.colors.colPrimary : Appearance.colors.colOnPrimary
+
+                                    Text {
+                                        id: modeLabel
+                                        anchors.centerIn: parent
+                                        text: modelData
+                                        color: modeButton.selected ? Appearance.colors.colOnSecondary : Appearance.colors.colPrimaryFixed
+                                        font.family: Sizes.fontFamilyMono
+                                        font.pixelSize: rofiStyle.fontPixelSize
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.setMode(index)
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                
-                // --- 右侧：列表区 ---
+
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    
-                    Rectangle {
-                        anchors.fill: parent
-                        color: Qt.rgba(0.06, 0.06, 0.1, 0.85) 
-                    }
-                    
+
                     StackLayout {
                         anchors.fill: parent
-                        anchors.margins: 30
-                        currentIndex: root.currentMode 
-                        
-                        AppPage { 
-                            id: appPage 
+                        anchors.margins: rofiStyle.panelPadding
+                        currentIndex: root.currentMode
+
+                        AppPage {
+                            id: appPage
+                            query: root.query
                             onRequestCloseLauncher: root.requestClose()
                         }
-                        WindowPage { 
-                            id: windowPage 
+
+                        WindowPage {
+                            id: windowPage
+                            query: root.query
                             onRequestCloseLauncher: root.requestClose()
                         }
-                        WallpaperPage { 
-                            id: wallpaperPage  
+
+                        WallpaperPage {
+                            id: wallpaperPage
+                            query: root.query
                             onRequestCloseLauncher: root.requestClose()
                         }
                     }
@@ -385,9 +486,9 @@ PanelWindow {
         Rectangle {
             anchors.fill: parent
             color: "transparent"
-            border.color: Appearance.colors.colSecondaryFixed
-            border.width: 2
-            radius: 20
+            border.color: Appearance.colors.colSecondaryContainer
+            border.width: rofiStyle.borderWidth
+            radius: rofiStyle.windowRadius
         }
     }
 }

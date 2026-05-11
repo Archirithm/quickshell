@@ -7,27 +7,100 @@ import qs.Common
 
 Item {
     id: root
-    
+
     signal requestCloseLauncher()
 
+    property string query: ""
     property string wallpaperPath: Quickshell.env("HOME") + "/.config/wallpaper"
-    
+
     property string currentSelectedPreview: ""
     property string pendingOverviewPath: ""
     property bool isLoading: true
 
+    RofiStyle {
+        id: rofiStyle
+    }
+
     ListModel { id: wallpaperModel }
+    ListModel { id: filteredWallpaperModel }
 
-    function decrementCurrentIndex() { wallpaperList.decrementCurrentIndex() }
-    function incrementCurrentIndex() { wallpaperList.incrementCurrentIndex() }
+    function decrementCurrentIndex() { setCurrentIndex(wallpaperList.currentIndex - 1) }
+    function incrementCurrentIndex() { setCurrentIndex(wallpaperList.currentIndex + 1) }
 
-    // ==========================================
-    // 壁纸扫描引擎
-    // ==========================================
+    function setCurrentIndex(index) {
+        if (filteredWallpaperModel.count === 0) {
+            wallpaperList.currentIndex = -1
+            wallpaperList.contentY = 0
+            root.currentSelectedPreview = ""
+            return
+        }
+
+        wallpaperList.currentIndex = Math.max(0, Math.min(index, filteredWallpaperModel.count - 1))
+        ensureCurrentVisible()
+        updateSelectedPreview()
+    }
+
+    function ensureCurrentVisible() {
+        if (wallpaperList.currentIndex < 0)
+            return
+
+        let firstVisibleIndex = Math.round(wallpaperList.contentY / rofiStyle.listStep)
+        if (wallpaperList.currentIndex < firstVisibleIndex)
+            firstVisibleIndex = wallpaperList.currentIndex
+        else if (wallpaperList.currentIndex >= firstVisibleIndex + rofiStyle.listRows)
+            firstVisibleIndex = wallpaperList.currentIndex - rofiStyle.listRows + 1
+
+        const maxFirstIndex = Math.max(0, filteredWallpaperModel.count - rofiStyle.listRows)
+        firstVisibleIndex = Math.max(0, Math.min(firstVisibleIndex, maxFirstIndex))
+        wallpaperList.contentY = firstVisibleIndex * rofiStyle.listStep
+    }
+
+    function wallpaperMatches(path, fileName, text) {
+        const needle = text.trim().toLowerCase()
+        if (needle === "")
+            return true
+
+        return fileName.toLowerCase().indexOf(needle) !== -1 || path.toLowerCase().indexOf(needle) !== -1
+    }
+
+    function updateSelectedPreview() {
+        if (wallpaperList.currentIndex >= 0 && wallpaperList.currentIndex < filteredWallpaperModel.count)
+            root.currentSelectedPreview = "file://" + filteredWallpaperModel.get(wallpaperList.currentIndex).path
+        else
+            root.currentSelectedPreview = ""
+    }
+
+    function filterWallpapers(text) {
+        let previousPath = ""
+        if (wallpaperList.currentIndex >= 0 && wallpaperList.currentIndex < filteredWallpaperModel.count)
+            previousPath = filteredWallpaperModel.get(wallpaperList.currentIndex).path
+
+        filteredWallpaperModel.clear()
+
+        let nextIndex = -1
+        for (let i = 0; i < wallpaperModel.count; i++) {
+            const item = wallpaperModel.get(i)
+            if (!wallpaperMatches(item.path, item.fileName, text))
+                continue
+
+            if (item.path === previousPath)
+                nextIndex = filteredWallpaperModel.count
+            filteredWallpaperModel.append({ path: item.path, fileName: item.fileName })
+        }
+
+        if (filteredWallpaperModel.count === 0) {
+            setCurrentIndex(-1)
+            return
+        }
+
+        wallpaperList.contentY = 0
+        setCurrentIndex(nextIndex >= 0 ? nextIndex : 0)
+    }
+
     Process {
         id: scanWallpapers
         command: ["bash", "-c", "find " + root.wallpaperPath + " -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | sort"]
-        running: false 
+        running: false
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: (file) => {
@@ -39,133 +112,138 @@ Item {
         }
         onExited: {
             root.isLoading = false
-            
-            // 直接白嫖 LauncherWindow 刚打开时就已经查好的全局变量
-            let currentPath = Appearance.currentWallpaperPreview.replace("file://", "");
-            
-            if (currentPath === "") return;
+            root.filterWallpapers(root.query)
 
-            for (let i = 0; i < wallpaperModel.count; i++) {
-                if (wallpaperModel.get(i).path === currentPath) {
-                    wallpaperList.currentIndex = i;
-                    // 初始化当前页面的预览变量
-                    root.currentSelectedPreview = Appearance.currentWallpaperPreview;
-                    // 自动滚动到当前选中的壁纸位置
-                    wallpaperList.positionViewAtIndex(i, ListView.Center);
-                    break;
+            let currentPath = Appearance.currentWallpaperPreview.replace("file://", "")
+            if (currentPath !== "") {
+                for (let i = 0; i < filteredWallpaperModel.count; i++) {
+                    if (filteredWallpaperModel.get(i).path === currentPath) {
+                        root.setCurrentIndex(i)
+                        break
+                    }
                 }
             }
         }
     }
 
-    // 删除了原先冗余的 Process { id: getCurrentWallpaper ... } 
+    onQueryChanged: filterWallpapers(query)
 
     onVisibleChanged: {
         if (visible) {
             wallpaperModel.clear()
+            filteredWallpaperModel.clear()
+            root.currentSelectedPreview = ""
             root.isLoading = true
             scanWallpapers.running = true
-        } 
+        }
     }
 
-    // ==========================================
-    // UI 渲染层
-    // ==========================================
     Text {
-        anchors.centerIn: parent 
+        anchors.centerIn: parent
         text: "Scanning wallpapers..."
         color: Appearance.colors.colOnSurfaceVariant
-        font.pixelSize: 16
+        font.family: Sizes.fontFamilyMono
+        font.pixelSize: rofiStyle.fontPixelSize
         visible: root.isLoading
+    }
+
+    Text {
+        anchors.centerIn: parent
+        text: "No wallpapers found."
+        color: Appearance.colors.colOnSurfaceVariant
+        font.family: Sizes.fontFamilyMono
+        font.pixelSize: rofiStyle.fontPixelSize
+        visible: !root.isLoading && filteredWallpaperModel.count === 0
     }
 
     ListView {
         id: wallpaperList
         width: parent.width
-        height: 504 
-        anchors.verticalCenter: parent.verticalCenter 
+        height: rofiStyle.listHeight
+        anchors.top: parent.top
         clip: true
-        model: wallpaperModel
-        
-        snapMode: ListView.SnapToItem         
-        boundsBehavior: Flickable.StopAtBounds
-        highlightRangeMode: ListView.StrictlyEnforceRange 
-        preferredHighlightBegin: 0
-        preferredHighlightEnd: height - 56 
-        
-        highlight: Rectangle { 
-            color: Appearance.colors.colPrimary
-            radius: 12 
-        }
-        highlightMoveDuration: 0 
+        spacing: rofiStyle.listSpacing
+        visible: !root.isLoading && filteredWallpaperModel.count > 0
+        model: filteredWallpaperModel
 
-        onCurrentIndexChanged: {
-            if (currentIndex >= 0 && currentIndex < count) {
-                root.currentSelectedPreview = "file://" + wallpaperModel.get(currentIndex).path
-            }
+        boundsBehavior: Flickable.StopAtBounds
+        interactive: false
+        highlightFollowsCurrentItem: true
+        highlightRangeMode: ListView.NoHighlightRange
+
+        highlight: Rectangle {
+            width: wallpaperList.width
+            height: rofiStyle.rowHeight
+            color: Appearance.colors.colPrimary
+            radius: rofiStyle.controlRadius
         }
+        highlightMoveDuration: 0
+
+        onCurrentIndexChanged: root.updateSelectedPreview()
 
         delegate: Item {
-            id: delegateItem 
+            id: delegateItem
             width: ListView.view.width
-            height: 56
+            height: rofiStyle.rowHeight
 
             MouseArea {
                 anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    wallpaperList.currentIndex = index
+                    root.setCurrentIndex(index)
                     applyWallpaper()
                 }
             }
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 16
-                spacing: 16
+                anchors.margins: rofiStyle.itemPadding
+                spacing: rofiStyle.itemSpacing
 
                 Image {
-                    Layout.preferredWidth: 64
-                    Layout.preferredHeight: 36
+                    Layout.preferredWidth: rofiStyle.wallpaperThumbWidth
+                    Layout.preferredHeight: rofiStyle.wallpaperThumbHeight
+                    Layout.alignment: Qt.AlignVCenter
                     source: "file://" + model.path
                     fillMode: Image.PreserveAspectCrop
-                    sourceSize.width: 128
-                    sourceSize.height: 72
+                    sourceSize.width: rofiStyle.wallpaperThumbWidth * 2
+                    sourceSize.height: rofiStyle.wallpaperThumbHeight * 2
                     asynchronous: true
                     cache: true
-                    visible: status === Image.Ready
+                    smooth: true
+                    clip: true
                 }
 
                 Text {
                     text: model.fileName
-                    color: delegateItem.ListView.isCurrentItem ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
-                    font.pixelSize: 16
-                    font.bold: false 
-                    elide: Text.ElideRight 
+                    color: delegateItem.ListView.isCurrentItem ? Appearance.colors.colOnSecondary : Appearance.colors.colOnSurface
+                    font.family: Sizes.fontFamilyMono
+                    font.pixelSize: rofiStyle.fontPixelSize
+                    font.bold: false
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
                     Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
                 }
             }
         }
     }
 
-    // ==========================================
-    // 脚本执行引擎
-    // ==========================================
     function wallpaperProcessesRunning() {
         return setWallpaperProcess.running || generateColorsProcess.running || overviewProcess.running;
     }
 
     function applyWallpaper() {
-        if (wallpaperModel.count === 0 || wallpaperList.currentIndex < 0) return
-        
+        if (filteredWallpaperModel.count === 0 || wallpaperList.currentIndex < 0) return
+
         if (wallpaperProcessesRunning()) {
             console.log("Wallpaper switch in progress, ignoring extra triggers...")
             return
         }
-        
-        let currentPath = wallpaperModel.get(wallpaperList.currentIndex).path
-        
-        Appearance.currentWallpaperPreview = "file://" + currentPath;
+
+        let currentPath = filteredWallpaperModel.get(wallpaperList.currentIndex).path
+
+        Appearance.currentWallpaperPreview = "file://" + currentPath
         root.pendingOverviewPath = currentPath
 
         generateColorsProcess.command = [

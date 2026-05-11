@@ -29,14 +29,14 @@ Item {
     }
 
     function formatSpeedValue(value) {
-        if (!validNumber(value)) return "--"
+        if (!root.validNumber(value)) return "--"
         const rounded = Math.round(value * 10) / 10
         if (Math.abs(rounded - Math.round(rounded)) < 0.05) return Math.round(rounded).toString()
         return rounded.toFixed(1)
     }
 
     function beaufortLevel(speedMs) {
-        if (!validNumber(speedMs) || speedMs < 0.3) return 0
+        if (!root.validNumber(speedMs) || speedMs < 0.3) return 0
         if (speedMs < 1.6) return 1
         if (speedMs < 3.4) return 2
         if (speedMs < 5.5) return 3
@@ -52,7 +52,7 @@ Item {
     }
 
     function windColor(speedMs) {
-        const bf = beaufortLevel(speedMs)
+        const bf = root.beaufortLevel(speedMs)
         if (bf < 4) return "#72d572"
         if (bf < 6) return "#ffca28"
         if (bf < 8) return "#ffa726"
@@ -62,7 +62,7 @@ Item {
     }
 
     function chartUpperBound(highest) {
-        if (!validNumber(highest) || highest <= 0) return 5
+        if (!root.validNumber(highest) || highest <= 0) return 5
         if (highest <= 5) return 5
         if (highest <= 8) return 8
         if (highest <= 12) return 12
@@ -71,7 +71,7 @@ Item {
     }
 
     function yForValue(value) {
-        if (!validNumber(value) || chartMax <= 0) return chartBottom
+        if (!root.validNumber(value) || chartMax <= 0) return chartBottom
         const clamped = Math.max(0, Math.min(chartMax, value))
         return chartBottom - clamped / chartMax * (chartBottom - chartTop)
     }
@@ -80,33 +80,40 @@ Item {
         const list = []
         let highest = 0
         let validCount = 0
-        const count = sourceModel && sourceModel.count ? Math.min(maxHours, sourceModel.count()) : 0
+        const count = root.sourceModel && root.sourceModel.count ? Math.min(root.maxHours, root.sourceModel.count()) : 0
         for (let i = 0; i < count; ++i) {
-            const item = sourceModel.get(i) || ({})
+            const item = root.sourceModel.get(i) || ({})
             const speed = Number(item.windSpeedMs)
             const direction = Number(item.windDirection)
-            if (validNumber(speed)) {
+            if (root.validNumber(speed)) {
                 highest = Math.max(highest, speed)
                 validCount += 1
             }
             list.push({
                 time: item.time || 0,
-                hourText: hourLabel(item.time || 0),
+                hourText: root.hourLabel(item.time || 0),
                 speed: speed,
-                speedText: formatSpeedValue(speed),
+                speedText: root.formatSpeedValue(speed),
                 direction: direction,
-                color: windColor(speed),
+                color: root.windColor(speed),
                 emphasized: i !== 0
             })
         }
         items = list
-        chartMax = chartUpperBound(highest)
+        chartMax = root.chartUpperBound(highest)
         hasData = validCount > 0
     }
 
+    Timer {
+        id: rebuildTimer
+        interval: 0
+        repeat: false
+        onTriggered: rebuild()
+    }
+
     onSourceModelChanged: rebuild()
-    onWidthChanged: Qt.callLater(rebuild)
-    onHeightChanged: Qt.callLater(rebuild)
+    onWidthChanged: rebuildTimer.restart()
+    onHeightChanged: rebuildTimer.restart()
     Component.onCompleted: rebuild()
 
     Connections {

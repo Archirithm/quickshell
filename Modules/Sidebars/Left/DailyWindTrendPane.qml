@@ -40,14 +40,14 @@ Item {
     }
 
     function formatSpeedValue(value) {
-        if (!validNumber(value)) return "--"
+        if (!root.validNumber(value)) return "--"
         const rounded = Math.round(value * 10) / 10
         if (Math.abs(rounded - Math.round(rounded)) < 0.05) return Math.round(rounded).toString()
         return rounded.toFixed(1)
     }
 
     function beaufortLevel(speedMs) {
-        if (!validNumber(speedMs) || speedMs < 0.3) return 0
+        if (!root.validNumber(speedMs) || speedMs < 0.3) return 0
         if (speedMs < 1.6) return 1
         if (speedMs < 3.4) return 2
         if (speedMs < 5.5) return 3
@@ -63,7 +63,7 @@ Item {
     }
 
     function windColor(speedMs) {
-        const bf = beaufortLevel(speedMs)
+        const bf = root.beaufortLevel(speedMs)
         if (bf < 4) return "#72d572"
         if (bf < 6) return "#ffca28"
         if (bf < 8) return "#ffa726"
@@ -73,7 +73,7 @@ Item {
     }
 
     function chartUpperBound(highest) {
-        if (!validNumber(highest) || highest <= 0) return 5
+        if (!root.validNumber(highest) || highest <= 0) return 5
         if (highest <= 5) return 5
         if (highest <= 8) return 8
         if (highest <= 12) return 12
@@ -85,49 +85,56 @@ Item {
         const list = []
         let highest = 0
         let validCount = 0
-        const count = sourceModel && sourceModel.count ? Math.min(maxItems, sourceModel.count()) : 0
+        const count = root.sourceModel && root.sourceModel.count ? Math.min(root.maxItems, root.sourceModel.count()) : 0
         for (let i = 0; i < count; ++i) {
-            const dayItem = sourceModel.get(i) || ({})
+            const dayItem = root.sourceModel.get(i) || ({})
             const dayPart = dayItem.day || ({})
             const nightPart = dayItem.night || ({})
             const daySpeed = Number(dayPart.windSpeedMs)
             const nightSpeed = Number(nightPart.windSpeedMs)
-            if (validNumber(daySpeed)) {
+            if (root.validNumber(daySpeed)) {
                 highest = Math.max(highest, daySpeed)
                 validCount += 1
             }
-            if (validNumber(nightSpeed)) {
+            if (root.validNumber(nightSpeed)) {
                 highest = Math.max(highest, nightSpeed)
                 validCount += 1
             }
             list.push({
                 time: dayItem.time || 0,
-                dayText: dayLabel(i, dayItem.time || 0),
-                dateText: dateLabel(dayItem.time || 0),
+                dayText: root.dayLabel(i, dayItem.time || 0),
+                dateText: root.dateLabel(dayItem.time || 0),
                 daySpeed: daySpeed,
                 nightSpeed: nightSpeed,
-                dayTextValue: formatSpeedValue(daySpeed),
-                nightTextValue: formatSpeedValue(nightSpeed),
+                dayTextValue: root.formatSpeedValue(daySpeed),
+                nightTextValue: root.formatSpeedValue(nightSpeed),
                 dayDirection: Number(dayPart.windDirection),
                 nightDirection: Number(nightPart.windDirection),
-                dayColor: windColor(daySpeed),
-                nightColor: windColor(nightSpeed),
+                dayColor: root.windColor(daySpeed),
+                nightColor: root.windColor(nightSpeed),
                 emphasized: i !== 0
             })
         }
         items = list
-        chartMax = chartUpperBound(highest)
+        chartMax = root.chartUpperBound(highest)
         hasData = validCount > 0
     }
 
     function barHeight(speed) {
-        if (!validNumber(speed) || speed <= 0 || chartMax <= 0) return 0
+        if (!root.validNumber(speed) || speed <= 0 || chartMax <= 0) return 0
         return Math.max(10, Math.min(barHalfRange, barHalfRange * speed / chartMax))
     }
 
+    Timer {
+        id: rebuildTimer
+        interval: 0
+        repeat: false
+        onTriggered: rebuild()
+    }
+
     onSourceModelChanged: rebuild()
-    onWidthChanged: Qt.callLater(rebuild)
-    onHeightChanged: Qt.callLater(rebuild)
+    onWidthChanged: rebuildTimer.restart()
+    onHeightChanged: rebuildTimer.restart()
     Component.onCompleted: rebuild()
 
     Connections {

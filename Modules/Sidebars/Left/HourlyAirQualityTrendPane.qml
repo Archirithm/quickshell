@@ -28,7 +28,7 @@ Item {
 
     function aqiLevelIndex(aqi) {
         if (aqi === undefined || aqi === null || isNaN(aqi)) return -1
-        const thresholds = aqiThresholds()
+        const thresholds = root.aqiThresholds()
         for (let i = thresholds.length - 1; i >= 0; --i) {
             if (aqi >= thresholds[i]) return i
         }
@@ -47,7 +47,7 @@ Item {
 
     function pollutantIndex(value, thresholds) {
         if (value === undefined || value === null || isNaN(value)) return NaN
-        const aqi = aqiThresholds()
+        const aqi = root.aqiThresholds()
         for (let level = thresholds.length - 1; level >= 0; --level) {
             if (value >= thresholds[level]) {
                 if (level < thresholds.length - 1) {
@@ -66,10 +66,10 @@ Item {
     function hourlyAqiValue(air) {
         if (!air) return NaN
         const values = [
-            pollutantIndex(air.ozone, [0, 50, 100, 160, 240, 480]),
-            pollutantIndex(air.nitrogenDioxide, [0, 10, 25, 200, 400, 1000]),
-            pollutantIndex(air.pm10, [0, 15, 45, 80, 160, 400]),
-            pollutantIndex(air.pm25, [0, 5, 15, 30, 60, 150])
+            root.pollutantIndex(air.ozone, [0, 50, 100, 160, 240, 480]),
+            root.pollutantIndex(air.nitrogenDioxide, [0, 10, 25, 200, 400, 1000]),
+            root.pollutantIndex(air.pm10, [0, 15, 45, 80, 160, 400]),
+            root.pollutantIndex(air.pm25, [0, 5, 15, 30, 60, 150])
         ].filter(function(v) { return !isNaN(v) })
         if (values.length === 0) return NaN
         return Math.max.apply(Math, values)
@@ -98,41 +98,48 @@ Item {
         const list = []
         let highest = 0
         let validCount = 0
-        const count = sourceModel && sourceModel.count ? Math.min(maxHours, sourceModel.count()) : 0
+        const count = root.sourceModel && root.sourceModel.count ? Math.min(root.maxHours, root.sourceModel.count()) : 0
         for (let i = 0; i < count; ++i) {
-            const hour = sourceModel.get(i) || ({})
-            const aqi = hourlyAqiValue(hour.airQuality || ({}))
-            const level = aqiLevelIndex(aqi)
+            const hour = root.sourceModel.get(i) || ({})
+            const aqi = root.hourlyAqiValue(hour.airQuality || ({}))
+            const level = root.aqiLevelIndex(aqi)
             if (!isNaN(aqi)) {
                 highest = Math.max(highest, aqi)
                 validCount += 1
             }
             list.push({
                 time: hour.time || 0,
-                hourText: hourLabel(hour.time || 0),
+                hourText: root.hourLabel(hour.time || 0),
                 aqi: aqi,
                 aqiText: !isNaN(aqi) ? Math.round(aqi).toString() : "--",
-                color: aqiPalette(level),
+                color: root.aqiPalette(level),
                 emphasized: i !== 0
             })
         }
         items = list
-        chartMax = chartUpperBound(highest)
+        chartMax = root.chartUpperBound(highest)
         hasData = validCount > 0
 
         const lines = [
-            { value: 20, label: aqiLevelName(1) },
-            { value: 100, label: aqiLevelName(3) }
+            { value: 20, label: root.aqiLevelName(1) },
+            { value: 100, label: root.aqiLevelName(3) }
         ]
         if (chartMax >= 250) {
-            lines.push({ value: 250, label: aqiLevelName(5) })
+            lines.push({ value: 250, label: root.aqiLevelName(5) })
         }
         keyLines = lines
     }
 
+    Timer {
+        id: rebuildTimer
+        interval: 0
+        repeat: false
+        onTriggered: rebuild()
+    }
+
     onSourceModelChanged: rebuild()
-    onWidthChanged: Qt.callLater(rebuild)
-    onHeightChanged: Qt.callLater(rebuild)
+    onWidthChanged: rebuildTimer.restart()
+    onHeightChanged: rebuildTimer.restart()
     Component.onCompleted: rebuild()
 
     Connections {

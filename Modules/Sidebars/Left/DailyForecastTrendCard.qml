@@ -38,6 +38,24 @@ Rectangle {
         return value !== undefined && value !== null && !isNaN(value) ? Math.round(value) + "%" : "--"
     }
 
+    function applyInitialPosition() {
+        if (trendFlick.initialPositionApplied) return
+        const count = root.modelCount()
+        if (count < 2) {
+            trendFlick.contentX = 0
+            trendFlick.initialPositionApplied = true
+            return
+        }
+        const maxX = Math.max(0, trendFlick.contentWidth - trendFlick.width)
+        if (maxX <= 0) {
+            trendFlick.contentX = 0
+            trendFlick.initialPositionApplied = true
+            return
+        }
+        trendFlick.contentX = Math.min(root.itemWidth, maxX)
+        trendFlick.initialPositionApplied = true
+    }
+
     function dayLabel(index, epoch) {
         if (index === 0) return "昨天"
         if (index === 1) return "今天"
@@ -49,6 +67,13 @@ Rectangle {
 
     function dateLabel(epoch) {
         return epoch ? Qt.formatDateTime(new Date(epoch * 1000), "M/d") : "--"
+    }
+
+    Timer {
+        id: initialPositionTimer
+        interval: 0
+        repeat: false
+        onTriggered: applyInitialPosition()
     }
 
     ColumnLayout {
@@ -148,29 +173,11 @@ Rectangle {
 
                 onContentXChanged: trendCanvas.requestPaint()
 
-                function applyInitialPosition() {
-                    if (initialPositionApplied) return
-                    const count = root.modelCount()
-                    if (count < 2) {
-                        contentX = 0
-                        initialPositionApplied = true
-                        return
-                    }
-                    const maxX = Math.max(0, contentWidth - width)
-                    if (maxX <= 0) {
-                        contentX = 0
-                        initialPositionApplied = true
-                        return
-                    }
-                    contentX = Math.min(root.itemWidth, maxX)
-                    initialPositionApplied = true
-                }
-
-                Component.onCompleted: Qt.callLater(applyInitialPosition)
-                onContentWidthChanged: Qt.callLater(applyInitialPosition)
-                onWidthChanged: Qt.callLater(applyInitialPosition)
+                Component.onCompleted: initialPositionTimer.restart()
+                onContentWidthChanged: initialPositionTimer.restart()
+                onWidthChanged: initialPositionTimer.restart()
                 onVisibleChanged: {
-                    if (visible) Qt.callLater(applyInitialPosition)
+                    if (visible) initialPositionTimer.restart()
                 }
 
                 Item {
@@ -541,13 +548,13 @@ Rectangle {
         ignoreUnknownSignals: true
         function onModelReset() {
             trendFlick.initialPositionApplied = false
-            Qt.callLater(function() { trendFlick.applyInitialPosition() })
+            initialPositionTimer.restart()
             trendCanvas.requestPaint()
         }
         function onDataChanged() { trendCanvas.requestPaint() }
         function onRowsInserted() {
             trendFlick.initialPositionApplied = false
-            Qt.callLater(function() { trendFlick.applyInitialPosition() })
+            initialPositionTimer.restart()
             trendCanvas.requestPaint()
         }
         function onRowsRemoved() { trendCanvas.requestPaint() }
@@ -555,7 +562,7 @@ Rectangle {
 
     onSourceModelChanged: {
         trendFlick.initialPositionApplied = false
-        Qt.callLater(function() { trendFlick.applyInitialPosition() })
+        initialPositionTimer.restart()
         trendCanvas.requestPaint()
     }
     onWidthChanged: trendCanvas.requestPaint()

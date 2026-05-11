@@ -6,7 +6,6 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
 import qs.Common
-import qs.Modules.DynamicIsland.OverviewContent
 
 Singleton {
     id: root
@@ -58,7 +57,7 @@ Singleton {
 
     readonly property string notificationsDir: Quickshell.env("HOME") + "/.cache/quickshell/notifications"
     readonly property string filePath: notificationsDir + "/notifications.json"
-    readonly property bool silent: ControlBackend.dndEnabled
+    readonly property bool silent: UiPreferences.dndEnabled
     readonly property bool popupInhibited: silent || (WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === "info")
     readonly property bool hasNotifs: popupList.length > 0
 
@@ -287,7 +286,7 @@ Singleton {
     }
 
     function setSilent(value) {
-        ControlBackend.dndEnabled = value;
+        UiPreferences.setDndEnabled(value);
     }
 
     function markAllRead() {

@@ -2,14 +2,14 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.Common
-import qs.Modules.DynamicIsland.OverviewContent
+import qs.Services
 
 Item {
     id: root
 
     required property var manager
 
-    visible: !ControlBackend.dndEnabled && manager.hasNotifs
+    visible: !UiPreferences.dndEnabled && manager.hasNotifs
 
     ListView {
         anchors.fill: parent

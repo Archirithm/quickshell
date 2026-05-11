@@ -36,6 +36,7 @@ Item {
         Network {}
         Brightness {}
         Volume {}
+        SettingsButton {}
         PowerButton {}
     }
 }

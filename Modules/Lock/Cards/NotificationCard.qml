@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Quickshell
 import qs.Common
 import qs.Services
@@ -17,6 +17,7 @@ Rectangle {
 
     readonly property var notifications: NotificationManager.list.slice().sort((a, b) => b.time - a.time)
     readonly property int notificationCount: notifications.length
+    readonly property int cardMargin: Sizes.lockOuterPadding
 
     function normalizeSource(source) {
         if (!source || source === "")
@@ -52,228 +53,250 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 20
-        spacing: 10
+        anchors.margins: root.cardMargin
+        spacing: Math.round(10 * 4 / 3)
 
-        RowLayout {
+        Text {
             Layout.fillWidth: true
-            spacing: 10
-
-            Text {
-                text: "Notifications"
-                color: Appearance.colors.colOnSurfaceVariant
-                font.family: Sizes.fontFamilyMono
-                font.pixelSize: 12
-                font.bold: true
-            }
-
-            Rectangle {
-                visible: root.notificationCount > 0
-                width: countText.contentWidth + 12
-                height: 18
-                radius: 9
-                color: Appearance.colors.colPrimaryContainer
-
-                Text {
-                    id: countText
-                    anchors.centerIn: parent
-                    text: root.notificationCount
-                    color: Appearance.colors.colOnPrimaryContainer
-                    font.family: Sizes.fontFamilyMono
-                    font.pixelSize: 10
-                    font.bold: true
-                }
-            }
-
-            Item { Layout.fillWidth: true }
-
-            Text {
-                text: "Clear All"
-                visible: root.notificationCount > 0
-                color: Appearance.colors.colPrimary
-                font.family: Sizes.fontFamilyMono
-                font.pixelSize: 12
-                font.underline: true
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: NotificationManager.discardAllNotifications()
-                }
-            }
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            height: 1
+            text: root.notificationCount > 0 ? root.notificationCount + " notification" + (root.notificationCount === 1 ? "" : "s") : "Notifications"
             color: Appearance.colors.colOutline
-            opacity: 0.2
+            font.family: Sizes.fontFamilyMono
+            font.pixelSize: 17
+            font.weight: 500
+            elide: Text.ElideRight
         }
 
-        ListView {
-            id: listView
+        Item {
+            id: clipRect
 
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: 12
-            model: root.notifications
 
-            Text {
+            ColumnLayout {
                 anchors.centerIn: parent
-                visible: root.notificationCount === 0
-                text: "No new notifications"
-                color: Appearance.colors.colOnSurfaceVariant
-                font.family: Sizes.fontFamily
-                font.pixelSize: 14
-                opacity: 0.5
-            }
+                width: parent.width
+                spacing: Math.round(20 * 4 / 3)
+                opacity: root.notificationCount > 0 ? 0 : 1
+                scale: root.notificationCount > 0 ? 0.96 : 1
+                visible: opacity > 0
 
-            delegate: Rectangle {
-                id: delegateRoot
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Appearance.animation.standardExtraLarge.duration
+                        easing.type: Appearance.animation.standardExtraLarge.type
+                        easing.bezierCurve: Appearance.animation.standardExtraLarge.bezierCurve
+                    }
+                }
 
-                required property var modelData
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: Appearance.animation.expressiveDefaultSpatial.duration
+                        easing.type: Appearance.animation.expressiveDefaultSpatial.type
+                        easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
+                    }
+                }
 
-                width: ListView.view ? ListView.view.width : 0
-                height: Math.max(68, contentRow.implicitHeight)
-                color: "transparent"
+                Item {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredWidth: Math.min(clipRect.width * 0.8, 360)
+                    Layout.preferredHeight: width * 868 / 1984
 
-                readonly property string iconSource: root.iconSourceFor(modelData)
+                    Image {
+                        id: dinoImage
 
-                RowLayout {
-                    id: contentRow
-                    anchors.fill: parent
-                    spacing: 12
-
-                    Rectangle {
-                        Layout.preferredWidth: 42
-                        Layout.preferredHeight: 42
-                        Layout.alignment: Qt.AlignTop
-                        radius: 13
-                        color: Appearance.colors.colLayer4
-                        clip: true
-
-                        Image {
-                            id: iconImg
-                            anchors.fill: parent
-                            anchors.margins: delegateRoot.modelData && delegateRoot.modelData.image ? 0 : 6
-                            source: delegateRoot.iconSource
-                            fillMode: delegateRoot.modelData && delegateRoot.modelData.image ? Image.PreserveAspectCrop : Image.PreserveAspectFit
-                            visible: delegateRoot.iconSource !== "" && status !== Image.Error
-                            asynchronous: true
-                            smooth: true
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "notifications"
-                            visible: !iconImg.visible
-                            color: Appearance.colors.colOnSurfaceVariant
-                            font.family: "Material Symbols Rounded"
-                            font.pixelSize: 20
-                        }
+                        anchors.fill: parent
+                        source: Paths.fileUrl(Paths.imagesDir + "/dino.png")
+                        fillMode: Image.PreserveAspectFit
+                        asynchronous: true
+                        visible: false
                     }
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-                        spacing: 3
+                    ColorOverlay {
+                        anchors.fill: dinoImage
+                        source: dinoImage
+                        color: Appearance.colors.colOutlineVariant
+                    }
+                }
 
-                        RowLayout {
-                            Layout.fillWidth: true
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: "No Notifications"
+                    color: Appearance.colors.colOutlineVariant
+                    font.family: Sizes.fontFamilyMono
+                    font.pixelSize: 24
+                    font.weight: 500
+                }
+            }
+
+            ListView {
+                id: listView
+
+                anchors.fill: parent
+                visible: root.notificationCount > 0
+                clip: true
+                spacing: Math.round(7 * 4 / 3)
+                model: root.notifications
+
+                delegate: Rectangle {
+                    id: delegateRoot
+
+                    required property var modelData
+
+                    width: ListView.view ? ListView.view.width : 0
+                    height: Math.max(84, contentRow.implicitHeight + 14)
+                    radius: Sizes.lockCardRadiusSmall
+                    color: Appearance.colors.colLayer3
+
+                    readonly property string iconSource: root.iconSourceFor(modelData)
+
+                    RowLayout {
+                        id: contentRow
+
+                        anchors.fill: parent
+                        anchors.margins: 14
+                        spacing: 12
+
+                        Rectangle {
+                            Layout.preferredWidth: 56
+                            Layout.preferredHeight: 56
+                            Layout.alignment: Qt.AlignTop
+                            radius: 18
+                            color: Appearance.colors.colLayer4
+                            clip: true
+
+                            Image {
+                                id: iconImg
+                                anchors.fill: parent
+                                anchors.margins: delegateRoot.modelData && delegateRoot.modelData.image ? 0 : 8
+                                source: delegateRoot.iconSource
+                                fillMode: delegateRoot.modelData && delegateRoot.modelData.image ? Image.PreserveAspectCrop : Image.PreserveAspectFit
+                                visible: delegateRoot.iconSource !== "" && status !== Image.Error
+                                asynchronous: true
+                                smooth: true
+                            }
 
                             Text {
-                                text: delegateRoot.modelData ? delegateRoot.modelData.appName : ""
-                                color: Appearance.colors.colPrimary
-                                font.family: Sizes.fontFamilyMono
-                                font.pixelSize: 10
+                                anchors.centerIn: parent
+                                text: "notifications"
+                                visible: !iconImg.visible
+                                color: Appearance.colors.colOnSurfaceVariant
+                                font.family: "Material Symbols Rounded"
+                                font.pixelSize: 27
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 4
+
+                            RowLayout {
+                                Layout.fillWidth: true
+
+                                Text {
+                                    text: delegateRoot.modelData ? delegateRoot.modelData.appName : ""
+                                    color: Appearance.colors.colPrimary
+                                    font.family: Sizes.fontFamilyMono
+                                    font.pixelSize: 13
+                                    font.bold: true
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: delegateRoot.modelData ? root.formatTime(delegateRoot.modelData.time) : ""
+                                    color: Appearance.colors.colOnSurfaceVariant
+                                    font.family: Sizes.fontFamilyMono
+                                    font.pixelSize: 13
+                                    opacity: 0.7
+                                }
+                            }
+
+                            Text {
+                                text: delegateRoot.modelData ? delegateRoot.modelData.summary : ""
+                                color: Appearance.colors.colOnSurface
+                                font.family: Sizes.fontFamily
+                                font.pixelSize: 17
                                 font.bold: true
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
 
                             Text {
-                                text: delegateRoot.modelData ? root.formatTime(delegateRoot.modelData.time) : ""
+                                text: delegateRoot.modelData ? delegateRoot.modelData.body : ""
                                 color: Appearance.colors.colOnSurfaceVariant
-                                font.family: Sizes.fontFamilyMono
-                                font.pixelSize: 10
-                                opacity: 0.7
+                                font.family: Sizes.fontFamily
+                                font.pixelSize: 16
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                                maximumLineCount: 2
+                                opacity: 0.8
                             }
                         }
 
                         Text {
-                            text: delegateRoot.modelData ? delegateRoot.modelData.summary : ""
-                            color: Appearance.colors.colOnSurface
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: 13
-                            font.bold: true
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-
-                        Text {
-                            text: delegateRoot.modelData ? delegateRoot.modelData.body : ""
+                            Layout.alignment: Qt.AlignTop
+                            text: "close"
                             color: Appearance.colors.colOnSurfaceVariant
-                            font.family: Sizes.fontFamily
-                            font.pixelSize: 12
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                            maximumLineCount: 2
-                            opacity: 0.8
-                        }
-                    }
+                            font.family: "Material Symbols Rounded"
+                            font.pixelSize: 24
 
-                    Text {
-                        Layout.alignment: Qt.AlignTop
-                        text: "close"
-                        color: Appearance.colors.colOnSurfaceVariant
-                        font.family: "Material Symbols Rounded"
-                        font.pixelSize: 18
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: NotificationManager.discardNotification(delegateRoot.modelData.notificationId)
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: NotificationManager.discardNotification(delegateRoot.modelData.notificationId)
+                            }
                         }
                     }
                 }
-            }
 
-            add: Transition {
-                ParallelAnimation {
-                    NumberAnimation {
-                        property: "opacity"
-                        from: 0
-                        to: 1
-                        duration: Appearance.animation.expressiveEffects.duration
-                        easing.type: Appearance.animation.expressiveEffects.type
-                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                add: Transition {
+                    ParallelAnimation {
+                        NumberAnimation {
+                            property: "opacity"
+                            from: 0
+                            to: 1
+                            duration: Appearance.animation.expressiveEffects.duration
+                            easing.type: Appearance.animation.expressiveEffects.type
+                            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                        }
+                        NumberAnimation {
+                            property: "scale"
+                            from: 0.92
+                            to: 1
+                            duration: Appearance.animation.expressiveDefaultSpatial.duration
+                            easing.type: Appearance.animation.expressiveDefaultSpatial.type
+                            easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
+                        }
                     }
+                }
+
+                remove: Transition {
+                    ParallelAnimation {
+                        NumberAnimation {
+                            property: "opacity"
+                            to: 0
+                            duration: Appearance.animation.expressiveEffects.duration
+                            easing.type: Appearance.animation.expressiveEffects.type
+                            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                        }
+                        NumberAnimation {
+                            property: "scale"
+                            to: 0.6
+                            duration: Appearance.animation.expressiveEffects.duration
+                            easing.type: Appearance.animation.expressiveEffects.type
+                            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                        }
+                    }
+                }
+
+                displaced: Transition {
                     NumberAnimation {
                         property: "y"
-                        from: -20
-                        duration: Appearance.animation.expressiveEffects.duration
-                        easing.type: Appearance.animation.expressiveEffects.type
-                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                    }
-                }
-            }
-
-            remove: Transition {
-                ParallelAnimation {
-                    NumberAnimation {
-                        property: "opacity"
-                        to: 0
-                        duration: Appearance.animation.expressiveEffects.duration
-                        easing.type: Appearance.animation.expressiveEffects.type
-                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                    }
-                    NumberAnimation {
-                        property: "height"
-                        to: 0
-                        duration: Appearance.animation.expressiveEffects.duration
-                        easing.type: Appearance.animation.expressiveEffects.type
-                        easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                        duration: Appearance.animation.expressiveDefaultSpatial.duration
+                        easing.type: Appearance.animation.expressiveDefaultSpatial.type
+                        easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
                     }
                 }
             }

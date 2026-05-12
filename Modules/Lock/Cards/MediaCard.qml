@@ -1,158 +1,245 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
-import Qt5Compat.GraphicalEffects 
-import Quickshell
-import Quickshell.Services.Mpris
+import Qt5Compat.GraphicalEffects
 import qs.Common
+import qs.Services
 
 Rectangle {
     id: root
+
     Layout.fillWidth: true
-    Layout.preferredHeight: 160
-    
-    // 基础背景色
-    color: "#000000"
+    implicitHeight: Math.max(Sizes.lockMediaHeight, contentLayout.implicitHeight + Sizes.lockOuterPadding)
+    color: Appearance.colors.colLayer2
     radius: Sizes.lockCardRadius
-    
-    // 【核心】裁切圆角，因为内部的 Image 是铺满的
     clip: true
 
-    // ================== MPRIS 逻辑 ==================
-    property var player: {
-        let list = Mpris.players.values;
-        for (let i = 0; i < list.length; i++) {
-            if (list[i].isPlaying) return list[i];
-        }
-        return list.length > 0 ? list[0] : null;
-    }
-
+    property var player: MediaManager.active
     property bool hasMedia: player !== null
     property bool isPlaying: player && player.isPlaying
     property string artUrl: (player && player.trackArtUrl) ? player.trackArtUrl : ""
     property string title: (player && player.trackTitle) ? player.trackTitle : "No Media"
     property string artist: (player && player.trackArtist) ? player.trackArtist : "Not Playing"
 
-    // ================== 1. 全背景封面 ==================
     Image {
         id: coverArt
+
         anchors.fill: parent
         source: root.artUrl
-        // 保持比例裁切填充
-        fillMode: Image.PreserveAspectCrop 
-        visible: root.artUrl !== ""
+        asynchronous: true
+        fillMode: Image.PreserveAspectCrop
+        sourceSize.width: width
+        sourceSize.height: height
         smooth: true
+        visible: false
     }
 
-    // ================== 2. 黑色渐变遮罩 (Gradient Scrim) ==================
-    // 从左侧黑色过渡到右侧透明，保证左侧文字可读
     Rectangle {
+        id: coverMask
+
         anchors.fill: parent
-        visible: root.artUrl !== ""
+        visible: false
+        layer.enabled: true
         gradient: Gradient {
             orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: "#cc000000" } // 左侧 80% 黑
-            GradientStop { position: 0.6; color: "#66000000" } // 中间半透明
-            GradientStop { position: 1.0; color: "#00000000" } // 右侧完全透明
+
+            GradientStop {
+                position: 0
+                color: Appearance.applyAlpha(Appearance.colors.colScrim, 0.5)
+            }
+            GradientStop {
+                position: 0.4
+                color: Appearance.applyAlpha(Appearance.colors.colScrim, 0.2)
+            }
+            GradientStop {
+                position: 0.8
+                color: Appearance.applyAlpha(Appearance.colors.colScrim, 0)
+            }
         }
     }
 
-    // 无媒体时的默认背景 (微弱的渐变)
-    Rectangle {
+    OpacityMask {
         anchors.fill: parent
-        visible: root.artUrl === ""
-        color: Appearance.colors.colLayer2
-        
+        source: coverArt
+        maskSource: coverMask
+        opacity: coverArt.status === Image.Ready ? 1 : 0
+        visible: opacity > 0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Appearance.animation.standardExtraLarge.duration
+                easing.type: Appearance.animation.standardExtraLarge.type
+                easing.bezierCurve: Appearance.animation.standardExtraLarge.bezierCurve
+            }
+        }
+    }
+
+    Item {
+        anchors.fill: parent
+        visible: coverArt.status !== Image.Ready
+
         Text {
             anchors.centerIn: parent
-            text: ""
-            font.family: Sizes.fontFamilyMono
-            font.pixelSize: 40
+            text: "music_note"
             color: Appearance.colors.colOnSurfaceVariant
+            font.family: "Material Symbols Rounded"
+            font.pixelSize: 48
             opacity: 0.2
         }
     }
 
-    // ================== 3. 内容层 ==================
     ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: 24
+        id: contentLayout
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: Sizes.lockOuterPadding
         spacing: 0
 
-        // 顶部占位 (把内容推到下面或者居中)
-        Item { Layout.fillHeight: true }
-
-        // 标签
         Text {
+            Layout.topMargin: Sizes.lockOuterPadding
+            Layout.bottomMargin: Sizes.lockOuterPadding
             text: "Now playing"
+            color: Appearance.colors.colOnSurfaceVariant
+            font.family: Sizes.fontFamilyMono
+            font.pixelSize: 17
+            font.weight: 500
+            elide: Text.ElideRight
+        }
+
+        Text {
+            Layout.fillWidth: true
+            text: root.artist
             color: Appearance.colors.colPrimary
             font.family: Sizes.fontFamilyMono
-            font.pixelSize: 12
-            font.bold: true
-            opacity: 0.9
+            font.pixelSize: 24
+            font.weight: 600
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
         }
 
-        // 歌名
         Text {
+            Layout.fillWidth: true
             text: root.title
-            color: "white" // 无论主题如何，在黑色遮罩上必须是白色
-            font.family: Sizes.fontFamily
-            font.bold: true
+            color: Appearance.colors.colOnSurface
+            font.family: Sizes.fontFamilyMono
             font.pixelSize: 20
-            Layout.fillWidth: true
-            Layout.maximumWidth: root.width * 0.8 // 防止文字太长挡住封面主体
+            horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
-            Layout.topMargin: 4
-        }
-        
-        // 歌手
-        Text {
-            text: root.artist
-            color: "#cccccc" // 浅灰
-            font.family: Sizes.fontFamily
-            font.pixelSize: 14
-            Layout.fillWidth: true
-            Layout.maximumWidth: root.width * 0.8
-            elide: Text.ElideRight
-            Layout.bottomMargin: 15
         }
 
-        // 按钮组 (居左显示)
         RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: Math.round(Sizes.lockColumnGap * 0.6)
+            Layout.bottomMargin: Sizes.lockOuterPadding
             spacing: 20
-            
-            // 上一曲
-            Text { 
-                text: "" 
-                font.family: Sizes.fontFamilyMono; font.pixelSize: 22
-                color: "#dddddd"
-                MouseArea { anchors.fill: parent; onClicked: if(root.player) root.player.previous() }
-            }
-            
-            // 播放/暂停 (圆形按钮)
-            Rectangle {
-                width: 40; height: 40; radius: 20
-                color: Appearance.colors.colPrimary
-                
-                Text { 
-                    anchors.centerIn: parent
-                    text: root.isPlaying ? "" : ""
-                    font.family: Sizes.fontFamilyMono; font.pixelSize: 16
-                    color: Appearance.colors.colOnPrimary
+
+            PlayerControl {
+                icon: "skip_previous"
+                canUse: root.hasMedia
+                onClicked: {
+                    if (root.player)
+                        root.player.previous();
                 }
-                MouseArea { anchors.fill: parent; onClicked: if(root.player) root.player.togglePlaying() }
             }
 
-            // 下一曲
-            Text { 
-                text: "" 
-                font.family: Sizes.fontFamilyMono; font.pixelSize: 22
-                color: "#dddddd"
-                MouseArea { anchors.fill: parent; onClicked: if(root.player) root.player.next() }
+            PlayerControl {
+                icon: root.isPlaying ? "pause" : "play_arrow"
+                active: root.isPlaying
+                colour: "Primary"
+                canUse: root.hasMedia
+                onClicked: {
+                    if (root.player)
+                        root.player.togglePlaying();
+                }
+            }
+
+            PlayerControl {
+                icon: "skip_next"
+                canUse: root.hasMedia
+                onClicked: {
+                    if (root.player)
+                        root.player.next();
+                }
             }
         }
-        
-        // 底部留白
-        Item { height: 5 }
+    }
+
+    component PlayerControl: Rectangle {
+        id: control
+
+        property string icon: ""
+        property bool active: false
+        property bool canUse: true
+        property string colour: "Secondary"
+
+        signal clicked()
+
+        Layout.preferredWidth: implicitWidth + (controlState.pressed ? Sizes.lockOuterPadding * 2 : active ? Sizes.lockOuterPadding : 0)
+        implicitWidth: controlIcon.implicitWidth + Sizes.lockOuterPadding * 2
+        implicitHeight: controlIcon.implicitHeight + 20
+        color: active ? Appearance.colors[`col${colour}`] : Appearance.colors[`col${colour}Container`]
+        radius: active || controlState.pressed ? Appearance.rounding.normal : Math.min(implicitWidth, implicitHeight) / 2
+        opacity: canUse ? 1 : 0.45
+
+        Behavior on Layout.preferredWidth {
+            NumberAnimation {
+                duration: Appearance.animation.expressiveFastSpatial.duration
+                easing.type: Appearance.animation.expressiveFastSpatial.type
+                easing.bezierCurve: Appearance.animation.expressiveFastSpatial.bezierCurve
+            }
+        }
+
+        Behavior on radius {
+            NumberAnimation {
+                duration: Appearance.animation.expressiveFastSpatial.duration
+                easing.type: Appearance.animation.expressiveFastSpatial.type
+                easing.bezierCurve: Appearance.animation.expressiveFastSpatial.bezierCurve
+            }
+        }
+
+        Behavior on color {
+            ColorAnimation {
+                duration: Appearance.animation.standard.duration
+                easing.type: Appearance.animation.standard.type
+                easing.bezierCurve: Appearance.animation.standard.bezierCurve
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            color: control.active ? Appearance.colors[`colOn${control.colour}`] : Appearance.colors[`colOn${control.colour}Container`]
+            opacity: controlState.pressed ? 0.2 : controlState.containsMouse ? 0.12 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Appearance.animation.expressiveEffects.duration
+                    easing.type: Appearance.animation.expressiveEffects.type
+                    easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                }
+            }
+        }
+
+        Text {
+            id: controlIcon
+
+            anchors.centerIn: parent
+            text: control.icon
+            color: control.active ? Appearance.colors[`colOn${control.colour}`] : Appearance.colors[`colOn${control.colour}Container`]
+            font.family: "Material Symbols Rounded"
+            font.pixelSize: 29
+            font.weight: control.active ? 600 : 400
+        }
+
+        MouseArea {
+            id: controlState
+
+            anchors.fill: parent
+            enabled: control.canUse
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: control.clicked()
+        }
     }
 }

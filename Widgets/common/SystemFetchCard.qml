@@ -20,6 +20,7 @@ Rectangle {
     property int logoSize: compact ? 86 : 138
     property int lineLabelWidth: compact ? 58 : 62
     property int lineHeight: compact ? 20 : 22
+    property int swatchBottomGap: compact ? 8 : 12
 
     function distroLogo() {
         const id = root.distroId.toLowerCase();
@@ -44,8 +45,11 @@ Rectangle {
     clip: true
 
     RowLayout {
-        anchors.fill: parent
-        anchors.margins: root.cardPadding
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.leftMargin: root.cardPadding
+        anchors.rightMargin: root.cardPadding
         spacing: root.compact ? 18 : 24
 
         Item {
@@ -132,7 +136,8 @@ Rectangle {
             }
 
             RowLayout {
-                Layout.topMargin: root.compact ? 2 : 4
+                Layout.topMargin: root.compact ? 6 : 8
+                Layout.bottomMargin: root.swatchBottomGap
                 spacing: 6
 
                 Repeater {

@@ -9,6 +9,7 @@ import "./notifications"
 Item {
     id: root
 
+    readonly property int fetchCardHeight: 252
 
     readonly property bool isForeground: WidgetState.leftSidebarOpen && WidgetState.leftSidebarView === "info"
     onIsForegroundChanged: {
@@ -57,7 +58,7 @@ Item {
 
             SystemFetchCard {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 236
+                Layout.preferredHeight: root.fetchCardHeight
                 radius: 24
                 cardPadding: 16
                 systemUser: SysmonPlugin.systemUser
@@ -73,7 +74,7 @@ Item {
 
             NotificationCenterCard {
                 Layout.fillWidth: true
-                Layout.preferredHeight: Math.max(360, flick.height - 236 - contentColumn.spacing)
+                Layout.preferredHeight: Math.max(360, flick.height - root.fetchCardHeight - contentColumn.spacing)
             }
         }
     }

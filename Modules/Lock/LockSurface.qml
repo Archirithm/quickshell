@@ -1,7 +1,5 @@
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Effects
-import Quickshell
 import Quickshell.Wayland
 import qs.Common
 
@@ -10,56 +8,54 @@ Item {
 
     property var context: null
     property var screenRef: null
-    property real animProgress: 0
-    property real backgroundOpacity: 0
     property bool isExiting: false
+    property real backgroundOpacity: 1
+    property real morphProgress: 0
+    property real containerScale: 0
+    property real containerRotation: 180
+    property real contentOpacity: 0
+    property real contentScale: 0
 
-    readonly property real availableWidth: Math.max(1, width - Sizes.lockOuterPadding * 2)
-    readonly property real workHeight: Math.max(1, height * Sizes.lockHeightMult)
-    readonly property real targetHeight: Math.min(workHeight, availableWidth / Sizes.lockRatio)
+    readonly property real targetHeight: Math.max(1, height * Sizes.lockHeightMult)
     readonly property real targetWidth: targetHeight * Sizes.lockRatio
-    readonly property real iconSize: Math.min(Sizes.lockIconPanelSize, targetHeight)
-    readonly property real iconRadius: iconSize / 4
+    readonly property real compactSize: Math.min(Sizes.lockIconPanelSize, targetHeight)
+    readonly property real compactRadius: compactSize / 4
     readonly property real panelRadius: Sizes.lockCardRadiusLarge * 1.5
 
     function focusAuth() {
-        lockContent.forceAuthFocus();
+        if (lockContent.opacity > 0)
+            lockContent.forceAuthFocus();
     }
 
     function startExitAnimation() {
         if (isExiting)
             return;
 
+        startupAnim.stop();
         isExiting = true;
         exitAnim.start();
     }
 
-    Rectangle {
-        anchors.fill: parent
-        color: "black"
-        z: -2
-    }
+    function emergencyExit() {
+        if (!root.context)
+            return;
 
-    Image {
-        id: wallpaper
-        anchors.fill: parent
-        z: -1
-        source: Paths.fileUrl(Paths.currentWallpaper)
-        fillMode: Image.PreserveAspectCrop
-        visible: false
-    }
-
-    MultiEffect {
-        anchors.fill: parent
-        source: wallpaper
-        blurEnabled: true
-        blurMax: 64
-        blur: 1
-        opacity: root.backgroundOpacity
+        startupAnim.stop();
+        exitAnim.stop();
+        root.isExiting = true;
+        root.context.finishUnlock();
     }
 
     ScreencopyView {
-        id: liveBackground
+        id: desktopBackdrop
+        anchors.fill: parent
+        captureSource: root.screenRef
+        opacity: root.screenRef !== null ? 1 : 0
+        visible: root.screenRef !== null
+    }
+
+    ScreencopyView {
+        id: background
         anchors.fill: parent
         captureSource: root.screenRef
         opacity: root.backgroundOpacity
@@ -80,6 +76,43 @@ Item {
         onClicked: root.focusAuth()
     }
 
+    Rectangle {
+        id: emergencyExitButton
+        z: 1000
+        width: Math.max(230, emergencyExitLabel.implicitWidth + 32)
+        height: 42
+        radius: 12
+        color: emergencyExitMouse.containsMouse ? Appearance.colors.colErrorContainerHover : Appearance.colors.colErrorContainer
+        border.width: 1
+        border.color: Appearance.colors.colError
+
+        anchors {
+            top: parent.top
+            left: parent.left
+            margins: Sizes.lockOuterPadding
+        }
+
+        Text {
+            id: emergencyExitLabel
+            anchors.centerIn: parent
+            text: "Its not working, let me out"
+            color: Appearance.colors.colOnErrorContainer
+            font.family: Sizes.fontFamily
+            font.pixelSize: 14
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+
+        MouseArea {
+            id: emergencyExitMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.emergencyExit()
+        }
+    }
+
     Connections {
         target: root.context
         ignoreUnknownSignals: true
@@ -97,40 +130,76 @@ Item {
     ParallelAnimation {
         id: startupAnim
         running: true
-
-        NumberAnimation {
-            target: root
-            property: "backgroundOpacity"
-            to: 1
-            duration: Appearance.animation.expressiveDefaultSpatial.duration
-            easing.type: Appearance.animation.expressiveDefaultSpatial.type
-            easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
-        }
+        onFinished: root.focusAuth()
 
         SequentialAnimation {
-            PauseAnimation { duration: 80 }
             ParallelAnimation {
                 NumberAnimation {
                     target: root
-                    property: "animProgress"
+                    property: "containerScale"
+                    to: 1
+                    duration: Appearance.animation.expressiveFastSpatial.duration
+                    easing.type: Appearance.animation.expressiveFastSpatial.type
+                    easing.bezierCurve: Appearance.animation.expressiveFastSpatial.bezierCurve
+                }
+
+                NumberAnimation {
+                    target: root
+                    property: "containerRotation"
+                    to: 360
+                    duration: Appearance.animation.expressiveFastSpatial.duration
+                    easing.type: Appearance.animation.standardAccel.type
+                    easing.bezierCurve: Appearance.animation.standardAccel.bezierCurve
+                }
+            }
+
+            ParallelAnimation {
+                NumberAnimation {
+                    target: root
+                    property: "morphProgress"
                     to: 1
                     duration: Appearance.animation.expressiveDefaultSpatial.duration
                     easing.type: Appearance.animation.expressiveDefaultSpatial.type
                     easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
                 }
+
                 NumberAnimation {
                     target: lockIcon
                     property: "rotation"
-                    from: 180
                     to: 360
-                    duration: Appearance.animation.expressiveFastSpatial.duration
-                    easing.type: Appearance.animation.expressiveFastSpatial.type
-                    easing.bezierCurve: Appearance.animation.expressiveFastSpatial.bezierCurve
+                    duration: Appearance.animation.standard.duration
+                    easing.type: Appearance.animation.standardDecel.type
+                    easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
+                }
+
+                NumberAnimation {
+                    target: lockIcon
+                    property: "opacity"
+                    to: 0
+                    duration: Appearance.animation.standard.duration
+                    easing.type: Appearance.animation.standard.type
+                    easing.bezierCurve: Appearance.animation.standard.bezierCurve
+                }
+
+                NumberAnimation {
+                    target: root
+                    property: "contentOpacity"
+                    to: 1
+                    duration: Appearance.animation.standard.duration
+                    easing.type: Appearance.animation.standard.type
+                    easing.bezierCurve: Appearance.animation.standard.bezierCurve
+                }
+
+                NumberAnimation {
+                    target: root
+                    property: "contentScale"
+                    to: 1
+                    duration: Appearance.animation.expressiveDefaultSpatial.duration
+                    easing.type: Appearance.animation.expressiveDefaultSpatial.type
+                    easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
                 }
             }
         }
-
-        onFinished: root.focusAuth()
     }
 
     Rectangle {
@@ -138,9 +207,11 @@ Item {
         anchors.centerIn: parent
         clip: true
 
-        width: root.iconSize + (root.targetWidth - root.iconSize) * root.animProgress
-        height: root.iconSize + (root.targetHeight - root.iconSize) * root.animProgress
-        radius: root.iconRadius + (root.panelRadius - root.iconRadius) * root.animProgress
+        width: root.compactSize + (root.targetWidth - root.compactSize) * root.morphProgress
+        height: root.compactSize + (root.targetHeight - root.compactSize) * root.morphProgress
+        radius: root.compactRadius + (root.panelRadius - root.compactRadius) * root.morphProgress
+        rotation: root.containerRotation
+        scale: root.containerScale
         color: Appearance.colors.colLayer0
 
         layer.enabled: true
@@ -155,12 +226,10 @@ Item {
             id: lockIcon
             anchors.centerIn: parent
             text: "lock"
-            opacity: 1 - root.animProgress
-            scale: 1 - root.animProgress * 0.45
-            visible: opacity > 0
+            rotation: 180
             color: Appearance.colors.colOnSurface
             font.family: "Material Symbols Rounded"
-            font.pixelSize: root.iconSize * 0.56
+            font.pixelSize: root.compactSize * 0.56
             font.bold: true
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
@@ -168,13 +237,14 @@ Item {
 
         LockContent {
             id: lockContent
-            anchors.fill: parent
-            anchors.margins: Sizes.lockOuterPadding
+            anchors.centerIn: parent
+            width: root.targetWidth - Sizes.lockOuterPadding * 2
+            height: root.targetHeight - Sizes.lockOuterPadding * 2
             context: root.context
             screenHeight: root.height
-            opacity: root.animProgress > 0.5 ? (root.animProgress - 0.5) * 2 : 0
-            scale: 0.86 + root.animProgress * 0.14
-            visible: opacity > 0
+            opacity: root.contentOpacity
+            scale: root.contentScale
+            visible: opacity > 0 || root.morphProgress > 0.96
         }
     }
 
@@ -184,37 +254,70 @@ Item {
         ParallelAnimation {
             NumberAnimation {
                 target: root
-                property: "animProgress"
+                property: "morphProgress"
                 to: 0
                 duration: Appearance.animation.expressiveDefaultSpatial.duration
                 easing.type: Appearance.animation.expressiveDefaultSpatial.type
                 easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
             }
+
+            NumberAnimation {
+                target: root
+                property: "contentScale"
+                to: 0
+                duration: Appearance.animation.expressiveDefaultSpatial.duration
+                easing.type: Appearance.animation.expressiveDefaultSpatial.type
+                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
+            }
+
+            NumberAnimation {
+                target: root
+                property: "contentOpacity"
+                to: 0
+                duration: Appearance.animation.standardSmall.duration
+                easing.type: Appearance.animation.standardSmall.type
+                easing.bezierCurve: Appearance.animation.standardSmall.bezierCurve
+            }
+
             NumberAnimation {
                 target: lockIcon
-                property: "rotation"
-                to: 180
-                duration: Appearance.animation.expressiveFastSpatial.duration
-                easing.type: Appearance.animation.expressiveFastSpatial.type
-                easing.bezierCurve: Appearance.animation.expressiveFastSpatial.bezierCurve
+                property: "opacity"
+                to: 1
+                duration: Appearance.animation.standardLarge.duration
+                easing.type: Appearance.animation.standardLarge.type
+                easing.bezierCurve: Appearance.animation.standardLarge.bezierCurve
             }
+
             NumberAnimation {
                 target: root
                 property: "backgroundOpacity"
                 to: 0
-                duration: Appearance.animation.expressiveDefaultSpatial.duration
-                easing.type: Appearance.animation.expressiveDefaultSpatial.type
-                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
+                duration: Appearance.animation.standardLarge.duration
+                easing.type: Appearance.animation.standardLarge.type
+                easing.bezierCurve: Appearance.animation.standardLarge.bezierCurve
+            }
+
+            NumberAnimation {
+                target: lockIcon
+                property: "rotation"
+                to: 360
+                duration: Appearance.animation.standard.duration
+                easing.type: Appearance.animation.standardDecel.type
+                easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
             }
         }
 
-        NumberAnimation {
-            target: morphContainer
-            property: "opacity"
-            to: 0
-            duration: Appearance.animation.expressiveEffects.duration
-            easing.type: Appearance.animation.expressiveEffects.type
-            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+        SequentialAnimation {
+            PauseAnimation { duration: Animations.durations.small }
+
+            NumberAnimation {
+                target: morphContainer
+                property: "opacity"
+                to: 0
+                duration: Appearance.animation.expressiveEffects.duration
+                easing.type: Appearance.animation.expressiveEffects.type
+                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+            }
         }
 
         onFinished: {

@@ -1,16 +1,17 @@
 import QtQuick
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Services.Pam
+import Quickshell.Wayland
 import qs.Common
 
-ShellRoot {
+Scope {
     id: root
+
     signal unlocked()
 
-    // 1. 鉴权逻辑 (Scope)
     Scope {
         id: internalContext
+
         property string currentText: ""
         property bool unlockInProgress: false
         property bool showFailure: false
@@ -19,12 +20,13 @@ ShellRoot {
         signal unlockFailed()
 
         function tryUnlock() {
-            if (currentText === "") return;
-            if (unlockInProgress) return;
+            if (currentText === "" || unlockInProgress)
+                return;
+
             internalContext.unlockInProgress = true;
             pam.start();
         }
-        
+
         function finishUnlock() {
             sessionLock.locked = false;
             root.unlocked();
@@ -32,9 +34,15 @@ ShellRoot {
 
         PamContext {
             id: pam
+
             configDirectory: Paths.shellDir + "/Modules/Lock/pam"
             config: "password.conf"
-            onPamMessage: { if (this.responseRequired) this.respond(internalContext.currentText); }
+
+            onPamMessage: {
+                if (this.responseRequired)
+                    this.respond(internalContext.currentText);
+            }
+
             onCompleted: result => {
                 if (result == PamResult.Success) {
                     internalContext.currentText = "";
@@ -50,42 +58,19 @@ ShellRoot {
         }
     }
 
-    // 2. Wayland 锁屏
     WlSessionLock {
         id: sessionLock
         locked: true
 
         WlSessionLockSurface {
             id: lockSurface
+            color: "transparent"
 
             LockSurface {
                 anchors.fill: parent
                 context: internalContext
                 screenRef: lockSurface.screen
             }
-
-            // // C. 紧急出口 (右上角)
-            // Rectangle {
-            //     anchors.top: parent.top
-            //     anchors.right: parent.right
-            //     width: 150; height: 50
-            //     color: "red"
-            //     z: 999
-            //     Text { 
-            //         anchors.centerIn: parent
-            //         text: "紧急解锁"
-            //         color: "white" 
-            //         font.pixelSize: 16
-            //         font.bold: true
-            //     }
-            //     MouseArea { 
-            //         anchors.fill: parent
-            //         onClicked: { 
-            //             sessionLock.locked = false
-            //             root.unlocked() 
-            //         } 
-            //     }
-            // }
         }
     }
 }

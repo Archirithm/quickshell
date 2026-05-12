@@ -17,14 +17,13 @@ Singleton {
         readonly property var standard: [0.2, 0, 0, 1, 1, 1]
         readonly property var standardAccel: [0.3, 0, 1, 1, 1, 1]
         readonly property var standardDecel: [0, 0, 0, 1, 1, 1]
-        readonly property var expressiveFastSpatial: [0.42, 1.67, 0.21, 0.90, 1, 1]
-        readonly property var expressiveDefaultSpatial: [0.38, 1.21, 0.22, 1.00, 1, 1]
+        readonly property var expressiveFastSpatial: [0.42, 1.67, 0.21, 0.9, 1, 1]
+        readonly property var expressiveDefaultSpatial: [0.38, 1.21, 0.22, 1, 1, 1]
         readonly property var expressiveSlowSpatial: [0.39, 1.29, 0.35, 0.98, 1, 1]
-        readonly property var expressiveFastEffects: [0.31, 0.94, 0.34, 1.00, 1, 1]
-        readonly property var expressiveDefaultEffects: [0.34, 0.80, 0.34, 1.00, 1, 1]
-        readonly property var expressiveSlowEffects: [0.34, 0.88, 0.34, 1.00, 1, 1]
+        readonly property var expressiveFastEffects: [0.31, 0.94, 0.34, 1, 1, 1]
+        readonly property var expressiveDefaultEffects: [0.34, 0.8, 0.34, 1, 1, 1]
+        readonly property var expressiveSlowEffects: [0.34, 0.88, 0.34, 1, 1, 1]
 
-        // Backward-compatible aliases used by existing QML.
         readonly property var expressiveEffects: expressiveDefaultEffects
         readonly property int expressiveFastSpatialDuration: root.durations.expressiveFastSpatial
         readonly property int expressiveDefaultSpatialDuration: root.durations.expressiveDefaultSpatial
@@ -45,13 +44,54 @@ Singleton {
         readonly property int expressiveDefaultEffects: 200
         readonly property int expressiveSlowEffects: 300
 
-        // Backward-compatible aliases used by existing QML.
         readonly property int expressiveEffects: expressiveDefaultEffects
         readonly property int emphasizedAccel: small
         readonly property int standardDecel: small
     }
 
     animation: QtObject {
+        readonly property QtObject standardSmall: QtObject {
+            readonly property int duration: root.durations.small
+            readonly property int type: Easing.BezierSpline
+            readonly property var bezierCurve: root.curves.standard
+        }
+
+        readonly property QtObject standard: QtObject {
+            readonly property int duration: root.durations.normal
+            readonly property int type: Easing.BezierSpline
+            readonly property var bezierCurve: root.curves.standard
+        }
+
+        readonly property QtObject standardLarge: QtObject {
+            readonly property int duration: root.durations.large
+            readonly property int type: Easing.BezierSpline
+            readonly property var bezierCurve: root.curves.standard
+        }
+
+        readonly property QtObject standardExtraLarge: QtObject {
+            readonly property int duration: root.durations.extraLarge
+            readonly property int type: Easing.BezierSpline
+            readonly property var bezierCurve: root.curves.standard
+        }
+
+        readonly property QtObject standardAccel: QtObject {
+            readonly property int duration: root.durations.normal
+            readonly property int type: Easing.BezierSpline
+            readonly property var bezierCurve: root.curves.standardAccel
+        }
+
+        readonly property QtObject standardDecel: QtObject {
+            readonly property int duration: root.durations.standardDecel
+            readonly property int type: Easing.BezierSpline
+            readonly property var bezierCurve: root.curves.standardDecel
+        }
+
+        readonly property QtObject emphasizedAccel: QtObject {
+            readonly property int duration: root.durations.emphasizedAccel
+            readonly property int type: Easing.BezierSpline
+            readonly property var bezierCurve: root.curves.emphasizedAccel
+        }
+
         readonly property QtObject expressiveFastSpatial: QtObject {
             readonly property int duration: root.durations.expressiveFastSpatial
             readonly property int type: Easing.BezierSpline
@@ -86,18 +126,6 @@ Singleton {
             readonly property int duration: root.durations.expressiveSlowEffects
             readonly property int type: Easing.BezierSpline
             readonly property var bezierCurve: root.curves.expressiveSlowEffects
-        }
-
-        readonly property QtObject emphasizedAccel: QtObject {
-            readonly property int duration: root.durations.emphasizedAccel
-            readonly property int type: Easing.BezierSpline
-            readonly property var bezierCurve: root.curves.emphasizedAccel
-        }
-
-        readonly property QtObject standardDecel: QtObject {
-            readonly property int duration: root.durations.standardDecel
-            readonly property int type: Easing.BezierSpline
-            readonly property var bezierCurve: root.curves.standardDecel
         }
 
         readonly property QtObject expressiveEffects: expressiveDefaultEffects

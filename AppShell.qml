@@ -4,6 +4,7 @@ import Quickshell.Io
 import qs.Modules.Bar
 import qs.Modules.DynamicIsland
 import qs.Modules.Launcher
+import qs.Modules.Lock
 import qs.Modules.Sidebars.Left
 import qs.Modules.Sidebars.Right
 
@@ -21,7 +22,7 @@ Item {
     Loader {
         id: lockLoader
         active: false
-        source: Qt.resolvedUrl("Modules/Lock/Lock.qml")
+        sourceComponent: lockComponent
 
         Connections {
             target: lockLoader.item
@@ -31,6 +32,12 @@ Item {
                 lockLoader.active = false;
             }
         }
+    }
+
+    Component {
+        id: lockComponent
+
+        Lock {}
     }
 
     IpcHandler {

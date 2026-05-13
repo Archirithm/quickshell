@@ -193,6 +193,7 @@ Rectangle {
 
                             RowLayout {
                                 Layout.fillWidth: true
+                                spacing: 6
 
                                 Text {
                                     text: delegateRoot.modelData ? delegateRoot.modelData.appName : ""
@@ -205,11 +206,37 @@ Rectangle {
                                 }
 
                                 Text {
+                                    Layout.alignment: Qt.AlignVCenter
                                     text: delegateRoot.modelData ? root.formatTime(delegateRoot.modelData.time) : ""
                                     color: Appearance.colors.colOnSurfaceVariant
                                     font.family: Sizes.fontFamilyMono
                                     font.pixelSize: 13
                                     opacity: 0.7
+                                }
+
+                                Item {
+                                    Layout.preferredWidth: 18
+                                    Layout.preferredHeight: 18
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "close"
+                                        color: Appearance.colors.colOnSurfaceVariant
+                                        font.family: "Material Symbols Rounded"
+                                        font.pixelSize: 14
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        opacity: closeMouse.containsMouse ? 1 : 0.7
+                                    }
+
+                                    MouseArea {
+                                        id: closeMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: NotificationManager.discardNotification(delegateRoot.modelData.notificationId)
+                                    }
                                 }
                             }
 
@@ -235,19 +262,6 @@ Rectangle {
                             }
                         }
 
-                        Text {
-                            Layout.alignment: Qt.AlignTop
-                            text: "close"
-                            color: Appearance.colors.colOnSurfaceVariant
-                            font.family: "Material Symbols Rounded"
-                            font.pixelSize: 24
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: NotificationManager.discardNotification(delegateRoot.modelData.notificationId)
-                            }
-                        }
                     }
                 }
 

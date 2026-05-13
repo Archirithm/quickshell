@@ -9,6 +9,21 @@ Scope {
 
     signal unlocked()
 
+    function open() {
+        if (sessionLock.locked)
+            return "ALREADY_LOCKED";
+
+        internalContext.currentText = "";
+        internalContext.unlockInProgress = false;
+        internalContext.showFailure = false;
+        sessionLock.locked = true;
+        return "LOCKED";
+    }
+
+    function isLocked() {
+        return sessionLock.locked;
+    }
+
     Scope {
         id: internalContext
 
@@ -16,7 +31,6 @@ Scope {
         property bool unlockInProgress: false
         property bool showFailure: false
 
-        signal unlockSucceeded()
         signal unlockFailed()
 
         function tryUnlock() {
@@ -47,7 +61,7 @@ Scope {
                 if (result == PamResult.Success) {
                     internalContext.currentText = "";
                     internalContext.showFailure = false;
-                    internalContext.unlockSucceeded();
+                    sessionLock.unlock();
                 } else {
                     internalContext.currentText = "";
                     internalContext.showFailure = true;
@@ -60,17 +74,12 @@ Scope {
 
     WlSessionLock {
         id: sessionLock
-        locked: true
 
-        WlSessionLockSurface {
-            id: lockSurface
-            color: "transparent"
+        signal unlock()
 
-            LockSurface {
-                anchors.fill: parent
-                context: internalContext
-                screenRef: lockSurface.screen
-            }
+        LockSurface {
+            lock: sessionLock
+            context: internalContext
         }
     }
 }

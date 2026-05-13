@@ -313,6 +313,10 @@ Item {
                         id: errorFlashAnim
 
                         loops: 2
+                        onFinished: {
+                            if (root.context && root.context.showFailure)
+                                root.context.showFailure = false;
+                        }
 
                         NumberAnimation {
                             target: errorMessage

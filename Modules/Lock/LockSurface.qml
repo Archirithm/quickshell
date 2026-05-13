@@ -3,24 +3,26 @@ import QtQuick.Effects
 import Quickshell.Wayland
 import qs.Common
 
-Item {
+WlSessionLockSurface {
     id: root
 
+    required property WlSessionLock lock
     property var context: null
-    property var screenRef: null
     property bool isExiting: false
-    property real backgroundOpacity: 1
     property real morphProgress: 0
     property real containerScale: 0
     property real containerRotation: 180
     property real contentOpacity: 0
     property real contentScale: 0
+    property real backgroundBlur: 0
 
     readonly property real targetHeight: Math.max(1, height * Sizes.lockHeightMult)
     readonly property real targetWidth: targetHeight * Sizes.lockRatio
     readonly property real compactSize: Math.min(Sizes.lockIconPanelSize, targetHeight)
     readonly property real compactRadius: compactSize / 4
     readonly property real panelRadius: Sizes.lockCardRadiusLarge * 1.5
+
+    color: "transparent"
 
     function focusAuth() {
         if (lockContent.opacity > 0)
@@ -36,36 +38,42 @@ Item {
         exitAnim.start();
     }
 
-    function emergencyExit() {
-        if (!root.context)
-            return;
-
-        startupAnim.stop();
-        exitAnim.stop();
-        root.isExiting = true;
-        root.context.finishUnlock();
+    Rectangle {
+        id: immediateFallback
+        anchors.fill: parent
+        color: Appearance.colors.colLayer0Base
     }
 
-    ScreencopyView {
-        id: desktopBackdrop
+    Image {
+        id: wallpaperFallback
         anchors.fill: parent
-        captureSource: root.screenRef
-        opacity: root.screenRef !== null ? 1 : 0
-        visible: root.screenRef !== null
-    }
-
-    ScreencopyView {
-        id: background
-        anchors.fill: parent
-        captureSource: root.screenRef
-        opacity: root.backgroundOpacity
-        visible: root.screenRef !== null
+        source: Appearance.currentWallpaperPreview !== "" ? Appearance.currentWallpaperPreview : Paths.fileUrl(Paths.currentWallpaper)
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: false
+        cache: false
 
         layer.enabled: true
         layer.effect: MultiEffect {
             autoPaddingEnabled: false
             blurEnabled: true
-            blur: 1
+            blur: root.backgroundBlur
+            blurMax: 64
+            blurMultiplier: 1
+        }
+    }
+
+    ScreencopyView {
+        id: background
+
+        anchors.fill: parent
+        captureSource: root.screen
+        opacity: 1
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            autoPaddingEnabled: false
+            blurEnabled: true
+            blur: root.backgroundBlur
             blurMax: 64
             blurMultiplier: 1
         }
@@ -76,50 +84,9 @@ Item {
         onClicked: root.focusAuth()
     }
 
-    Rectangle {
-        id: emergencyExitButton
-        z: 1000
-        width: Math.max(230, emergencyExitLabel.implicitWidth + 32)
-        height: 42
-        radius: 12
-        color: emergencyExitMouse.containsMouse ? Appearance.colors.colErrorContainerHover : Appearance.colors.colErrorContainer
-        border.width: 1
-        border.color: Appearance.colors.colError
-
-        anchors {
-            top: parent.top
-            left: parent.left
-            margins: Sizes.lockOuterPadding
-        }
-
-        Text {
-            id: emergencyExitLabel
-            anchors.centerIn: parent
-            text: "Its not working, let me out"
-            color: Appearance.colors.colOnErrorContainer
-            font.family: Sizes.fontFamily
-            font.pixelSize: 14
-            font.bold: true
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-        }
-
-        MouseArea {
-            id: emergencyExitMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.emergencyExit()
-        }
-    }
-
     Connections {
         target: root.context
         ignoreUnknownSignals: true
-
-        function onUnlockSucceeded() {
-            root.startExitAnimation();
-        }
 
         function onUnlockFailed() {
             root.isExiting = false;
@@ -127,10 +94,27 @@ Item {
         }
     }
 
+    Connections {
+        target: root.lock
+
+        function onUnlock() {
+            root.startExitAnimation();
+        }
+    }
+
     ParallelAnimation {
         id: startupAnim
         running: true
         onFinished: root.focusAuth()
+
+        NumberAnimation {
+            target: root
+            property: "backgroundBlur"
+            to: 1
+            duration: Appearance.animation.standardLarge.duration
+            easing.type: Appearance.animation.standardLarge.type
+            easing.bezierCurve: Appearance.animation.standardLarge.bezierCurve
+        }
 
         SequentialAnimation {
             ParallelAnimation {
@@ -289,15 +273,6 @@ Item {
             }
 
             NumberAnimation {
-                target: root
-                property: "backgroundOpacity"
-                to: 0
-                duration: Appearance.animation.standardLarge.duration
-                easing.type: Appearance.animation.standardLarge.type
-                easing.bezierCurve: Appearance.animation.standardLarge.bezierCurve
-            }
-
-            NumberAnimation {
                 target: lockIcon
                 property: "rotation"
                 to: 360
@@ -305,24 +280,37 @@ Item {
                 easing.type: Appearance.animation.standardDecel.type
                 easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
             }
+
+            NumberAnimation {
+                target: root
+                property: "backgroundBlur"
+                to: 0
+                duration: Appearance.animation.standardLarge.duration
+                easing.type: Appearance.animation.standardLarge.type
+                easing.bezierCurve: Appearance.animation.standardLarge.bezierCurve
+            }
         }
 
         SequentialAnimation {
-            PauseAnimation { duration: Animations.durations.small }
+            PauseAnimation {
+                duration: Animations.durations.small
+            }
 
             NumberAnimation {
                 target: morphContainer
                 property: "opacity"
                 to: 0
-                duration: Appearance.animation.expressiveEffects.duration
-                easing.type: Appearance.animation.expressiveEffects.type
-                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                duration: Appearance.animation.standard.duration
+                easing.type: Appearance.animation.standard.type
+                easing.bezierCurve: Appearance.animation.standard.bezierCurve
             }
         }
 
         onFinished: {
             if (root.context)
                 root.context.finishUnlock();
+            else
+                root.lock.locked = false;
         }
     }
 }

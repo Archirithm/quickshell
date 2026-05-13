@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import qs.Common
 import qs.Services
+import qs.Widgets.common
 
 Rectangle {
     id: root
@@ -12,6 +13,18 @@ Rectangle {
     color: Appearance.colors.colLayer2
     radius: Sizes.lockCardRadius
     clip: true
+    layer.enabled: true
+    layer.effect: OpacityMask {
+        maskSource: Rectangle {
+            width: root.width
+            height: root.height
+            radius: root.radius
+            topLeftRadius: root.topLeftRadius
+            topRightRadius: root.topRightRadius
+            bottomLeftRadius: root.bottomLeftRadius
+            bottomRightRadius: root.bottomRightRadius
+        }
+    }
 
     property var player: MediaManager.active
     property bool hasMedia: player !== null
@@ -75,7 +88,7 @@ Rectangle {
 
     Item {
         anchors.fill: parent
-        visible: coverArt.status !== Image.Ready
+        visible: root.hasMedia && coverArt.status !== Image.Ready
 
         Text {
             anchors.centerIn: parent
@@ -143,11 +156,33 @@ Rectangle {
                 }
             }
 
-            PlayerControl {
-                icon: root.isPlaying ? "pause" : "play_arrow"
-                active: root.isPlaying
-                colour: "Primary"
-                canUse: root.hasMedia
+            PlayPauseButton {
+                Layout.alignment: Qt.AlignVCenter
+                Layout.preferredWidth: implicitWidth
+                Layout.preferredHeight: implicitHeight
+                enabled: root.hasMedia
+                opacity: enabled ? 1 : 0.45
+                isPlaying: root.isPlaying
+                playingBg: Appearance.colors.colPrimary
+                playingFg: Appearance.colors.colOnPrimary
+                pausedBg: Appearance.colors.colPrimaryContainer
+                pausedFg: Appearance.colors.colOnPrimaryContainer
+                stateLayerPlaying: Appearance.colors.colOnPrimary
+                stateLayerPaused: Appearance.colors.colOnPrimaryContainer
+                buttonSize: Math.round(48 * Sizes.lockReferenceScale)
+                iconSize: 31
+                iconFontFamily: "Material Symbols Rounded"
+                morphExpandWidth: Sizes.lockOuterPadding
+                morphPressWidth: Sizes.lockOuterPadding * 2
+                morphPlayingRadius: Appearance.rounding.normal
+                morphPressRadius: Appearance.rounding.normal
+                spatialAnimationDuration: Appearance.animation.expressiveFastSpatial.duration
+                spatialCurve: Appearance.animation.expressiveFastSpatial.bezierCurve
+                colorAnimationDuration: Appearance.animation.standard.duration
+                colorCurve: Appearance.animation.standard.bezierCurve
+                iconSwapHalfDuration: Appearance.animation.standardSmall.duration
+                iconOutCurve: Appearance.animation.standardAccel.bezierCurve
+                iconInCurve: Appearance.animation.standardDecel.bezierCurve
                 onClicked: {
                     if (root.player)
                         root.player.togglePlaying();
@@ -172,12 +207,15 @@ Rectangle {
         property bool active: false
         property bool canUse: true
         property string colour: "Secondary"
+        readonly property int baseWidth: Math.round(52 * Sizes.lockReferenceScale)
+        readonly property int baseHeight: Math.round(44 * Sizes.lockReferenceScale)
+        readonly property int iconBoxSize: Math.round(30 * Sizes.lockReferenceScale)
 
         signal clicked()
 
-        Layout.preferredWidth: implicitWidth + (controlState.pressed ? Sizes.lockOuterPadding * 2 : active ? Sizes.lockOuterPadding : 0)
-        implicitWidth: controlIcon.implicitWidth + Sizes.lockOuterPadding * 2
-        implicitHeight: controlIcon.implicitHeight + 20
+        Layout.preferredWidth: baseWidth + (active ? Sizes.lockOuterPadding : 0)
+        implicitWidth: baseWidth
+        implicitHeight: baseHeight
         color: active ? Appearance.colors[`col${colour}`] : Appearance.colors[`col${colour}Container`]
         radius: active || controlState.pressed ? Appearance.rounding.normal : Math.min(implicitWidth, implicitHeight) / 2
         opacity: canUse ? 1 : 0.45
@@ -224,12 +262,16 @@ Rectangle {
         Text {
             id: controlIcon
 
+            width: control.iconBoxSize
+            height: control.iconBoxSize
             anchors.centerIn: parent
             text: control.icon
             color: control.active ? Appearance.colors[`colOn${control.colour}`] : Appearance.colors[`colOn${control.colour}Container`]
             font.family: "Material Symbols Rounded"
             font.pixelSize: 29
-            font.weight: control.active ? 600 : 400
+            font.weight: 500
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
         }
 
         MouseArea {

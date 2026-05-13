@@ -9,6 +9,9 @@ FocusScope {
     property var context: null
     readonly property bool hasText: input.text.length > 0
     readonly property bool busy: context && context.unlockInProgress
+    readonly property bool enterEnabled: hasText && !busy
+    readonly property bool enterHovered: frameMouse.containsMouse && frameMouse.mouseX >= enterButton.x
+    readonly property bool enterPressed: frameMouse.pressed && frameMouse.mouseX >= enterButton.x
 
     signal requestUnlock()
 
@@ -26,49 +29,125 @@ FocusScope {
         radius: height / 2
         clip: true
 
-        Rectangle {
-            id: ripple
+        Shape {
+            id: rippleLayer
 
-            property real centerX: 0
-            property real centerY: 0
-            property real rippleSize: Math.max(inputFrame.width, inputFrame.height) * 2.2
+            property real pressX: width / 2
+            property real pressY: height / 2
+            property real circleRadius: 0
+            readonly property real cornerRadius: inputFrame.radius
+            readonly property real endRadius: {
+                const d1 = distSq(0, 0);
+                const d2 = distSq(width, 0);
+                const d3 = distSq(0, height);
+                const d4 = distSq(width, height);
+                return Math.sqrt(Math.max(d1, d2, d3, d4));
+            }
+
+            function distSq(x, y) {
+                return Math.pow(pressX - x, 2) + Math.pow(pressY - y, 2);
+            }
 
             function start(x, y) {
-                centerX = x;
-                centerY = y;
-                scale = 0;
+                pressX = x;
+                pressY = y;
+                circleRadius = 0;
                 opacity = 0.14;
                 rippleAnim.restart();
             }
 
-            width: rippleSize
-            height: rippleSize
-            x: centerX - width / 2
-            y: centerY - height / 2
-            radius: width / 2
-            color: Appearance.colors.colOnSurface
+            anchors.fill: parent
             opacity: 0
-            scale: 0
+            preferredRendererType: Shape.CurveRenderer
+
+            ShapePath {
+                strokeWidth: 0
+                strokeColor: "transparent"
+                fillGradient: RadialGradient {
+                    centerX: rippleLayer.pressX
+                    centerY: rippleLayer.pressY
+                    centerRadius: rippleLayer.circleRadius
+                    focalX: centerX
+                    focalY: centerY
+
+                    GradientStop {
+                        position: 0
+                        color: Appearance.colors.colOnSurface
+                    }
+                    GradientStop {
+                        position: 0.99
+                        color: Appearance.colors.colOnSurface
+                    }
+                    GradientStop {
+                        position: 1
+                        color: Appearance.applyAlpha(Appearance.colors.colOnSurface, 0)
+                    }
+                }
+
+                startX: rippleLayer.cornerRadius
+                startY: 0
+
+                PathLine {
+                    x: rippleLayer.width - rippleLayer.cornerRadius
+                    y: 0
+                }
+                PathArc {
+                    x: rippleLayer.width
+                    y: rippleLayer.cornerRadius
+                    radiusX: rippleLayer.cornerRadius
+                    radiusY: rippleLayer.cornerRadius
+                }
+                PathLine {
+                    x: rippleLayer.width
+                    y: rippleLayer.height - rippleLayer.cornerRadius
+                }
+                PathArc {
+                    x: rippleLayer.width - rippleLayer.cornerRadius
+                    y: rippleLayer.height
+                    radiusX: rippleLayer.cornerRadius
+                    radiusY: rippleLayer.cornerRadius
+                }
+                PathLine {
+                    x: rippleLayer.cornerRadius
+                    y: rippleLayer.height
+                }
+                PathArc {
+                    x: 0
+                    y: rippleLayer.height - rippleLayer.cornerRadius
+                    radiusX: rippleLayer.cornerRadius
+                    radiusY: rippleLayer.cornerRadius
+                }
+                PathLine {
+                    x: 0
+                    y: rippleLayer.cornerRadius
+                }
+                PathArc {
+                    x: rippleLayer.cornerRadius
+                    y: 0
+                    radiusX: rippleLayer.cornerRadius
+                    radiusY: rippleLayer.cornerRadius
+                }
+            }
 
             ParallelAnimation {
                 id: rippleAnim
 
                 NumberAnimation {
-                    target: ripple
-                    property: "scale"
-                    to: 1
-                    duration: Appearance.animation.expressiveDefaultSpatial.duration
-                    easing.type: Appearance.animation.expressiveDefaultSpatial.type
-                    easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
+                    target: rippleLayer
+                    property: "circleRadius"
+                    to: rippleLayer.endRadius
+                    duration: Appearance.animation.expressiveSlowEffects.duration * 2
+                    easing.type: Appearance.animation.expressiveSlowEffects.type
+                    easing.bezierCurve: Appearance.animation.expressiveSlowEffects.bezierCurve
                 }
 
                 NumberAnimation {
-                    target: ripple
+                    target: rippleLayer
                     property: "opacity"
                     to: 0
-                    duration: Appearance.animation.expressiveEffects.duration
-                    easing.type: Appearance.animation.expressiveEffects.type
-                    easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
+                    duration: Appearance.animation.expressiveSlowEffects.duration * 2
+                    easing.type: Appearance.animation.expressiveSlowEffects.type
+                    easing.bezierCurve: Appearance.animation.expressiveSlowEffects.bezierCurve
                 }
             }
         }
@@ -88,46 +167,40 @@ FocusScope {
                     anchors.centerIn: parent
                     width: 32
                     height: 32
+                    rotation: root.busy ? spinAngle : 0
 
+                    property real spinAngle: 0
                     property real arcStart: -90
-                    property real arcSweep: 78
+                    property real arcSweep: 32
+                    readonly property real strokeSize: 3
+                    readonly property real arcRadius: Math.max(1, width / 2 - strokeSize)
 
-                    Text {
-                        id: lockIcon
-
-                        anchors.centerIn: parent
-                        text: "lock"
-                        color: Appearance.colors.colOnSurface
-                        font.family: "Material Symbols Rounded"
-                        font.pixelSize: 24
-                        opacity: root.busy ? 0 : 1
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: Appearance.animation.expressiveEffects.duration
-                                easing.type: Appearance.animation.expressiveEffects.type
-                                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                            }
+                    Behavior on rotation {
+                        enabled: !root.busy
+                        NumberAnimation {
+                            duration: Appearance.animation.expressiveEffects.duration
+                            easing.type: Appearance.animation.expressiveEffects.type
+                            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                         }
                     }
 
                     Shape {
-                        id: busyIndicator
-
                         anchors.fill: parent
                         opacity: root.busy ? 1 : 0
+                        preferredRendererType: Shape.CurveRenderer
+                        asynchronous: true
 
                         ShapePath {
                             strokeColor: Appearance.colors.colSecondary
-                            strokeWidth: 3
+                            strokeWidth: progressHost.strokeSize
                             fillColor: "transparent"
                             capStyle: ShapePath.RoundCap
 
                             PathAngleArc {
-                                centerX: busyIndicator.width / 2
-                                centerY: busyIndicator.height / 2
-                                radiusX: Math.max(1, busyIndicator.width / 2 - 2)
-                                radiusY: Math.max(1, busyIndicator.height / 2 - 2)
+                                centerX: progressHost.width / 2
+                                centerY: progressHost.height / 2
+                                radiusX: progressHost.arcRadius
+                                radiusY: progressHost.arcRadius
                                 startAngle: progressHost.arcStart
                                 sweepAngle: progressHost.arcSweep
                             }
@@ -149,40 +222,79 @@ FocusScope {
                         ParallelAnimation {
                             NumberAnimation {
                                 target: progressHost
-                                property: "arcStart"
-                                from: -90
-                                to: 270
+                                property: "spinAngle"
+                                from: 0
+                                to: 360
                                 duration: Appearance.animation.expressiveDefaultSpatial.duration
                                 easing.type: Appearance.animation.expressiveDefaultSpatial.type
                                 easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
                             }
+
+                            NumberAnimation {
+                                target: progressHost
+                                property: "arcStart"
+                                from: -90
+                                to: 80
+                                duration: Appearance.animation.expressiveDefaultSpatial.duration
+                                easing.type: Appearance.animation.standardAccel.type
+                                easing.bezierCurve: Appearance.animation.standardAccel.bezierCurve
+                            }
+
                             NumberAnimation {
                                 target: progressHost
                                 property: "arcSweep"
-                                from: 62
-                                to: 246
+                                from: 36
+                                to: 265
                                 duration: Appearance.animation.expressiveDefaultSpatial.duration
-                                easing.type: Appearance.animation.expressiveDefaultSpatial.type
-                                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
+                                easing.type: Appearance.animation.standardDecel.type
+                                easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
                             }
                         }
 
                         ParallelAnimation {
                             NumberAnimation {
                                 target: progressHost
-                                property: "arcStart"
-                                to: 630
+                                property: "spinAngle"
+                                to: 720
                                 duration: Appearance.animation.expressiveDefaultSpatial.duration
                                 easing.type: Appearance.animation.expressiveDefaultSpatial.type
                                 easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
                             }
+
+                            NumberAnimation {
+                                target: progressHost
+                                property: "arcStart"
+                                to: 310
+                                duration: Appearance.animation.expressiveDefaultSpatial.duration
+                                easing.type: Appearance.animation.standardDecel.type
+                                easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
+                            }
+
                             NumberAnimation {
                                 target: progressHost
                                 property: "arcSweep"
-                                to: 62
+                                to: 44
                                 duration: Appearance.animation.expressiveDefaultSpatial.duration
-                                easing.type: Appearance.animation.expressiveDefaultSpatial.type
-                                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
+                                easing.type: Appearance.animation.standardAccel.type
+                                easing.bezierCurve: Appearance.animation.standardAccel.bezierCurve
+                            }
+                        }
+                    }
+
+                    Text {
+                        id: lockIcon
+
+                        anchors.centerIn: parent
+                        text: "lock"
+                        color: Appearance.colors.colOnSurface
+                        font.family: "Material Symbols Rounded"
+                        font.pixelSize: 24
+                        opacity: root.busy ? 0 : 1
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Appearance.animation.expressiveEffects.duration
+                                easing.type: Appearance.animation.expressiveEffects.type
+                                easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
                             }
                         }
                     }
@@ -382,10 +494,10 @@ FocusScope {
                 id: enterButton
 
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: implicitWidth + (enterMouse.pressed ? Sizes.lockOuterPadding * 2 : root.hasText ? Sizes.lockOuterPadding : 0)
+                Layout.preferredWidth: implicitWidth + (root.enterPressed ? Sizes.lockOuterPadding * 2 : root.hasText ? Sizes.lockOuterPadding : 0)
                 implicitWidth: enterIcon.implicitWidth + Sizes.lockOuterPadding * 2
                 implicitHeight: enterIcon.implicitHeight + Math.round(10 * 4 / 3) * 2
-                radius: root.hasText || enterMouse.pressed ? Math.round(17 * 4 / 3) : Math.min(implicitWidth, implicitHeight) / 2
+                radius: root.hasText || root.enterPressed ? Math.round(17 * 4 / 3) : Math.min(implicitWidth, implicitHeight) / 2
                 color: root.hasText ? Appearance.colors.colPrimary : Appearance.colors.colLayer3
 
                 Behavior on Layout.preferredWidth {
@@ -416,7 +528,7 @@ FocusScope {
                     anchors.fill: parent
                     radius: parent.radius
                     color: root.hasText ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
-                    opacity: enterMouse.pressed ? 0.2 : enterMouse.containsMouse ? 0.12 : 0
+                    opacity: root.enterPressed ? 0.2 : root.enterHovered ? 0.12 : 0
 
                     Behavior on opacity {
                         NumberAnimation {
@@ -437,37 +549,24 @@ FocusScope {
                     font.pixelSize: 24
                     font.weight: 500
                 }
-
-                MouseArea {
-                    id: enterMouse
-
-                    anchors.fill: parent
-                    enabled: root.hasText && !root.busy
-                    hoverEnabled: enabled
-                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: {
-                        input.forceActiveFocus();
-                        root.requestUnlock();
-                    }
-                }
             }
         }
 
-        HoverHandler {
-            id: frameHover
+        MouseArea {
+            id: frameMouse
 
-            cursorShape: Qt.IBeamCursor
-        }
-
-        TapHandler {
-            id: frameTap
-
-            acceptedButtons: Qt.LeftButton
-            onTapped: eventPoint => {
-                if (eventPoint.position.x < enterButton.x)
-                    ripple.start(eventPoint.position.x, eventPoint.position.y);
-
+            anchors.fill: parent
+            z: 10
+            hoverEnabled: true
+            cursorShape: root.enterEnabled && mouseX >= enterButton.x ? Qt.PointingHandCursor : Qt.IBeamCursor
+            onPressed: mouse => {
+                rippleLayer.start(mouse.x, mouse.y);
                 input.forceActiveFocus();
+            }
+            onClicked: mouse => {
+                input.forceActiveFocus();
+                if (root.enterEnabled && mouse.x >= enterButton.x)
+                    root.requestUnlock();
             }
         }
     }

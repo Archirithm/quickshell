@@ -19,36 +19,21 @@ Item {
 
     RightSidebar {}
 
-    Loader {
-        id: lockLoader
-        active: false
-        sourceComponent: lockComponent
+    LockWarmup {}
 
-        Connections {
-            target: lockLoader.item
-            ignoreUnknownSignals: true
-
-            function onUnlocked() {
-                lockLoader.active = false;
-            }
-        }
-    }
-
-    Component {
-        id: lockComponent
-
-        Lock {}
+    Lock {
+        id: sessionLocker
     }
 
     IpcHandler {
         target: "lock"
 
         function open() {
-            if (!lockLoader.active) {
-                lockLoader.active = true;
-                return "LOCKED";
-            }
-            return "ALREADY_LOCKED";
+            return sessionLocker.open();
+        }
+
+        function isLocked() {
+            return sessionLocker.isLocked();
         }
     }
 

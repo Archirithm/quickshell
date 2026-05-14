@@ -3,25 +3,59 @@ import Quickshell
 import Quickshell.Services.Pam
 import Quickshell.Wayland
 import qs.Common
+import qs.Services
 
 Scope {
     id: root
 
     signal unlocked()
 
+    property bool lockPending: false
+    property int lockGeneration: 0
+
     function open() {
-        if (sessionLock.locked)
+        if (sessionLock.locked || lockPending)
             return "ALREADY_LOCKED";
 
         internalContext.currentText = "";
         internalContext.unlockInProgress = false;
         internalContext.showFailure = false;
-        sessionLock.locked = true;
+        lockPending = true;
+        lockGeneration = LockSnapshot.request(Quickshell.screens.length);
+        lockSnapshotTimeout.restart();
+
+        if (LockSnapshot.ready)
+            commitLock(lockGeneration);
+
         return "LOCKED";
     }
 
     function isLocked() {
-        return sessionLock.locked;
+        return sessionLock.locked || lockPending;
+    }
+
+    function commitLock(snapshotGeneration) {
+        if (!lockPending || snapshotGeneration !== lockGeneration)
+            return;
+
+        lockPending = false;
+        lockSnapshotTimeout.stop();
+        sessionLock.locked = true;
+    }
+
+    Connections {
+        target: LockSnapshot
+
+        function onPrepared(snapshotGeneration) {
+            root.commitLock(snapshotGeneration);
+        }
+    }
+
+    Timer {
+        id: lockSnapshotTimeout
+        interval: 180
+        repeat: false
+        onTriggered: root.commitLock(root.lockGeneration)
     }
 
     Scope {

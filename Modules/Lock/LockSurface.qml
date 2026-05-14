@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import Quickshell.Wayland
 import qs.Common
+import qs.Services
 
 WlSessionLockSurface {
     id: root
@@ -15,18 +16,35 @@ WlSessionLockSurface {
     property real contentOpacity: 0
     property real contentScale: 0
     property real backgroundBlur: 0
+    property bool startupStarted: false
+    property bool startupFallbackElapsed: false
 
     readonly property real targetHeight: Math.max(1, height * Sizes.lockHeightMult)
     readonly property real targetWidth: targetHeight * Sizes.lockRatio
     readonly property real compactSize: Math.min(Sizes.lockIconPanelSize, targetHeight)
     readonly property real compactRadius: compactSize / 4
     readonly property real panelRadius: Sizes.lockCardRadiusLarge * 1.5
+    readonly property string snapshotSource: LockSnapshot.snapshotUrl(root.screen)
+    readonly property bool snapshotReady: snapshotSource !== "" && desktopSnapshotFallback.status === Image.Ready
+    readonly property bool canStartStartupAnimation: snapshotReady || startupFallbackElapsed
 
     color: "transparent"
+
+    onCanStartStartupAnimationChanged: maybeStartStartupAnimation()
+
+    Component.onCompleted: maybeStartStartupAnimation()
 
     function focusAuth() {
         if (lockContent.opacity > 0)
             lockContent.forceAuthFocus();
+    }
+
+    function maybeStartStartupAnimation() {
+        if (startupStarted || !canStartStartupAnimation)
+            return;
+
+        startupStarted = true;
+        startupAnim.start();
     }
 
     function startExitAnimation() {
@@ -45,12 +63,13 @@ WlSessionLockSurface {
     }
 
     Image {
-        id: wallpaperFallback
+        id: desktopSnapshotFallback
         anchors.fill: parent
-        source: Appearance.currentWallpaperPreview !== "" ? Appearance.currentWallpaperPreview : Paths.fileUrl(Paths.currentWallpaper)
-        fillMode: Image.PreserveAspectCrop
+        source: root.snapshotSource
+        fillMode: Image.Stretch
         asynchronous: false
         cache: false
+        visible: root.snapshotSource !== ""
 
         layer.enabled: true
         layer.effect: MultiEffect {
@@ -60,23 +79,8 @@ WlSessionLockSurface {
             blurMax: 64
             blurMultiplier: 1
         }
-    }
 
-    ScreencopyView {
-        id: background
-
-        anchors.fill: parent
-        captureSource: root.screen
-        opacity: 1
-
-        layer.enabled: true
-        layer.effect: MultiEffect {
-            autoPaddingEnabled: false
-            blurEnabled: true
-            blur: root.backgroundBlur
-            blurMax: 64
-            blurMultiplier: 1
-        }
+        onStatusChanged: root.maybeStartStartupAnimation()
     }
 
     MouseArea {
@@ -102,9 +106,17 @@ WlSessionLockSurface {
         }
     }
 
+    Timer {
+        id: startupFallbackTimer
+        interval: 160
+        running: true
+        repeat: false
+        onTriggered: root.startupFallbackElapsed = true
+    }
+
     ParallelAnimation {
         id: startupAnim
-        running: true
+        running: false
         onFinished: root.focusAuth()
 
         NumberAnimation {

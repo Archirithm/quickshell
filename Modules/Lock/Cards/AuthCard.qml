@@ -1,4 +1,6 @@
 import QtQuick
+import QtQuick.Controls
+import QtQuick.Controls.Material
 import QtQuick.Layouts
 import QtQuick.Shapes
 import qs.Common
@@ -167,116 +169,22 @@ FocusScope {
                     anchors.centerIn: parent
                     width: 32
                     height: 32
-                    rotation: root.busy ? spinAngle : 0
 
-                    property real spinAngle: 0
-                    property real arcStart: -90
-                    property real arcSweep: 32
-                    readonly property real strokeSize: 3
-                    readonly property real arcRadius: Math.max(1, width / 2 - strokeSize)
-
-                    Behavior on rotation {
-                        enabled: !root.busy
-                        NumberAnimation {
-                            duration: Appearance.animation.expressiveEffects.duration
-                            easing.type: Appearance.animation.expressiveEffects.type
-                            easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                        }
-                    }
-
-                    Shape {
-                        anchors.fill: parent
+                    BusyIndicator {
+                        anchors.centerIn: parent
+                        width: parent.width
+                        height: parent.height
+                        padding: 0
+                        running: root.busy
                         opacity: root.busy ? 1 : 0
-                        preferredRendererType: Shape.CurveRenderer
-                        asynchronous: true
-
-                        ShapePath {
-                            strokeColor: Appearance.colors.colSecondary
-                            strokeWidth: progressHost.strokeSize
-                            fillColor: "transparent"
-                            capStyle: ShapePath.RoundCap
-
-                            PathAngleArc {
-                                centerX: progressHost.width / 2
-                                centerY: progressHost.height / 2
-                                radiusX: progressHost.arcRadius
-                                radiusY: progressHost.arcRadius
-                                startAngle: progressHost.arcStart
-                                sweepAngle: progressHost.arcSweep
-                            }
-                        }
+                        Material.theme: Appearance.m3colors.darkmode ? Material.Dark : Material.Light
+                        Material.accent: Appearance.colors.colSecondary
 
                         Behavior on opacity {
                             NumberAnimation {
                                 duration: Appearance.animation.expressiveEffects.duration
                                 easing.type: Appearance.animation.expressiveEffects.type
                                 easing.bezierCurve: Appearance.animation.expressiveEffects.bezierCurve
-                            }
-                        }
-                    }
-
-                    SequentialAnimation {
-                        running: root.busy
-                        loops: Animation.Infinite
-
-                        ParallelAnimation {
-                            NumberAnimation {
-                                target: progressHost
-                                property: "spinAngle"
-                                from: 0
-                                to: 360
-                                duration: Appearance.animation.expressiveDefaultSpatial.duration
-                                easing.type: Appearance.animation.expressiveDefaultSpatial.type
-                                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
-                            }
-
-                            NumberAnimation {
-                                target: progressHost
-                                property: "arcStart"
-                                from: -90
-                                to: 80
-                                duration: Appearance.animation.expressiveDefaultSpatial.duration
-                                easing.type: Appearance.animation.standardAccel.type
-                                easing.bezierCurve: Appearance.animation.standardAccel.bezierCurve
-                            }
-
-                            NumberAnimation {
-                                target: progressHost
-                                property: "arcSweep"
-                                from: 36
-                                to: 265
-                                duration: Appearance.animation.expressiveDefaultSpatial.duration
-                                easing.type: Appearance.animation.standardDecel.type
-                                easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
-                            }
-                        }
-
-                        ParallelAnimation {
-                            NumberAnimation {
-                                target: progressHost
-                                property: "spinAngle"
-                                to: 720
-                                duration: Appearance.animation.expressiveDefaultSpatial.duration
-                                easing.type: Appearance.animation.expressiveDefaultSpatial.type
-                                easing.bezierCurve: Appearance.animation.expressiveDefaultSpatial.bezierCurve
-                            }
-
-                            NumberAnimation {
-                                target: progressHost
-                                property: "arcStart"
-                                to: 310
-                                duration: Appearance.animation.expressiveDefaultSpatial.duration
-                                easing.type: Appearance.animation.standardDecel.type
-                                easing.bezierCurve: Appearance.animation.standardDecel.bezierCurve
-                            }
-
-                            NumberAnimation {
-                                target: progressHost
-                                property: "arcSweep"
-                                to: 44
-                                duration: Appearance.animation.expressiveDefaultSpatial.duration
-                                easing.type: Appearance.animation.standardAccel.type
-                                easing.bezierCurve: Appearance.animation.standardAccel.bezierCurve
                             }
                         }
                     }

@@ -11,7 +11,7 @@ Singleton {
     property string matugenScheme: "scheme-tonal-spot"
     property string matugenMode: "dark"
     readonly property string effectiveMatugenMode: matugenMode.toLowerCase() === "light" ? "light" : "dark"
-    property string currentWallpaperPreview: "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current"
+    property string currentWallpaperPreview: ""
     property real backgroundTransparency: 0
     property real contentTransparency: 0.9
     property QtObject m3colors

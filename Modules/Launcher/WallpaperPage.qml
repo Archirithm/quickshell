@@ -4,6 +4,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import qs.Common
+import qs.Services
 
 Item {
     id: root
@@ -11,10 +12,9 @@ Item {
     signal requestCloseLauncher()
 
     property string query: ""
-    property string wallpaperPath: Quickshell.env("HOME") + "/.config/wallpaper"
+    property string wallpaperPath: PersonalizationConfig.wallpaperFolder
 
     property string currentSelectedPreview: ""
-    property string pendingOverviewPath: ""
     property bool isLoading: true
 
     RofiStyle {
@@ -230,7 +230,7 @@ Item {
     }
 
     function wallpaperProcessesRunning() {
-        return setWallpaperProcess.running || generateColorsProcess.running || overviewProcess.running;
+        return WallpaperService.busy;
     }
 
     function applyWallpaper() {
@@ -243,45 +243,6 @@ Item {
 
         let currentPath = filteredWallpaperModel.get(wallpaperList.currentIndex).path
 
-        Appearance.currentWallpaperPreview = "file://" + currentPath
-        root.pendingOverviewPath = currentPath
-
-        generateColorsProcess.command = [
-            "bash", Paths.scriptPath("theme", "generate_quickshell_colors.sh"),
-            "--image", currentPath,
-            "--scheme", Appearance.matugenScheme,
-            "--mode", Appearance.effectiveMatugenMode
-        ]
-        generateColorsProcess.running = true
-
-        setWallpaperProcess.command = [
-            "awww", "img", currentPath,
-            "--transition-type", "any",
-            "--transition-duration", "3",
-            "--transition-fps", "60",
-            "--transition-bezier", ".43,1.19,1,.4"
-        ]
-        setWallpaperProcess.running = true
-    }
-
-    Process {
-        id: setWallpaperProcess
-        onExited: {
-            if (root.pendingOverviewPath === "")
-                return
-
-            overviewProcess.command = ["bash", Paths.scriptPath("system", "overview.sh"), root.pendingOverviewPath]
-            overviewProcess.running = true
-        }
-    }
-
-    Process {
-        id: generateColorsProcess
-        onExited: Appearance.reloadColors()
-    }
-
-    Process {
-        id: overviewProcess
-        onExited: root.pendingOverviewPath = ""
+        WallpaperService.setWallpaper(currentPath)
     }
 }

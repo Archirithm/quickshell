@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import qs.Common
+import qs.Services
 
 PanelWindow {
     id: root
@@ -32,24 +33,16 @@ PanelWindow {
 
     property string previewImage: (currentMode === 2 && wallpaperPage.currentSelectedPreview !== "")
                                   ? wallpaperPage.currentSelectedPreview
-                                  : (Appearance.currentWallpaperPreview !== "" ? Appearance.currentWallpaperPreview : "file://" + Quickshell.env("HOME") + "/.cache/wallpaper_rofi/current")
+                                  : (Appearance.currentWallpaperPreview !== "" ? Appearance.currentWallpaperPreview : (WallpaperService.currentWallpaper !== "" ? Paths.fileUrl(WallpaperService.currentWallpaper) : ""))
 
     RofiStyle {
         id: rofiStyle
     }
 
-    Process {
-        id: syncGlobalWallpaper
-        command: ["bash", "-c", "awww query | awk -F 'image: ' '{print $2}' | head -n 1"]
-        running: false
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: (path) => {
-                let currentPath = path.trim().replace(/^"|"$/g, "");
-                if (currentPath !== "")
-                    Appearance.currentWallpaperPreview = "file://" + currentPath;
-            }
-        }
+    function syncGlobalWallpaperPreview() {
+        const path = WallpaperService.currentWallpaper || WallpaperService.wallpaperForScreen("");
+        if (path && path !== "")
+            Appearance.currentWallpaperPreview = Paths.fileUrl(path);
     }
 
     function resetSearch() {
@@ -108,8 +101,7 @@ PanelWindow {
         else
             launcherFadeIn.restart()
 
-        syncGlobalWallpaper.running = false
-        syncGlobalWallpaper.running = true
+        root.syncGlobalWallpaperPreview()
         root.focusSearch()
     }
 

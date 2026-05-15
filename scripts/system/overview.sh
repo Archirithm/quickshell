@@ -1,17 +1,12 @@
 #!/bin/bash
 
-# 1. 优先使用传入的参数
 if [ -n "$1" ]; then
   WALLPAPER="$1"
 else
-  # 只有没传参数时，才去问 awww (兜底逻辑)
-  # 【核心修改】：swww query -> awww query
-  sleep 0.5
-  WALLPAPER=$(awww query | head -n1 | grep -oP 'image: \K.*')
+  WALLPAPER="$HOME/.cache/wallpaper_rofi/current"
 fi
 
-# 检查一下到底有没有拿到路径
-if [ -z "$WALLPAPER" ]; then
+if [ -z "$WALLPAPER" ] || [ ! -e "$WALLPAPER" ]; then
   echo "$(date) - ERROR: No wallpaper path found!" >>/tmp/wp_debug.log
   exit 1
 fi
@@ -32,25 +27,18 @@ if [ ! -f "$BLURRED_WALLPAPER" ] || [ ! -f "$BLURRED_WALLPAPER_OVERVIEW" ]; then
   magick "$WALLPAPER" -blur 0x30 "$BLURRED_WALLPAPER"
 fi
 
-# 这里的 awww img 其实是多余的，因为 QML 已经切换过了
-# 但保留它用于做淡入淡出的特效是可以的
-# 【核心修改】：swww img -> awww img
-awww img -n overview "$BLURRED_WALLPAPER_OVERVIEW" \
-  --transition-type fade \
-  --transition-duration 0.5
-
 # ============================================================
 # 核心保存逻辑 (已修复软链接穿透覆盖的致命 Bug)
 # ============================================================
 CACHE_ROFI="$HOME/.cache/wallpaper_rofi"
 mkdir -p "$CACHE_ROFI"
 
-# 绝对不要用 cp 覆盖！先用 rm 彻底清除可能的旧链接或文件
 rm -f "$CACHE_ROFI/current"
 rm -f "$CACHE_ROFI/blurred"
+rm -f "$CACHE_DIR_OVERVIEW/current"
 
-# 统一使用 ln -sf 创建软链接，速度极快且不伤硬盘
 ln -sf "$WALLPAPER" "$CACHE_ROFI/current"
 ln -sf "$BLURRED_WALLPAPER" "$CACHE_ROFI/blurred"
+ln -sf "$BLURRED_WALLPAPER_OVERVIEW" "$CACHE_DIR_OVERVIEW/current"
 
 echo "$(date) - Done: Safely linked $FILENAME" >>/tmp/wp_debug.log

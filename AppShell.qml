@@ -7,9 +7,14 @@ import qs.Modules.Launcher
 import qs.Modules.Lock
 import qs.Modules.Sidebars.Left
 import qs.Modules.Sidebars.Right
+import qs.Modules.Wallpaper
 
 Item {
     id: root
+
+    WallpaperBackground {}
+
+    OverviewWallpaperBackground {}
 
     Bar {}
 

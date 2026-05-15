@@ -90,6 +90,23 @@ Qt/C++ plugin 统一位于 `core/`：可复用 backend 代码在 `core/src/`，Q
 - 字体可选 `LXGW WenKai GB Screen`、`Maple Mono NF CN`、`JetBrainsMono Nerd Font`。中文和英文优先使用 `LXGW WenKai GB Screen`，数字优先使用 `JetBrainsMono Nerd Font`。
 - 图标可选 Nerd Font 图标，也可以使用 `ttf-material-symbols-variable` 中的 Material Symbols 图标；优先使用 `ttf-material-symbols-variable`。
 
+## Material 组件优先原则
+
+本项目中的 Quickshell UI 组件默认应优先基于 `QtQuick.Controls.Material` 实现。
+
+在实现任何按钮、输入框、滑块、开关、进度条、菜单、弹窗等常见控件之前，应先检查 `QtQuick.Controls.Material` 是否已经提供对应组件或可通过样式属性完成需求。
+
+禁止在没有明确理由的情况下重复手写 Material 风格控件。
+
+允许自定义组件的情况包括：
+
+- `QtQuick.Controls.Material` 没有提供对应组件；
+- 原生控件无法实现目标动画或特殊形状；
+- 需要与 Quickshell、Niri、LayerShell、ShaderEffect 等场景深度结合；
+- 原生控件存在明显性能或交互问题。
+
+自定义组件必须尽量遵循 Material Design 3 的视觉和交互规范。
+
 ## 测试指南
 
 纯 QML 改动至少执行一次 `qmllint`；涉及 `core/` 的改动至少重新构建一次 plugin。界面验证优先直接运行 `qs`。

@@ -16,7 +16,7 @@ Singleton {
     property bool wifiConnecting: connectProc.running
     property var wifiConnectTarget: null
     property var wifiNetworks: []
-    property var savedWifiConnectionsWithSecrets: []
+    property var savedWifiConnections: []
     readonly property bool passwordPromptActive: wifiNetworks.some(network => network.askingPassword)
     readonly property var activeWifi: wifiNetworks.find(n => n.active) || null
     readonly property var friendlyWifiNetworks: wifiNetworks.slice().sort((a, b) => {
@@ -111,7 +111,7 @@ Singleton {
             "environment": {
                 "SSID": ssid
             },
-            "command": ["bash", "-c", 'nmcli -t -f NAME,TYPE connection show | while IFS=: read -r name type; do case "$type" in *wireless*|*wifi*) profile_ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | head -n1)"; [ -n "$profile_ssid" ] || profile_ssid="$name"; [ "$profile_ssid" = "$SSID" ] || continue; nmcli connection down "$name" 2>/dev/null || true; flags="$(nmcli -g 802-11-wireless-security.psk-flags connection show "$name" 2>/dev/null | head -n1)"; psk="$(nmcli -s -g 802-11-wireless-security.psk connection show "$name" 2>/dev/null | head -n1)"; case "$flags" in 1|2) nmcli connection modify "$name" connection.autoconnect no 2>/dev/null || true; nmcli connection delete "$name" 2>/dev/null || true; continue;; esac; [ -z "$psk" ] && nmcli connection delete "$name" 2>/dev/null || true;; esac; done']
+            "command": ["bash", "-c", 'nmcli -t -f NAME,TYPE connection show | while IFS=: read -r name type; do case "$type" in *wireless*|*wifi*) profile_ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | head -n1)"; [ -n "$profile_ssid" ] || profile_ssid="$name"; [ "$profile_ssid" = "$SSID" ] || continue; flags="$(nmcli -g 802-11-wireless-security.psk-flags connection show "$name" 2>/dev/null | head -n1)"; case "$flags" in ""|*[!0-9]*) flags=0;; esac; if [ $((flags & 3)) -ne 0 ]; then nmcli connection down "$name" 2>/dev/null || true; nmcli connection modify "$name" connection.autoconnect no 2>/dev/null || true; nmcli connection delete "$name" 2>/dev/null || true; fi;; esac; done']
         });
     }
 
@@ -120,7 +120,7 @@ Singleton {
     }
 
     function savedConnectionForSsid(ssid) {
-        return root.savedWifiConnectionsWithSecrets.find(connection => connection.ssid === ssid) || null;
+        return root.savedWifiConnections.find(connection => connection.ssid === ssid) || null;
     }
 
     function disconnectWifiNetwork() {
@@ -144,7 +144,7 @@ Singleton {
                 "PASSWORD": password,
                 "SSID": network.ssid
             },
-            "command": ["bash", "-c", 'nmcli -t -f NAME,TYPE connection show | while IFS=: read -r name type; do case "$type" in *wireless*|*wifi*) profile_ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | head -n1)"; [ -n "$profile_ssid" ] || profile_ssid="$name"; [ "$profile_ssid" = "$SSID" ] || continue; nmcli connection down "$name" 2>/dev/null || true; flags="$(nmcli -g 802-11-wireless-security.psk-flags connection show "$name" 2>/dev/null | head -n1)"; psk="$(nmcli -s -g 802-11-wireless-security.psk connection show "$name" 2>/dev/null | head -n1)"; case "$flags" in 1|2) nmcli connection delete "$name" 2>/dev/null || true; continue;; esac; [ -z "$psk" ] && nmcli connection delete "$name" 2>/dev/null || true;; esac; done; nmcli dev wifi connect "$SSID" password "$PASSWORD"']
+            "command": ["bash", "-c", 'nmcli -t -f NAME,TYPE connection show | while IFS=: read -r name type; do case "$type" in *wireless*|*wifi*) profile_ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | head -n1)"; [ -n "$profile_ssid" ] || profile_ssid="$name"; [ "$profile_ssid" = "$SSID" ] || continue; flags="$(nmcli -g 802-11-wireless-security.psk-flags connection show "$name" 2>/dev/null | head -n1)"; case "$flags" in ""|*[!0-9]*) flags=0;; esac; if [ $((flags & 3)) -ne 0 ]; then nmcli connection down "$name" 2>/dev/null || true; nmcli connection delete "$name" 2>/dev/null || true; fi;; esac; done; nmcli dev wifi connect "$SSID" password "$PASSWORD"']
         });
     }
 
@@ -302,7 +302,7 @@ Singleton {
 
     Process {
         id: savedConnectionsProcess
-        command: ["bash", "-c", 'nmcli -t -f NAME,TYPE connection show | while IFS=: read -r name type; do case "$type" in *wireless*|*wifi*) ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | head -n1)"; [ -n "$ssid" ] || ssid="$name"; flags="$(nmcli -g 802-11-wireless-security.psk-flags connection show "$name" 2>/dev/null | head -n1)"; psk="$(nmcli -s -g 802-11-wireless-security.psk connection show "$name" 2>/dev/null | head -n1)"; case "$flags" in ""|0) [ -n "$psk" ] && printf "%s\\t%s\\n" "$ssid" "$name";; esac;; esac; done']
+        command: ["bash", "-c", 'nmcli -t -f NAME,TYPE connection show | while IFS=: read -r name type; do case "$type" in *wireless*|*wifi*) ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | head -n1)"; [ -n "$ssid" ] || ssid="$name"; flags="$(nmcli -g 802-11-wireless-security.psk-flags connection show "$name" 2>/dev/null | head -n1)"; case "$flags" in ""|*[!0-9]*) flags=0;; esac; [ $((flags & 3)) -eq 0 ] && printf "%s\\t%s\\n" "$ssid" "$name";; esac; done']
         environment: ({
             LANG: "C",
             LC_ALL: "C"
@@ -314,11 +314,11 @@ Singleton {
 
                 const rawText = text.trim();
                 if (rawText.length === 0) {
-                    root.savedWifiConnectionsWithSecrets = [];
+                    root.savedWifiConnections = [];
                     return;
                 }
 
-                root.savedWifiConnectionsWithSecrets = rawText.split("\n").map(line => {
+                root.savedWifiConnections = rawText.split("\n").map(line => {
                     const fields = line.split("\t");
                     return {
                         ssid: fields[0] || "",

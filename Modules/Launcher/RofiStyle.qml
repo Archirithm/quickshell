@@ -1,35 +1,41 @@
 import QtQuick
 
 QtObject {
-    readonly property int windowWidth: 1000
-    readonly property int windowHeight: 498
-    readonly property int windowRadius: 15
-    readonly property int controlRadius: 10
-    readonly property int borderWidth: 2
+    readonly property real resolutionScale: 4 / 3
+
+    function scaled(value) {
+        return Math.round(value * resolutionScale)
+    }
+
+    readonly property int windowWidth: scaled(1000)
+    readonly property int windowHeight: scaled(498)
+    readonly property int windowRadius: scaled(15)
+    readonly property int controlRadius: scaled(10)
+    readonly property int borderWidth: scaled(2)
 
     readonly property real contentWidth: windowWidth - borderWidth * 2
     readonly property real leftPaneWidth: contentWidth / 2
     readonly property real paneInnerWidth: leftPaneWidth - panelPadding * 2
-    readonly property int panelPadding: 20
-    readonly property int controlPadding: 15
-    readonly property int controlHeight: 48
-    readonly property int controlSpacing: 10
-    readonly property int modeSpacing: 20
+    readonly property int panelPadding: scaled(20)
+    readonly property int controlPadding: scaled(15)
+    readonly property int controlHeight: scaled(48)
+    readonly property int controlSpacing: scaled(10)
+    readonly property int modeSpacing: scaled(20)
     readonly property real modeButtonWidth: (paneInnerWidth - modeSpacing * 2) / 3
 
     readonly property int listRows: 8
-    readonly property int listSpacing: 10
-    readonly property int rowHeight: 48
+    readonly property int listSpacing: scaled(10)
+    readonly property int rowHeight: scaled(48)
     readonly property int listStep: rowHeight + listSpacing
     readonly property int listHeight: listRows * rowHeight + (listRows - 1) * listSpacing
-    readonly property int itemPadding: 8
-    readonly property int itemSpacing: 15
-    readonly property int iconSize: 32
-    readonly property int wallpaperThumbWidth: 64
-    readonly property int wallpaperThumbHeight: 32
+    readonly property int itemPadding: scaled(8)
+    readonly property int itemSpacing: scaled(15)
+    readonly property int iconSize: scaled(32)
+    readonly property int wallpaperThumbWidth: scaled(64)
+    readonly property int wallpaperThumbHeight: scaled(32)
 
-    readonly property int fontPixelSize: 14
-    readonly property int secondaryFontPixelSize: 12
+    readonly property int fontPixelSize: scaled(14)
+    readonly property int secondaryFontPixelSize: scaled(12)
 
     readonly property int openDuration: 300
     readonly property int closeDuration: 220
